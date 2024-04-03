@@ -18,9 +18,10 @@ import AdminNav from '../views/Admin/AdminNav.vue'
 import publications from '../views/Offices/publications.vue'
 import OfficeCard from '../views/OfficeCard.vue'
 import Login from '../views/Login.vue'
+import Events from '@/views/Events.vue'
 const routes = [
   {
-    path: '/Template',
+    path: '/',
     component: Template,
   },
 
@@ -56,6 +57,10 @@ const routes = [
   {
     path: '/Pwd',
     component:Pwd
+  },
+  {
+    path: '/Events',
+    component:Events
   },
   {
     path: '/Needyadults',

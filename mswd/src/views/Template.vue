@@ -54,37 +54,34 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-/* Styles for the homepage */
+<style>
 
 .homepage {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-  min-height: 100vh; /* Ensures the page fills at least the viewport height */
+  font-family: 'Open Sans', sans-serif; /* Clean and modern font */
+  max-width: none; /* Remove max-width for full-bleed effect */
+  margin: 0; /* Remove margin for full-bleed effect */
+  padding: 2rem; /* Consistent spacing with rem units */
   display: flex;
   flex-direction: column;
+  min-height: 100vh; /* Ensures full viewport height */
+  background-color: #f5f5f5; /* Light background for better contrast */
 }
 
 header {
   text-align: center;
-  background-color: #f0f0f0;
-  padding: 60px 20px;
+  padding: 6rem 2rem; /* More spacing for content */
   border-radius: 8px;
-  margin-bottom: 40px;
 }
 
 header h1 {
-  margin-bottom: 20px;
-  font-size: 48px;
+  margin-bottom: 2rem;
+  font-size: 3.2rem; /* Adjust font size for responsiveness */
   color: #333;
 }
 
 header p {
-  color: #666;
-  font-size: 20px;
+  color: #777; /* Slightly darker for better readability */
+  font-size: 1.2rem; /* Adjust font size for readability */
 }
 
 main .banner img {
@@ -94,29 +91,34 @@ main .banner img {
 }
 
 .services {
-  margin-top: 40px;
+  margin-top: 4rem; /* Consistent spacing */
 }
 
 .services h2 {
-  margin-bottom: 30px;
+  margin-bottom: 2rem;
   text-align: center;
-  font-size: 36px;
+  font-size: 2.4rem; /* Adjust font size for responsiveness */
   color: #333;
 }
 
 .service-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 30px;
+  grid-template-columns: repeat(2, 1fr); /* Two columns */
+  grid-gap: 2rem; /* Consistent spacing */
+  margin: 0 auto; /* Center the grid horizontally */
+  width: fit-content; /* Ensures grid doesn't overflow */
 }
 
 .service {
   text-align: center;
+  padding: 2rem; /* Add padding for content */
+  background-color: #fff; /* White background for services */
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); /* Subtle shadow */
 }
 
 .service img {
-  width: 100%;
+  width: 100%; /* Adjust image width if needed */
   border-radius: 8px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 </style>
