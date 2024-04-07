@@ -8,7 +8,7 @@
         <router-link to="/" class="nav-link">Home</router-link>
         <router-link to="/offices" class="nav-link">Meet Our Departments</router-link>
         <router-link to="/Events" class="nav-link">Upcoming Events</router-link>
-        <router-link to="/services" class="nav-link">Services</router-link>
+        <router-link to="/Services" class="nav-link">Services</router-link>
         <router-link to="/publications" class="nav-link">Publications</router-link>
         <router-link to="/contacts" class="nav-link">Contact Us</router-link>
         <button class="logout-button" @click="logout">Sign Out</button>

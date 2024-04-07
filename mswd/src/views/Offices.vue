@@ -70,6 +70,7 @@ export default {
 
 <style scoped>
 .page-container {
+  padding:120px;
   background-color: #f7f9fc;
   min-height: 100vh;
   display: flex;

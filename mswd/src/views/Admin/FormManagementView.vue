@@ -1,6 +1,7 @@
 <template>
+        <AdminNav />
     <div class="form-management">
-      <AdminNav />
+
       <h1>Form Management</h1>
       <div v-if="forms.length === 0" class="no-forms">No forms available</div>
       <div v-else>

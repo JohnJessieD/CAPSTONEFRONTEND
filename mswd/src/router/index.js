@@ -19,6 +19,7 @@ import publications from '../views/Offices/publications.vue'
 import OfficeCard from '../views/OfficeCard.vue'
 import Login from '../views/Login.vue'
 import Events from '@/views/Events.vue'
+import RegisterComponent from '../views/RegisterComponent.vue'
 const routes = [
   {
     path: '/',
@@ -28,6 +29,10 @@ const routes = [
   {
     path: '/Login',
     component: Login,
+  },
+  {
+    path: '/RegisterComponent',
+    component: RegisterComponent,
   },
   {
     path: '/OfficeCard',

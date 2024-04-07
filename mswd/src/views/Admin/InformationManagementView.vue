@@ -1,6 +1,6 @@
-<template>
+<template>    <AdminNav />
     <div class="container">
-      <AdminNav />
+  
       <h1 class="heading">Information Management</h1>
   
       <div class="section">

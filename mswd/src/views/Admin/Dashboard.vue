@@ -1,6 +1,8 @@
+
 <template>
-  <div class="dashboard">
-    <AdminNav />
+   <AdminNav />
+<div class="dashboard">
+ 
     <h1>Dashboard</h1>
     <div class="search-container">
       <input type="text" v-model="searchQuery" placeholder="Search barangay..." class="search-input">

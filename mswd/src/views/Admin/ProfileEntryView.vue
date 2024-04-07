@@ -1,6 +1,7 @@
 <template>
+   <AdminNav />
     <div class="profile-entry">
-      <AdminNav />
+     
       <div class="form-container">
         <h1>Add Profile</h1>
         <form @submit.prevent="submitProfile" class="profile-form">
