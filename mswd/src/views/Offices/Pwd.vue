@@ -292,7 +292,8 @@ body {
 .office-info {
   background-color: #fff;
   border-radius: 10px;
-  padding: 20px;
+  padding: 10%;
+
   box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
   margin-bottom: 30px;
 }

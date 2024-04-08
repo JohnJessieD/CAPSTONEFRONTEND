@@ -1,12 +1,11 @@
-<template> <Navbar />
+<template>
+  <Navbar />
   <div class="container">
-   
     <h2>Welcome to the Needy Adult Office</h2>
     <p>This office provides support for adults in need.</p>
-    <button @click="openModal" class="button">Open Form</button> <!-- Button to open the modal -->
-    <Modal v-if="showModal" @close="closeModal" class="modal">
       <!-- Main Form -->
       <form @submit.prevent="submitForm" class="form">
+        <!-- Personal Information -->
         <div class="form-group">
           <label for="name">Name:</label>
           <input type="text" id="name" v-model="formData.name" required class="input-field">
@@ -14,23 +13,30 @@
         <div class="form-group">
           <label for="age">Age:</label>
           <input type="number" id="age" v-model="formData.age" required class="input-field">
-        </div> 
+        </div>
         <div class="form-group">
           <label for="contact">Contact Number:</label>
           <input type="text" id="contact" v-model="formData.contact" required class="input-field">
         </div>
-        <div class="form-group checkbox-group">
-          <label for="allowance" class="checkbox-label">Are you seeking financial support?</label>
-          <input type="checkbox" id="allowance" v-model="formData.allowanceRequest" @change="handleAllowanceChange" class="checkbox">
-        </div>
-        <!-- Medication Requests -->
-        <div class="form-group checkbox-group">
-          <label for="medication" class="checkbox-label">Do you need assistance with medication?</label>
-          <input type="checkbox" id="medication" v-model="formData.medicationRequest" @change="handleMedicationChange" class="checkbox">
+        <!-- Assistance Requests -->
+        <div class="form-group">
+          <label class="checkbox-label">I need assistance with:</label>
+          <div class="checkbox-group">
+            <label for="allowance" class="checkbox-label">
+              <input type="checkbox" id="allowance" v-model="formData.allowanceRequest" @change="handleAllowanceChange">
+              Financial Support
+            </label>
+          </div>
+          <div class="checkbox-group">
+            <label for="medication" class="checkbox-label">
+              <input type="checkbox" id="medication" v-model="formData.medicationRequest" @change="handleMedicationChange">
+              Medication
+            </label>
+          </div>
         </div>
         <!-- Additional Fields for Medication Request -->
         <div v-if="showMedicationFields" class="medication-form">
-          <h3>Medication Request Form</h3>
+          <h3>Medication Request Details</h3>
           <div class="form-group">
             <label for="medicineType">Type of Medicine:</label>
             <input type="text" id="medicineType" v-model="medicationFormData.medicineType" required class="input-field">
@@ -40,27 +46,17 @@
             <input type="text" id="purpose" v-model="medicationFormData.purpose" required class="input-field">
           </div>
           <div class="form-group file-upload">
-            <label for="medicalCertificate" class="upload-label">Upload Medical Certificate:</label>
+            <label for="medicalCertificate" class="upload-label">Medical Certificate:</label>
             <input type="file" id="medicalCertificate" accept="image/*" @change="handleMedicalCertificateChange" required class="file-input">
           </div>
           <div class="form-group file-upload">
-            <label for="proofOfReceipt" class="upload-label">Upload Proof of Receipt:</label>
+            <label for="proofOfReceipt" class="upload-label">Proof of Receipt:</label>
             <input type="file" id="proofOfReceipt" accept="image/*" @change="handleProofOfReceiptChange" required class="file-input">
           </div>
         </div>
+        <!-- Submit Button -->
+        <button type="submit" class="submit-btn">Submit Request</button>
       </form>
-      <button @click="submitForm" class="submit-btn">Submit</button>
-      <!-- Senior Verification Form -->
-      <form v-if="showSeniorVerification" @submit.prevent="submitSeniorVerification" class="senior-verification-form">
-        <h3>Senior Verification</h3>
-        <p>Please upload a photo of your senior ID.</p>
-        <div class="form-group file-upload">
-          <label for="seniorId" class="upload-label">Upload Senior ID:</label>
-          <input type="file" id="seniorId" accept="image/*" @change="handleFileChange" required class="file-input">
-        </div>
-        <button type="submit" class="submit-btn">Submit Senior Verification</button>
-      </form>
-    </Modal>
   </div>
 </template>
 
@@ -88,7 +84,6 @@ export default {
         proofOfReceipt: null,
       },
       showModal: false,
-      showSeniorVerification: false,
       showMedicationFields: false,
     };
   },
@@ -98,10 +93,10 @@ export default {
     },
     closeModal() {
       this.showModal = false;
-      this.showSeniorVerification = false; // Close senior verification form if open
     },
     handleAllowanceChange() {
       if (this.formData.allowanceRequest && this.formData.age < 60) {
+        this.showMedicationFields = false; // Hide medication fields if allowance is requested for non-senior
         this.showSeniorVerification = true;
       } else {
         this.showSeniorVerification = false;
@@ -110,6 +105,7 @@ export default {
     handleMedicationChange() {
       if (this.formData.medicationRequest) {
         this.showMedicationFields = true;
+        this.showSeniorVerification = false; // Hide senior verification if medication assistance is requested
       } else {
         this.showMedicationFields = false;
       }
@@ -120,16 +116,6 @@ export default {
       // Close the modal
       this.closeModal();
       // You can add additional logic here for submitting main form data if needed
-    },
-    submitSeniorVerification() {
-      // Senior verification form submission logic
-      // Close the senior verification form
-      this.showSeniorVerification = false;
-      // Additional logic can be added here if needed
-    },
-    handleFileChange(event) {
-      const file = event.target.files[0];
-      // You can do further processing here if needed
     },
     handleMedicalCertificateChange(event) {
       const file = event.target.files[0];
@@ -148,7 +134,7 @@ export default {
 <style scoped>
 .container {
   background-color: #f9f9f9;
-  padding: 20px;
+  padding: 20%;
   text-align: center;
 }
 
@@ -238,8 +224,7 @@ label {
   background-color: #0056b3;
 }
 
-.medication-form,
-.senior-verification-form {
+.medication-form {
   background-color: #f5f5f5;
   padding: 20px;
   border-radius: 10px;

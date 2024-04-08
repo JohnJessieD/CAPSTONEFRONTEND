@@ -7,9 +7,10 @@
           <div class="office-card" v-for="(office, index) in offices" :key="index">
             <div class="office-header">
               <h3>{{ office.name }}</h3>
+              <h3>{{ office.icon }}</h3>
             </div>
             <div class="office-body">
-              <img :src="office.image" alt="Office Image" class="office-image" />
+            
               <p>{{ office.description }}</p>
             </div>
             <div class="office-footer">
@@ -31,34 +32,35 @@ export default {
     Navbar,
   },
   data() {
-    return {
-      offices: [
-        { 
-          name: 'PWD Office', 
-          routerPath: '/Pwd', 
-          description: 'Providing support and services for Persons with Disabilities (PWD).',
-        ///  image: require('@/assets/pwd_office_image.jpg') // Import image for PWD Office
-        },
-        { 
-          name: 'Solo Parent Office', 
-          routerPath: '/Soloparent', 
-          description: 'Assisting single parents in accessing necessary resources and assistance.',
-         /// image: require('@/assets/solo_parent_office_image.jpg') // Import image for Solo Parent Office
-        },
-        { 
-          name: 'Needy Adult Office', 
-          routerPath: '/Needyadults', 
-          description: 'Offering assistance and resources to adults in need within the community.',
-        //  image: require('@/assets/needy_adult_office_image.jpg') // Import image for Needy Adult Office
-        },
-        { 
-          name: 'Disaster Victims Office', 
-          routerPath: '/Disastervictims', 
-          description: 'Assisting and supporting individuals affected by disasters in the community.',
-         // image: require('@/assets/disaster_victims_office_image.jpg') // Import image for Disaster Victims Office
-        },
-      ],
-    };
+    return{
+  offices: [
+    { 
+      name: 'PWD Office', 
+      routerPath: '/Pwd', 
+      description: 'Providing support and services for Persons with Disabilities (PWD).',
+      icon: '♿' // Unicode character for wheelchair icon
+    },
+    { 
+      name: 'Solo Parent Office', 
+      routerPath: '/Soloparent', 
+      description: 'Assisting single parents in accessing necessary resources and assistance.',
+      icon: '👨‍👩‍👦' // Unicode character for family icon
+    },
+    { 
+      name: 'Needy Adult Office', 
+      routerPath: '/Needyadults', 
+      description: 'Offering assistance and resources to adults in need within the community.',
+      icon: '❤️' // Unicode character for heart icon
+    },
+    {
+      name: 'Daycare Workers Support Office',
+      routerPath: '/Disastervictims',
+      description: 'Providing assistance and support to daycare workers in the community.',
+      icon: '👶' // Unicode character for baby icon
+    }
+  ]
+};
+
   },
   methods: {
     goToRouterLink(path) {
