@@ -40,37 +40,55 @@ export default {
   }),
   methods: {
     async login() {
-      try {
-        const response = await axios.post('/api/login', {
-          username: this.username,
-          password: this.password,
-        });
+  try {
+    const response = await axios.post('/api/login', {
+      username: this.username,
+      password: this.password,
+    });
 
-        if ('msg' in response.data) {
-          if (response.data.msg === 'okay') {
-            // Check the user role and redirect accordingly
-            switch (response.data.role) {
-              case 'admin':
-                this.$router.push('/Dashboard');
+    if ('msg' in response.data) {
+      if (response.data.msg === 'okay') {
+        // Check the user role and redirect accordingly
+        switch (response.data.role) {
+          case 'admin':
+            this.$router.push('/admin');
+            break;
+          case 'user':
+            // Assuming you also want to fetch the category here
+            switch (response.data.category) {
+              case 'PWD':
+                this.$router.push('/PWDNavbar');
                 break;
-              case 'user':
-                this.$router.push('/');
+              case 'Day Care Worker':
+                this.$router.push('/category2');
+                break;
+                case 'Senior Citizen':
+                this.$router.push('/SeniorNav');
+                break;
+                case 'Single Parent':
+                this.$router.push('/SoloNav');
                 break;
               default:
-                this.message = 'Invalid role. Please contact support.';
+                this.$router.push('/index');
+                break;
             }
-          } else {
-            this.message = 'Login failed. Please try again.';
-          }
-        } else {
-          this.message = 'Unexpected response structure. Please try again.';
-          console.error('Unexpected response structure:', response);
+            break;
+          default:
+            this.message = 'Invalid role. Please contact support.';
         }
-      } catch (error) {
-        this.message = 'Error during login. Please try again later.';
-        console.error('Error during login:', error);
+      } else {
+        this.message = 'Login failed. Please try again.';
       }
-    },
+    } else {
+      this.message = 'Unexpected response structure. Please try again.';
+      console.error('Unexpected response structure:', response);
+    }
+  } catch (error) {
+    this.message = 'Error during login. Please try again later.';
+    console.error('Error during login:', error);
+  }
+},
+
   },
 };
 </script>

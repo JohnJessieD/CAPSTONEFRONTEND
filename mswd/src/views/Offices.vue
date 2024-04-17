@@ -79,6 +79,7 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  margins: 120px;
 }
 
 .office-container {
