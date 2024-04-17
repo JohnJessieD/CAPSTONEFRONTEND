@@ -2,29 +2,39 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Template from '../views/Template.vue'
 import Navbar from '../views/Navbar.vue'
 import Offices from '../views/Offices.vue'
-import Services from '../views/Services.vue'
+import Services from '../views/Senior Citizen/Services.vue'
 import Disastervictims from '../views/Offices/Disastervictims.vue'
-import Contacts from '../views/Offices/Contacts.vue'
-import Needyadults from '../views/Offices/Needyadults.vue'
-import Pwd from '../views/Offices/Pwd.vue'
+import Contacts from '../views/Senior Citizen/Contacts.vue'
+import Needyadults from '../views/Senior Citizen/Needyadults.vue'
+import Pwd from '../views/PWD/Pwd.vue'
 import ProfileEntryView from '../views/Admin/ProfileEntryView.vue';
 import FormManagementView from '../views/Admin/FormManagementView.vue';
 import InformationManagementView from '../views/Admin/InformationManagementView.vue';
 import UserManagementView from '../views/Admin/UserManagementView.vue';
 import Dashboard from '../views/Admin/Dashboard.vue';
 
-import Soloparent from '../views/Offices/Soloparent.vue'
+import Soloparent from '../views/SoloParent/Soloparent.vue'
 import AdminNav from '../views/Admin/AdminNav.vue'
-import publications from '../views/Offices/publications.vue'
+import publications from '../views/SoloParent/publications.vue'
 import OfficeCard from '../views/OfficeCard.vue'
 import Login from '../views/Login.vue'
-import Events from '@/views/Events.vue'
+import Events from '@/views/SoloParent/Events.vue'
 
 import landingpage from '@/views/landingpage.vue'
 import RegisterComponent from '../views/RegisterComponent.vue'
 import AssistancePWD from '../views/AssistancePWD.vue'
 
+import PWDNavbar from '../views/PWDNavbar.vue'
 import SoloNav from '../views/SoloNav.vue'
+
+import SeniorNav from '../views/SeniorNav.vue'
+import publicationsPWD from '../views/PWD/publicationsPWD.vue'
+import CPWD from '../views/PWD/CPWD.vue'
+
+import temlpatep from '../views/PWD/temlpatep.vue'
+import EventsPWD from '../views/PWD/EventsPWD.vue'
+
+import ServicesPWD from '../views/PWD/ServicesPWD.vue'
 const routes = [
   {
     path: '/index',
@@ -33,10 +43,36 @@ const routes = [
   {
     path: '/AssistancePWD',
     component: AssistancePWD,
+  },  {
+    path: '/EventsPWD',
+    component: EventsPWD,
+  },{
+    path: '/ServicesPWD',
+    component: ServicesPWD ,
+  },
+  {
+    path: '/temlpatep',
+    component: temlpatep,
+  },
+  {
+    path: '/SeniorNav',
+    component: SeniorNav,
+  },
+  {
+    path: '/publicationsPWD',
+    component: publicationsPWD,
   },
   {
     path: '/SoloNav',
     component: SoloNav,
+  },
+  {
+    path: '/CPWD',
+    component: CPWD,
+  },
+  {
+    path: '/PWDNavbar',
+    component: PWDNavbar,
   },
   {
     path: '/Login',

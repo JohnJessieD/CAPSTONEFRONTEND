@@ -1,6 +1,20 @@
   <template>
-    <div>
-      <Navbar />
+    <div>  <nav class="navbar">  <div class="navbar-brand">
+          <img src="/img/Download.jpg" class="logo-img" alt="Government Logo" />
+          <span class="brand-text">Welcome to Municipal SWD!</span>
+        </div>
+        <div class="navbar-links">
+          <router-link to="/temlpatep" class="nav-link">Home</router-link>
+          <br>
+          <router-link to="/Pwd" class="nav-link">Assistance</router-link>
+          <router-link to="/EventsPWD" class="nav-link">Upcoming Events</router-link>
+          <router-link to="/ServicesPWD" class="nav-link">Services</router-link>
+          <router-link to="/publicationsPWD" class="nav-link">Publications</router-link>
+          <router-link to="/CPWD" class="nav-link">Contact Us</router-link>
+          <button class="logout-button" @click="logout">Sign Out</button>
+        
+      </div>  
+    </nav>
 
       <div class="pwd-office">
         <section class="office-info">
@@ -94,13 +108,10 @@
   </template>
 
 <script>
-import Navbar from '@/components/Navbar.vue';
 import axios from 'axios';
 
 export default {
-  components: {
-    Navbar,
-  },
+ 
   name: 'PwdOffice',
   data() {
     return {

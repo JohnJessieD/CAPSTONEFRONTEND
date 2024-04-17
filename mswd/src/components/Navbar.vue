@@ -6,7 +6,7 @@
         <div class="navbar-links">
           <router-link to="/index" class="nav-link">Home</router-link>
           <br>
-          <router-link to="/AssistancePWD" class="nav-link">Assistance</router-link>
+          <router-link to="/..." class="nav-link">Assistance</router-link>
           <router-link to="/Events" class="nav-link">Upcoming Events</router-link>
           <router-link to="/Services" class="nav-link">Services</router-link>
           <router-link to="/publications" class="nav-link">Publications</router-link>

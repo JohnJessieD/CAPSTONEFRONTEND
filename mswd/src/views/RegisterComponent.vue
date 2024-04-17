@@ -40,7 +40,7 @@ export default {
       passwordConfirm: '',
       selectedCategory: null,
       message: '',
-      categories: ['PWD', 'Day Care Worker', 'Senior Citizen', 'Single Parent'] // Categories
+      categories: ['PWD', 'Senior Citizen', 'Single Parent'] // Categories
     };
   },
   methods: {

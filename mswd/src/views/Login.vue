@@ -57,20 +57,16 @@ export default {
             // Assuming you also want to fetch the category here
             switch (response.data.category) {
               case 'PWD':
-                this.$router.push('/PWDNavbar');
+                this.$router.push('/temlpatep');
                 break;
-              case 'Day Care Worker':
-                this.$router.push('/category2');
-                break;
+
                 case 'Senior Citizen':
                 this.$router.push('/SeniorNav');
                 break;
                 case 'Single Parent':
                 this.$router.push('/SoloNav');
                 break;
-              default:
-                this.$router.push('/index');
-                break;
+            
             }
             break;
           default:
