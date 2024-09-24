@@ -129,7 +129,9 @@
   justify-content: space-between;
   align-items: center;
 }
-
+.spacer {
+    height: 100px; /* Adjust the height for desired spacing */
+  }
 .container {
   max-width: 1024px;
   margin: 0 auto; /* Center the navbar horizontally */

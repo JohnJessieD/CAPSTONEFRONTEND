@@ -143,7 +143,9 @@ export default {
 };
 </script>
 
-<style scoped>
+<style scoped>  .spacer {
+  height: 100px; /* Adjust the height for desired spacing */
+}
 .container {
   max-width: 800px;
   margin: 0 auto;

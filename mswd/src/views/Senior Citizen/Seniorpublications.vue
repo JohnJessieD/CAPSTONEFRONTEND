@@ -1,5 +1,4 @@
 <template>
-    <Navbar />
     <div class="publications-container">
       <h2>Publications</h2>
       <ul class="publication-list">
@@ -18,9 +17,7 @@
   import axios from 'axios';
   
   export default {
-    components: {
-      Navbar,
-    },
+   
     name: 'Publications',
     data() {
       return {

@@ -6,9 +6,10 @@
       </div>
       <ul class="nav-links" :class="{ 'open': isOpen }">
         <li><router-link to="/Dashboard" exact>Dashboard</router-link></li>
-        <li><router-link to="/profile-entry">Profile Entry</router-link></li>
-        <li><router-link to="/form-management">Form Management</router-link></li>
-        <li><router-link to="/information-management">Information Management</router-link></li>
+        <li><router-link to="/Schedule" exact>Schedule</router-link></li>
+        <li><router-link to="/AssistanceManagement" exact>Assistance Management</router-link></li>
+        <li><router-link to="/CardManagement" exact>Card Management</router-link></li>
+        <li><router-link class="dropdown-item" to="/reports">Reports</router-link></li>
         <li><router-link to="/user-management">User Management</router-link></li>
         <li><button class="logout-button" @click="logout">Logout</button></li>
       </ul>
@@ -78,7 +79,7 @@ export default {
 }
 
 .nav-links li a {
-  color: #fff;
+  color: #060606;
   text-decoration: none;
   font-weight: 500;
   transition: color 0.3s ease;

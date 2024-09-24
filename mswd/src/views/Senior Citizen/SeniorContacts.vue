@@ -1,6 +1,5 @@
 <template>
   
-  <Navbar />
   <div class="contact-container">
     <div class="contact-section">
       <h2>Contact Us</h2>
@@ -48,12 +47,9 @@
 </template>
 
 <script>
-import Navbar from '@/components/Navbar.vue';
 
 export default {
-  components: {
-    Navbar,
-  },
+ 
   name: 'ContactUs',
   data() {
     return {

@@ -1,62 +1,105 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import Template from '../views/Template.vue'
-import Navbar from '../views/Navbar.vue'
-import Offices from '../views/Offices.vue'
-import Services from '../views/Senior Citizen/Services.vue'
-import Disastervictims from '../views/Offices/Disastervictims.vue'
-import Contacts from '../views/Senior Citizen/Contacts.vue'
-import Needyadults from '../views/Senior Citizen/Needyadults.vue'
-import Pwd from '../views/PWD/Pwd.vue'
-import ProfileEntryView from '../views/Admin/ProfileEntryView.vue';
-import FormManagementView from '../views/Admin/FormManagementView.vue';
-import InformationManagementView from '../views/Admin/InformationManagementView.vue';
+import { createRouter, createWebHistory } from 'vue-router';
+import axios from 'axios';
+
+import Navbar from '../views/Navbar.vue';
+import Offices from '../views/Offices.vue';
+import SeniorServices from '../views/Senior Citizen/SeniorServices.vue';
+import Disastervictims from '../views/Offices/Disastervictims.vue';
+import SeniorContacts from '../views/Senior Citizen/SeniorContacts.vue';
+import Needyadults from '../views/Senior Citizen/Needyadults.vue';
+import Pwd from '../views/PWD/Pwd.vue';
 import UserManagementView from '../views/Admin/UserManagementView.vue';
 import Dashboard from '../views/Admin/Dashboard.vue';
 
-import Soloparent from '../views/SoloParent/Soloparent.vue'
-import AdminNav from '../views/Admin/AdminNav.vue'
-import publications from '../views/SoloParent/publications.vue'
-import OfficeCard from '../views/OfficeCard.vue'
-import Login from '../views/Login.vue'
-import Events from '@/views/SoloParent/Events.vue'
+import Soloparent from '../views/SoloParent/Soloparent.vue';
+import AdminNav from '../views/Admin/AdminNav.vue';
+import Solopublications from '../views/SoloParent/Solopublications.vue';
+import OfficeCard from '../views/OfficeCard.vue';
+import Login from '../views/Login.vue';
+import SoloEvents from '../views/SoloParent/SoloEvents.vue';
+import SoloServices from '@/views/SoloParent/SoloServices.vue';
+import landingpage from '../views/landingpage.vue';
+import RegisterComponent from '../views/RegisterComponent.vue';
+import AssistancePWD from '../views/AssistancePWD.vue';
 
-import landingpage from '@/views/landingpage.vue'
-import RegisterComponent from '../views/RegisterComponent.vue'
-import AssistancePWD from '../views/AssistancePWD.vue'
+import PWDNavbar from '../views/PWD/PWDNavbar.vue';
+import SoloNav from '../views/SoloNav.vue';
 
-import PWDNavbar from '../views/PWDNavbar.vue'
-import SoloNav from '../views/SoloNav.vue'
+import SeniorTemplate from '../views/Senior Citizen/SeniorTemplate.vue';
+import publicationsPWD from '../views/PWD/publicationsPWD.vue';
+import CPWD from '../views/PWD/CPWD.vue';
 
-import SeniorNav from '../views/SeniorNav.vue'
-import publicationsPWD from '../views/PWD/publicationsPWD.vue'
-import CPWD from '../views/PWD/CPWD.vue'
+import temlpatep from '../views/PWD/temlpatep.vue';
+import EventsPWD from '../views/PWD/EventsPWD.vue';
 
-import temlpatep from '../views/PWD/temlpatep.vue'
-import EventsPWD from '../views/PWD/EventsPWD.vue'
+import ServicesPWD from '../views/PWD/ServicesPWD.vue';
 
-import ServicesPWD from '../views/PWD/ServicesPWD.vue'
+import Status from '../views/PWD/Status.vue';
+import AssistanceManagement from '../views/Admin/AssistanceManagement.vue';
+import Schedule from '../views/Admin/Schedule.vue';
+import CardManagement from '../views/Admin/CardManagement.vue';
+
+import SoloTemplate from '../views/SoloParent/SoloTemplate.vue';
+
+import SoloContacts from '../views/SoloParent/SoloContacts.vue';
+
 const routes = [
+
   {
-    path: '/index',
-    component: Template,
+    path: '/AssistanceManagement',
+    component: AssistanceManagement,
+  },
+  {
+    path: '/SoloTemplate',
+    component: SoloTemplate,
+  },
+  {
+    path: '/Solopublications',
+    component: Solopublications,
+  },
+  {
+    path: '/SoloServices',
+    component: SoloServices,
+  },
+  {
+    path: '/SoloContacts',
+    component: SoloContacts,
+  },
+  {
+    path: '/SoloEvents',
+    component: SoloEvents,
+  },
+  {
+    path: '/Schedule',
+    component: Schedule,
+  },
+  {
+    path: '/CardManagement',
+    component: CardManagement,
+  },
+  {
+    path: '/Status',
+    component: Status,
   },
   {
     path: '/AssistancePWD',
     component: AssistancePWD,
-  },  {
+  },
+  {
     path: '/EventsPWD',
     component: EventsPWD,
-  },{
+  },
+  {
     path: '/ServicesPWD',
-    component: ServicesPWD ,
+    component: ServicesPWD,
   },
   {
     path: '/temlpatep',
     component: temlpatep,
   },
   {
-    path: '/SeniorNav',
-    component: SeniorNav,
+    path: '/SeniorTemplate',
+    component: SeniorTemplate,
   },
   {
     path: '/publicationsPWD',
@@ -91,44 +134,32 @@ const routes = [
     component: Dashboard,
   },
   {
-    path: '/publications',
-    component: publications,
+    path: '/user-management',
+    component: UserManagementView,
   },
-  { path: '/profile-entry', component: ProfileEntryView },
-  { path: '/form-management', component: FormManagementView },
-  { path: '/information-management', component: InformationManagementView },
-  { path: '/user-management', component: UserManagementView },
   {
-    path: '/Contacts',
-    component: Contacts,
+    path: '/SeniorContacts',
+    component: SeniorContacts,
   },
   {
     path: '/Soloparent',
     component: Soloparent,
   },
-
   {
     path: '/Pwd',
-    component:Pwd
-  },
-  {
-    path: '/Events',
-    component:Events
+    component: Pwd,
   },
   {
     path: '/Needyadults',
     component: Needyadults,
   },
- 
- 
   {
     path: '/Disastervictims',
     component: Disastervictims,
   },
- 
   {
     path: '/Services',
-    component: Services,
+    component: SeniorServices,
   },
   {
     path: '/Offices',
@@ -137,65 +168,54 @@ const routes = [
   {
     path: '/about',
     name: 'about',
-    component: () => import(/* webpackChunkName: "about" */ '../views/AboutView.vue')
+    component: () => import(/* webpackChunkName: "about" */ '../views/AboutView.vue'),
   },
   {
     path: '/Navbar',
     name: 'Navbar',
-    component: Navbar
+    component: Navbar,
   },
   {
     path: '/',
     name: 'landingpage',
-    component: landingpage
+    component: landingpage,
   },
   {
     path: '/AdminNav',
     name: 'AdminNav',
-    component: AdminNav
+    component: AdminNav,
   },
-]
+];
 
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
-  routes
+  routes,
 });
 
-// Navigation guard to check authentication and role/category-based access control
 router.beforeEach(async (to, from, next) => {
-  // Check if the route requires authentication
   if (to.meta.requiresAuth) {
     try {
-      // Fetch user data from the backend to determine their role and category
-      const response = await axios.get('/api/user'); // Replace with your API endpoint to fetch user data
+      const response = await axios.get('/api/user');
       const userData = response.data;
 
-      // Check if user is authenticated
       if (userData) {
-        // Check user's role
         const userRole = userData.role;
 
         if (userRole === 'admin' && to.path.startsWith('/user')) {
-          // Admin trying to access user side, redirect to admin dashboard
           next('/dashboard');
         } else if (userRole === 'user' && to.path.startsWith('/admin')) {
-          // User trying to access admin side, redirect to user dashboard or unauthorized page
-          next('/'); // Assuming user dashboard is '/'
+          next('/');
         } else {
-          // User has correct role, continue navigation
           next();
         }
       } else {
-        // User is not authenticated, redirect to login page
         next('/login');
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
-      // Redirect to login page or show error message
       next('/login');
     }
   } else {
-    // Route does not require authentication, allow access
     next();
   }
 });

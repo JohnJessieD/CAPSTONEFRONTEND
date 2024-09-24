@@ -1,5 +1,4 @@
 <template>
-  <Navbar />
   <div class="container">
     <h2>Welcome to the Needy Adult Office</h2>
     <p>This office provides support for adults in need.</p>
@@ -61,12 +60,9 @@
 </template>
 
 <script>
-import Navbar from '@/components/Navbar.vue';
 
 export default {
-  components: {
-    Navbar,
-  },
+ 
   name: 'NeedyAdultOffice',
   data() {
     return {

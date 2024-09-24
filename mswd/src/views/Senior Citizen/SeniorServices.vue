@@ -1,5 +1,4 @@
 <template>
-    <Navbar />
   <div class="container">
   
     
@@ -29,13 +28,10 @@
 </template>
 
 <script>
-import Navbar from '@/components/Navbar.vue';
 
 export default {
   name: 'Services',
-  components: {
-    Navbar,
-  },
+
   data() {
   return {
     services: [

@@ -3,25 +3,63 @@
     <v-container class="login-container" fluid fill-height>
       <v-row justify="center" align="center">
         <v-col cols="12" sm="8" md="6" lg="4">
-          <v-card class="login-card">
-            <v-card-title class="title">Welcome to Our Platform</v-card-title> <!-- Added welcome message -->
-            <v-card-title class="sub-title">Please Login</v-card-title> <!-- Added sub-title -->
+          <v-card class="login-card" elevation="10">
+            <v-img
+              src="/placeholder.svg?height=100&width=100"
+              alt="Logo"
+              class="mx-auto mt-6"
+              max-width="100"
+            ></v-img>
+            <v-card-title class="title text-h4 font-weight-bold">Welcome Back</v-card-title>
+            <v-card-subtitle class="sub-title text-subtitle-1">Please login to your account</v-card-subtitle>
             <v-card-text class="form">
-              <v-form @submit.prevent="login">
-                <v-text-field v-model="username" label="Username" outlined dense color="white"></v-text-field>
-                <v-text-field v-model="password" label="Password" type="password" outlined dense color="white"></v-text-field>
-                <v-btn type="submit" block class="login-button">Login</v-btn>
+              <v-form @submit.prevent="login" ref="form" v-model="valid" lazy-validation>
+                <v-text-field
+                  v-model="username"
+                  :rules="usernameRules"
+                  label="Username"
+                  prepend-icon="mdi-account"
+                  outlined
+                  dense
+                  color="primary"
+                  required
+                ></v-text-field>
+                <v-text-field
+                  v-model="password"
+                  :rules="passwordRules"
+                  label="Password"
+                  prepend-icon="mdi-lock"
+                  :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                  :type="showPassword ? 'text' : 'password'"
+                  @click:append="showPassword = !showPassword"
+                  outlined
+                  dense
+                  color="primary"
+                  required
+                ></v-text-field>
+                <v-btn
+                  type="submit"
+                  block
+                  class="login-button mt-6"
+                  :loading="loading"
+                  :disabled="!valid || loading"
+                >
+                  Login
+                </v-btn>
               </v-form>
             </v-card-text>
-            <v-card-actions>
+            <v-card-actions class="justify-center">
               <router-link to="/forgot-password" class="forgot-password">Forgot Password?</router-link>
             </v-card-actions>
-            <v-card-actions>
+            <v-card-actions class="justify-center">
               <router-link to="/RegisterComponent" class="register-link">Don't have an account? Register here</router-link>
             </v-card-actions>
-            <v-alert v-if="message" type="error" dismissible class="error-message">
+            <v-snackbar v-model="snackbar" :color="snackbarColor" :timeout="4000" top>
               {{ message }}
-            </v-alert>
+              <template v-slot:action="{ attrs }">
+                <v-btn text v-bind="attrs" @click="snackbar = false">Close</v-btn>
+              </template>
+            </v-snackbar>
           </v-card>
         </v-col>
       </v-row>
@@ -37,61 +75,87 @@ export default {
     username: '',
     password: '',
     message: '',
+    valid: true,
+    loading: false,
+    showPassword: false,
+    snackbar: false,
+    snackbarColor: 'error',
+    usernameRules: [
+      v => !!v || 'Username is required',
+      v => v.length >= 3 || 'Username must be at least 3 characters',
+    ],
+    passwordRules: [
+      v => !!v || 'Password is required',
+      v => v.length >= 6 || 'Password must be at least 6 characters',
+    ],
   }),
   methods: {
     async login() {
-  try {
-    const response = await axios.post('/api/login', {
-      username: this.username,
-      password: this.password,
-    });
+      if (this.$refs.form.validate()) {
+        this.loading = true;
+        try {
+          const response = await axios.post('/api/login', {
+            username: this.username,
+            password: this.password,
+          });
 
-    if ('msg' in response.data) {
-      if (response.data.msg === 'okay') {
-        // Check the user role and redirect accordingly
-        switch (response.data.role) {
-          case 'admin':
-            this.$router.push('/admin');
-            break;
-          case 'user':
-            // Assuming you also want to fetch the category here
-            switch (response.data.category) {
-              case 'PWD':
-                this.$router.push('/temlpatep');
-                break;
+          if ('msg' in response.data) {
+            if (response.data.msg === 'okay') {
+              this.snackbarColor = 'success';
+              this.message = 'Login successful!';
+              this.snackbar = true;
 
-                case 'Senior Citizen':
-                this.$router.push('/SeniorNav');
-                break;
-                case 'Single Parent':
-                this.$router.push('/SoloNav');
-                break;
-            
+              // Check the user role and redirect accordingly
+              switch (response.data.role) {
+                case 'admin':
+                  this.$router.push('/Dashboard');
+                  break;
+                case 'user':
+                  // Assuming you also want to fetch the category here
+                  switch (response.data.category) {
+                    case 'PWD':
+                      this.$router.push('/temlpatep');
+                      break;
+                    case 'Senior Citizen':
+                      this.$router.push('/SeniorTemplate');
+                      break;
+                    case 'Solo Parent':
+                      this.$router.push('/SoloTemplate');
+                      break;
+                    default:
+                      this.message = 'Invalid category. Please contact support.';
+                      this.snackbar = true;
+                  }
+                  break;
+                default:
+                  this.message = 'Invalid role. Please contact support.';
+                  this.snackbar = true;
+              }
+            } else {
+              this.message = 'Login failed. Please try again.';
+              this.snackbar = true;
             }
-            break;
-          default:
-            this.message = 'Invalid role. Please contact support.';
+          } else {
+            this.message = 'Unexpected response structure. Please try again.';
+            this.snackbar = true;
+            console.error('Unexpected response structure:', response);
+          }
+        } catch (error) {
+          this.message = 'Error during login. Please try again later.';
+          this.snackbar = true;
+          console.error('Error during login:', error);
+        } finally {
+          this.loading = false;
         }
-      } else {
-        this.message = 'Login failed. Please try again.';
       }
-    } else {
-      this.message = 'Unexpected response structure. Please try again.';
-      console.error('Unexpected response structure:', response);
-    }
-  } catch (error) {
-    this.message = 'Error during login. Please try again later.';
-    console.error('Error during login:', error);
-  }
-},
-
+    },
   },
 };
 </script>
 
 <style scoped>
-.v-app {
-  background: linear-gradient(135deg, #536dfe 0%, #1e88e5 100%);
+.v-application {
+  background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
 }
 
 .login-container {
@@ -102,57 +166,76 @@ export default {
 }
 
 .login-card {
-  border-radius: 10px;
-  box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.3);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.login-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
 }
 
 .title {
   text-align: center;
-  color: #4caf50; /* Green color */
-  margin-bottom: 16px;
-  font-size: 25px;
+  color: #4caf50;
+  margin-bottom: 8px;
+  font-size: 28px;
   font-weight: 700;
 }
 
 .sub-title {
   text-align: center;
-  color: #4caf50; /* Green color */
-  margin-bottom: 16px;
-  font-size: 20px;
+  color: #757575;
+  margin-bottom: 24px;
+  font-size: 16px;
 }
 
 .form {
-  padding: 20px;
+  padding: 0 32px;
 }
 
 .login-button {
-  margin-top: 16px;
-  background-color: #4caf50;
-  color: #fff;
-  border: none;
-  border-radius: 5px;
+  margin-top: 24px;
+  background-color: #4caf50 !important;
+  color: #fff !important;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
 }
 
 .login-button:hover {
-  color: #4caf50; /* Green color */
+  background-color: #45a049 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .forgot-password,
 .register-link {
   text-align: center;
   margin-top: 16px;
-  color: #4caf50; /* Green color */
+  color: #4caf50;
   text-decoration: none;
   display: inline-block;
+  font-weight: 500;
+  transition: color 0.3s ease;
 }
 
 .forgot-password:hover,
 .register-link:hover {
-  color: #296540;
+  color: #45a049;
 }
 
-.error-message {
-  margin-top: 16px;
-  color: #f44336;
+.v-text-field >>> .v-input__slot {
+  background-color: #f5f5f5 !important;
+}
+
+.v-text-field >>> .v-label {
+  color: #757575;
+}
+
+.v-text-field >>> .v-input__icon {
+  color: #4caf50;
 }
 </style>

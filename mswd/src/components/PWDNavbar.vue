@@ -10,7 +10,7 @@
           <router-link to="/Events" class="nav-link">Upcoming Events</router-link>
           <router-link to="/Services" class="nav-link">Services</router-link>
           <router-link to="/publicationsPWD" class="nav-link">Publications</router-link>
-          <router-link to="/CPWD" class="nav-link">Contact Us</router-link>
+          <router-link to="/Status" class="nav-link">Status</router-link>
           <button class="logout-button" @click="logout">Sign Out</button>
         
       </div>  

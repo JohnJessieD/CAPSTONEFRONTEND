@@ -1,20 +1,21 @@
 <template>
-   <nav class="navbar">  <div class="navbar-brand">
-          <img src="/img/Download.jpg" class="logo-img" alt="Government Logo" />
-          <span class="brand-text">Welcome to Municipal SWD!</span>
-        </div>
-        <div class="navbar-links">
-          <router-link to="/temlpatep" class="nav-link">Home</router-link>
-          <br>
-          <router-link to="/Pwd" class="nav-link">Assistance</router-link>
-          <router-link to="/EventsPWD" class="nav-link">Upcoming Events</router-link>
-          <router-link to="/ServicesPWD" class="nav-link">Services</router-link>
-          <router-link to="/publicationsPWD" class="nav-link">Publications</router-link>
-          <router-link to="/CPWD" class="nav-link">Contact Us</router-link>
-          <button class="logout-button" @click="logout">Sign Out</button>
-        
-      </div>  
-    </nav>
+
+ <nav class="navbar">
+    <div class="navbar-brand">
+      <img src="/img/Download.jpg" class="logo-img" alt="Government Logo" />
+      <span class="brand-text">Welcome to Municipal SWD!</span>
+    </div>
+    <div class="navbar-links">
+      <router-link to="/temlpatep" class="nav-link">Home</router-link>
+      <br>
+      <router-link to="/Pwd" class="nav-link">Assistance</router-link>
+      <router-link to="/EventsPWD" class="nav-link">Upcoming Events</router-link>
+      <router-link to="/ServicesPWD" class="nav-link">Services</router-link>
+      <router-link to="/publicationsPWD" class="nav-link">Publications</router-link>
+      <router-link to="/CPWD" class="nav-link">Contact Us</router-link>
+      <button class="logout-button" @click="logout">Sign Out</button>
+    </div>
+  </nav>
   <div class="contact-container">
     <div class="contact-section">
       <h2>Contact Us</h2>
@@ -25,7 +26,6 @@
       </div>
     </div>
 
-    <!-- Additional Contacts -->
     <div class="additional-contacts-section">
       <h3>Additional Contacts</h3>
       <div class="additional-contacts">
@@ -35,21 +35,21 @@
           <p><strong>Phone:</strong> {{ seniorOfficer.phone }}</p>
           <p><strong>Email:</strong> {{ seniorOfficer.email }}</p>
         </div>
-        
+
         <div class="office-contact">
           <h4>Day Care Center</h4>
           <p><strong>Name:</strong> {{ dayCareWorker.name }}</p>
           <p><strong>Phone:</strong> {{ dayCareWorker.phone }}</p>
           <p><strong>Email:</strong> {{ dayCareWorker.email }}</p>
         </div>
-        
+
         <div class="office-contact">
           <h4>Disaster Management</h4>
           <p><strong>Name:</strong> {{ disasterCoordinator.name }}</p>
           <p><strong>Phone:</strong> {{ disasterCoordinator.phone }}</p>
           <p><strong>Email:</strong> {{ disasterCoordinator.email }}</p>
         </div>
-        
+
         <div class="office-contact">
           <h4>Persons with Disabilities (PWD) Support</h4>
           <p><strong>Name:</strong> {{ pwdSupportOfficer.name }}</p>
@@ -65,8 +65,6 @@
 import Navbar from '@/components/Navbar.vue';
 
 export default {
-  
-
   name: 'ContactUs',
   data() {
     return {
@@ -99,21 +97,35 @@ export default {
 </script>
 
 <style scoped>
+/* Styles for navbar (unchanged) */
+
 .contact-container {
   max-width: 800px;
   margin: 0 auto;
-  padding:150px;
+  padding: 50px;
 }
 
-.contact-section {
-  margin-bottom: 40px;
+.contact-section,
+.additional-contacts-section {
+  margin-bottom: 30px;
 }
 
-.contact-info {
+.contact-info,
+.office-contact {
   background-color: #f9f9f9;
-  padding: 10px;
+  padding: 15px;
   border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
+.contact-info,
+.office-contact h4 {
+  font-weight: bold;
+}
+
+.office-contact p {
+  line-height: 1.5; /* Increased line-height for better readability */
+  margin-bottom: 10px;}
 
 .additional-contacts-section {
   margin-bottom: 40px;

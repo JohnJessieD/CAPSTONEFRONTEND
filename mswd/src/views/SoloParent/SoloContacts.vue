@@ -1,6 +1,35 @@
-<template>
-  
-  <Navbar />
+<template>        <nav class="navbar">  <div class="navbar-brand">
+  <img src="/img/Download.jpg" class="logo-img" alt="Government Logo" />
+  <span class="brand-text">Welcome to Solo Parent!</span>
+</div>
+<div class="navbar-links">
+  <router-link to="/SoloTemplate" class="nav-link">Home</router-link>
+  <br>
+  <router-link to="/Soloparent" class="nav-link">Assistance</router-link>
+  <router-link to="/SoloEvents" class="nav-link">Upcoming Events</router-link>
+  <router-link to="/SoloServices" class="nav-link">Services</router-link>
+  <router-link to="/Solopublications" class="nav-link">Publications</router-link>
+  <router-link to="/SoloContacts" class="nav-link">Contact Us</router-link>
+  <button class="logout-button" @click="logout">Sign Out</button>
+
+</div>
+</nav>
+  <nav class="navbar">  <div class="navbar-brand">
+          <img src="/img/Download.jpg" class="logo-img" alt="Government Logo" />
+          <span class="brand-text">Welcome to Municipal SWD!</span>
+        </div>
+        <div class="navbar-links">
+          <router-link to="/SeniorNav" class="nav-link">Home</router-link>
+          <br>
+          <router-link to="/Needyadults" class="nav-link">Assistance</router-link>
+          <router-link to="/Events" class="nav-link">Upcoming Events</router-link>
+          <router-link to="/Services" class="nav-link">Services</router-link>
+          <router-link to="/publications" class="nav-link">Publications</router-link>
+          <router-link to="/contacts" class="nav-link">Contact Us</router-link>
+          <button class="logout-button" @click="logout">Sign Out</button>
+        
+      </div>
+    </nav>
   <div class="contact-container">
     <div class="contact-section">
       <h2>Contact Us</h2>
@@ -51,9 +80,6 @@
 import Navbar from '@/components/Navbar.vue';
 
 export default {
-  components: {
-    Navbar,
-  },
   name: 'ContactUs',
   data() {
     return {

@@ -10,11 +10,12 @@
           <router-link to="/EventsPWD" class="nav-link">Upcoming Events</router-link>
           <router-link to="/ServicesPWD" class="nav-link">Services</router-link>
           <router-link to="/publicationsPWD" class="nav-link">Publications</router-link>
-          <router-link to="/CPWD" class="nav-link">Contact Us</router-link>
+          <router-link to="/Status" class="nav-link">Status</router-link>
           <button class="logout-button" @click="logout">Sign Out</button>
         
       </div>  
     </nav>
+    <div class="spacer"></div>
       <div class="homepage">
         <!-- Header -->
         <header>
@@ -130,7 +131,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background-image: url('C:\laragon\www\CAPSTONEFRONTEND\mswd\public\img\images.png'); /* Replace 'path/to/your/background/image.jpg' with the actual path to your image */
+  /* Replace 'path/to/your/background/image.jpg' with the actual path to your image */
   background-size: cover; /* Cover the entire background */
   background-position: center; /* Center the background image */
   background-repeat: no-repeat; /* Prevent the image from repeating */

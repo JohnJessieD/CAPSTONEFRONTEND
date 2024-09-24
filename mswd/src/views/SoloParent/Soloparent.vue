@@ -1,80 +1,53 @@
 <template>
-   <Navbar />
-  <div class="container">
-   
-    <h2>Solo Parent Office</h2>
-    <p>Welcome to the Solo Parent Office. This office supports single parents by offering resources and services.</p>
-    <div class="services">
-      <p>Services and Features:</p>
-      <ul>
-        <li>Financial assistance programs</li>
-        <li>Parenting workshops</li>
-        <li>Legal support</li>
-        <li>Healthcare services</li>
-        <li>Networking events</li>
-      </ul>
-    </div>
-
-    <!-- Form for Cash Assistance Cash Subsidy -->
-    <form class="application-form" @submit.prevent="validateAndApply">
-      <div class="form-group">
-        <label for="name">Name:</label>
-        <input type="text" id="name" v-model="applicantName" required>
+  <div>
+    <nav class="navbar">
+      <div class="navbar-brand">
+        <img src="/img/Download.jpg" class="logo-img" alt="Government Logo" />
+        <span class="brand-text">Welcome to Solo Parent!</span>
       </div>
-
-      <div class="form-group">
-        <label for="email">Email:</label>
-        <input type="email" id="email" v-model="applicantEmail" required>
+      <div class="navbar-links">
+        <router-link to="/SoloTemplate" class="nav-link">Home</router-link>
+        <router-link to="/Soloparent" class="nav-link">Assistance</router-link>
+        <router-link to="/SoloEvents" class="nav-link">Upcoming Events</router-link>
+        <router-link to="/SoloServices" class="nav-link">Services</router-link>
+        <router-link to="/Solopublications" class="nav-link">Publications</router-link>
+        <button class="logout-button" @click="logout">Sign Out</button>
       </div>
-
-      <div class="form-group">
-        <label for="phoneNumber">Phone Number:</label>
-        <input type="tel" id="phoneNumber" v-model="phoneNumber" required>
-      </div>
-
-      <div class="form-group">
-        <label for="address">Address:</label>
-        <textarea id="address" v-model="address" required></textarea>
-      </div>
-
-      <div class="form-group">
-        <label for="numberOfChildren">Number of Children:</label>
-        <input type="number" id="numberOfChildren" v-model="numberOfChildren" required>
-      </div>
-
-      <div class="form-group">
-        <label for="incomeProof">Proof of Income:</label>
-        <input type="file" id="incomeProof" accept="image/*, application/pdf" @change="handleFileUpload">
-      </div>
-
-      <!-- Additional fields can be added as necessary -->
-
-      <button type="submit" class="submit-button">Apply for Cash Assistance</button>
-    </form>
-
-    <!-- Modal for Eligibility Confirmation -->
-    <div v-if="showModal" class="modal">
-      <div class="modal-content">
-        <span class="close" @click="closeModal">&times;</span>
-        <h3>Confirm Eligibility</h3>
-        <p>Before proceeding, please confirm that you meet the eligibility criteria for cash assistance cash subsidy.</p>
-        <ul>
-          <li v-for="criterion in eligibilityCriteria">{{ criterion }}</li>
-        </ul>
-        <button @click="proceedWithApplication" class="proceed-button">Proceed with Application</button>
-      </div>
+    </nav>
+    <div class="container">
+      <div class="spacer"></div>
+   <form class="application-form" @submit.prevent="submitApplication">
+        <div class="form-group">
+          <label for="name">Name:</label>
+          <input type="text" id="name" v-model="applicantName" required>
+        </div>
+        <div class="form-group">
+          <label for="email">Email:</label>
+          <input type="email" id="email" v-model="applicantEmail" required>
+        </div>
+        <div class="form-group">
+          <label for="phoneNumber">Phone Number:</label>
+          <input type="tel" id="phoneNumber" v-model="phoneNumber" required>
+        </div>
+        <div class="form-group">
+          <label for="address">Address:</label>
+          <textarea id="address" v-model="address" required></textarea>
+        </div>
+        <div class="form-group">
+          <label for="numberOfChildren">Number of Children:</label>
+          <input type="number" id="numberOfChildren" v-model="numberOfChildren" required>
+        </div>
+        <!-- Removed income proof input field -->
+        <button type="submit" class="submit-button">Apply for Cash Assistance</button>
+      </form>
     </div>
   </div>
 </template>
 
 <script>
-import Navbar from '@/components/Navbar.vue';
 import axios from 'axios';
 
 export default {
-  components: {
-    Navbar,
-  },
   data() {
     return {
       applicantName: '',
@@ -82,38 +55,44 @@ export default {
       phoneNumber: '',
       address: '',
       numberOfChildren: 0,
-      incomeProof: null, // File upload for income proof
-      showModal: false,
-      eligibilityCriteria: [
-        "You are a solo parent according to the criteria outlined in RA 8972.",
-        "You have all the necessary documents as per Step 2 of the application process."
-      ]
     };
   },
   methods: {
-    validateAndApply() {
-      // Implement validation logic here
-      // For simplicity, assuming validation is always successful
-      this.showModal = true;
+    submitApplication() {
+      // Prepare form data
+      const formData = new FormData();
+      formData.append('applicantName', this.applicantName);
+      formData.append('applicantEmail', this.applicantEmail);
+      formData.append('phoneNumber', this.phoneNumber);
+      formData.append('address', this.address);
+      formData.append('numberOfChildren', this.numberOfChildren);
+
+      // Send POST request using Axios
+      axios.post('/api/submit-application', formData)
+        .then(response => {
+          // Handle successful response
+          alert('Your application has been submitted successfully.');
+          // Reset form fields
+          this.resetForm();
+        })
+        .catch(error => {
+          // Handle error
+          console.error('Error submitting application:', error);
+          // Optionally, you can show an error message to the user
+        });
     },
-    handleFileUpload(event) {
-      // Handle file upload for income proof
-      this.incomeProof = event.target.files[0];
-    },
-    proceedWithApplication() {
-      // Implement application submission logic here
-      alert('Your application has been submitted successfully.');
-      this.showModal = false;
+    resetForm() {
       // Reset form fields
       this.applicantName = '';
       this.applicantEmail = '';
       this.phoneNumber = '';
       this.address = '';
       this.numberOfChildren = 0;
-      this.incomeProof = null;
     },
-    closeModal() {
-      this.showModal = false;
+    logout() {
+      // Perform logout actions (e.g., clear session, redirect to login page)
+      // You need to replace '/login' with the correct path to your login page
+      this.$router.push('/');
     }
   }
 };
@@ -147,7 +126,9 @@ export default {
   font-size: 28px;
   font-weight: bold;
 }
-
+.spacer {
+    height: 100px; /* Adjust the height for desired spacing */
+  }
 .close:hover,
 .close:focus {
   color: black;
@@ -207,6 +188,39 @@ input[type="file"] {
 .submit-button:hover,
 .proceed-button:hover {
   background-color: #45a049;
+}
+.navbar {
+  background-color: #333;
+  color: #fff;
+  padding: 10px 20px;
+}
+
+.navbar-brand {
+  font-size: 24px;
+}
+
+.navbar-links {
+  margin-left: auto;
+}
+
+.nav-link {
+  color: #fff;
+  text-decoration: none;
+  margin-right: 20px;
+}
+
+.logout-button {
+  background-color: #ff5f5f;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.logout-button:hover {
+  background-color: #ff3333;
 }
 
 </style>
