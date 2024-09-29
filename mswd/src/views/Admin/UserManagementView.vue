@@ -1,31 +1,28 @@
 <template>
   <div class="dashboard">
-    <aside class="sidebar">
+    <aside class="sidebar" :class="{ 'collapsed': isCollapsed }">
       <div class="sidebar-header">
         <img src="/placeholder.svg?height=50&width=50" alt="MSWD Logo" class="logo">
-        <h1 class="sidebar-title">MSWD Admin</h1>
+        <h1 v-if="!isCollapsed" class="sidebar-title">MSWD Admin</h1>
       </div>
       <nav class="sidebar-nav">
-          <a href="#" class="nav-link active">
-            <i class="fas fa-users"></i> <span>Users</span>
-          </a>
-          <a href="#" class="nav-link">
-            <i class="fas fa-chart-line"></i> <span>Dashboard</span>
-          </a>
-          <a href="#" class="nav-link">
-            <i class="fas fa-file-alt"></i> <span>Reports</span>
-          </a>
-          <a href="#" class="nav-link">
-            <i class="fas fa-cog"></i> <span>Settings</span>
-          </a>
+        <router-link v-for="(item, index) in navItems" :key="index" :to="item.route" class="nav-link">
+          <component :is="item.icon" :size="24" />
+          <span v-if="!isCollapsed">{{ item.name }}</span>
+        </router-link>
       </nav>
       <div class="user-info">
         <img src="/placeholder.svg?height=40&width=40" alt="User Avatar" class="user-avatar">
-        <span class="user-name">Admin User</span>
-        <button class="logout-button">
-          <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+        <span v-if="!isCollapsed" class="user-name">Admin User</span>
+        <button class="logout-button" @click="logout">
+          <LogOut :size="20" />
+          <span v-if="!isCollapsed">Logout</span>
         </button>
       </div>
+      <button class="toggle-button" @click="toggleSidebar">
+        <ChevronLeft v-if="!isCollapsed" :size="20" />
+        <ChevronRight v-else :size="20" />
+      </button>
     </aside>
 
     <main class="main-content">
@@ -33,7 +30,7 @@
         <h2 class="page-title">User Management</h2>
         <div class="header-actions">
           <div class="search-container">
-            <i class="fas fa-search search-icon"></i>
+            <Search :size="20" class="search-icon" />
             <input
               type="text"
               v-model="searchQuery"
@@ -42,7 +39,7 @@
             />
           </div>
           <button class="refresh-button" @click="refreshData">
-            <i class="fas fa-sync-alt"></i> Refresh Data
+            <RefreshCw :size="20" /> Refresh Data
           </button>
         </div>
       </header>
@@ -67,10 +64,10 @@
                 <td>{{ user.category }}</td>
                 <td>
                   <button @click="editUser(user)" class="edit-btn">
-                    <i class="fas fa-edit"></i> Edit
+                    <Edit2 :size="16" /> Edit
                   </button>
                   <button @click="deleteUser(user)" class="delete-btn">
-                    <i class="fas fa-trash-alt"></i> Delete
+                    <Trash2 :size="16" /> Delete
                   </button>
                 </td>
               </tr>
@@ -100,10 +97,10 @@
                 </select>
               </div>
               <button type="submit" class="update-btn">
-                <i class="fas fa-check"></i> Update User
+                <Check :size="16" /> Update User
               </button>
               <button type="button" @click="cancelEdit" class="cancel-btn">
-                <i class="fas fa-times"></i> Cancel
+                <X :size="16" /> Cancel
               </button>
             </form>
           </div>
@@ -113,92 +110,108 @@
   </div>
 </template>
 
-<script>
-import axios from 'axios';
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import axios from 'axios'
+import { Users, Calendar, HandsHelping, CreditCard, BarChart2, Settings, LogOut, ChevronLeft, ChevronRight, Search, RefreshCw, Edit2, Trash2, Check, X } from 'lucide-vue-next'
 
-export default {
-  name: 'UserManagement',
-  data() {
-    return {
-      searchQuery: '',
-      users: [],
-      editMode: false,
-      editedUserId: null,
-      editedUserName: '',
-      editedUserRole: '',
-      editedUserCategory: '',
-    };
-  },
-  computed: {
-    filteredUsers() {
-      return this.users.filter((user) => {
-        return user.username.toLowerCase().includes(this.searchQuery.toLowerCase());
-      });
-    },
-  },
-  mounted() {
-    this.getUsers();
-  },
-  methods: {
-    refreshData() {
-      this.getUsers();
-    },
-    getUsers() {
-      axios.get('/api/users')
-        .then((response) => {
-          this.users = response.data;
-        })
-        .catch((error) => {
-          console.error('Error fetching users:', error);
-        });
-    },
-    editUser(user) {
-      this.editMode = true;
-      this.editedUserId = user.id;
-      this.editedUserName = user.username;
-      this.editedUserRole = user.role;
-      this.editedUserCategory = user.category;
-    },
-    updateUser() {
-      const data = {
-        username: this.editedUserName,
-        role: this.editedUserRole,
-        category: this.editedUserCategory,
-      };
+const isCollapsed = ref(false)
+const searchQuery = ref('')
+const users = ref([])
+const editMode = ref(false)
+const editedUserId = ref(null)
+const editedUserName = ref('')
+const editedUserRole = ref('')
+const editedUserCategory = ref('')
 
-      axios.post(`/api/update_user/${this.editedUserId}`, data)
-        .then((response) => {
-          console.log(response.data.msg);
-          this.getUsers();
-          this.editMode = false;
-          this.resetEditedUser();
-        })
-        .catch((error) => {
-          console.error('Error updating user:', error);
-        });
-    },
-    deleteUser(user) {
-      axios.delete(`/api/delete/${user.id}`)
-        .then((response) => {
-          console.log(response.data.msg);
-          this.getUsers();
-        })
-        .catch((error) => {
-          console.error('Error deleting user:', error);
-        });
-    },
-    cancelEdit() {
-      this.editMode = false;
-      this.resetEditedUser();
-    },
-    resetEditedUser() {
-      this.editedUserId = null;
-      this.editedUserName = '';
-      this.editedUserRole = '';
-      this.editedUserCategory = '';
-    },
-  },
-};
+const navItems = [
+{ name: 'Dashboard', route: '/Dashboard' },
+        { name: 'Schedule', route: '/Schedule' },
+        { name: 'Barangay Management', route: '/Barangaym'},
+        { name: 'Assistance Management', route: '/AssistanceManagement'},
+        { name: 'Card Management', route: '/CardManagement' },
+        { name: 'User Management', route: '/user-management'},
+]
+
+const filteredUsers = computed(() => {
+  return users.value.filter((user) => {
+    return user.username.toLowerCase().includes(searchQuery.value.toLowerCase())
+  })
+})
+
+const toggleSidebar = () => {
+  isCollapsed.value = !isCollapsed.value
+}
+
+const refreshData = () => {
+  getUsers()
+}
+
+const getUsers = async () => {
+  try {
+    const response = await axios.get('/api/users')
+    users.value = response.data
+  } catch (error) {
+    console.error('Error fetching users:', error)
+  }
+}
+
+const editUser = (user) => {
+  editMode.value = true
+  editedUserId.value = user.id
+  editedUserName.value = user.username
+  editedUserRole.value = user.role
+  editedUserCategory.value = user.category
+}
+
+const updateUser = async () => {
+  const data = {
+    username: editedUserName.value,
+    role: editedUserRole.value,
+    category: editedUserCategory.value,
+  }
+
+  try {
+    const response = await axios.post(`/api/update_user/${editedUserId.value}`, data)
+    console.log(response.data.msg)
+    await getUsers()
+    editMode.value = false
+    resetEditedUser()
+  } catch (error) {
+    console.error('Error updating user:', error)
+  }
+}
+
+const deleteUser = async (user) => {
+  try {
+    const response = await axios.delete(`/api/delete/${user.id}`)
+    console.log(response.data.msg)
+    await getUsers()
+  } catch (error) {
+    console.error('Error deleting user:', error)
+  }
+}
+
+const cancelEdit = () => {
+  editMode.value = false
+  resetEditedUser()
+}
+
+const resetEditedUser = () => {
+  editedUserId.value = null
+  editedUserName.value = ''
+  editedUserRole.value = ''
+  editedUserCategory.value = ''
+}
+
+const logout = () => {
+  console.log('Logging out...')
+  // Implement logout logic here
+}
+
+onMounted(() => {
+  getUsers()
+})
 </script>
 
 <style scoped>
@@ -218,6 +231,11 @@ export default {
   position: fixed;
   height: 100vh;
   overflow-y: auto;
+  transition: width 0.3s ease;
+}
+
+.sidebar.collapsed {
+  width: 80px;
 }
 
 .sidebar-header {
@@ -235,16 +253,13 @@ export default {
 .sidebar-title {
   font-size: 20px;
   font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sidebar-nav {
   flex-grow: 1;
-}
-
-.nav-links {
-  list-style-type: none;
-  padding: 0;
-  margin: 0;
 }
 
 .nav-link {
@@ -255,16 +270,15 @@ export default {
   text-decoration: none;
   transition: background-color 0.3s;
   border-radius: 5px;
+  margin-bottom: 5px;
 }
 
-.nav-link:hover, .nav-link.active {
+.nav-link:hover, .nav-link.router-link-active {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-.nav-link i {
+.nav-link svg {
   margin-right: 10px;
-  width: 20px;
-  text-align: center;
 }
 
 .user-info {
@@ -286,6 +300,9 @@ export default {
 .user-name {
   margin-bottom: 10px;
   font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .logout-button {
@@ -304,14 +321,40 @@ export default {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-.logout-button i {
+.logout-button svg {
   margin-right: 5px;
+}
+
+.toggle-button {
+  position: absolute;
+  top: 10px;
+  right: -15px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.toggle-button:hover {
+  background-color: #45a049;
 }
 
 .main-content {
   flex-grow: 1;
   padding: 20px;
   margin-left: 250px;
+  transition: margin-left 0.3s ease;
+}
+
+.sidebar.collapsed + .main-content {
+  margin-left: 80px;
 }
 
 .main-header {
@@ -381,7 +424,7 @@ export default {
   background-color: #45a049;
 }
 
-.refresh-button i {
+.refresh-button svg {
   margin-right: 5px;
 }
 
@@ -425,6 +468,9 @@ export default {
   border-radius: 4px;
   font-weight: bold;
   font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  margin-right: 5px;
 }
 
 .edit-btn,
@@ -444,6 +490,13 @@ export default {
 .delete-btn:hover,
 .cancel-btn:hover {
   opacity: 0.8;
+}
+
+.edit-btn svg,
+.delete-btn svg,
+.update-btn svg,
+.cancel-btn svg {
+  margin-right: 5px;
 }
 
 .user-form-modal {
@@ -514,8 +567,12 @@ export default {
     padding: 8px;
   }
 
-  .logout-button i {
+  .logout-button svg {
     margin-right: 0;
+  }
+
+  .toggle-button {
+    display: none;
   }
 }
 

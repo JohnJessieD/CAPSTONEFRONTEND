@@ -42,12 +42,17 @@ import CardManagement from '../views/Admin/CardManagement.vue';
 import SoloTemplate from '../views/SoloParent/SoloTemplate.vue';
 
 import SoloContacts from '../views/SoloParent/SoloContacts.vue';
-
+import BarangayM  from '@/views/Admin/BarangayM.vue';
 const routes = [
 
   {
     path: '/AssistanceManagement',
     component: AssistanceManagement,
+  },
+  
+  {
+    path: '/BarangayM',
+    component: BarangayM,
   },
   {
     path: '/SoloTemplate',

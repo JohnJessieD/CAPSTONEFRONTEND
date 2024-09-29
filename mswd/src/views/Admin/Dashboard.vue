@@ -1,31 +1,28 @@
 <template>
   <div class="dashboard">
-    <aside class="sidebar">
+    <aside class="sidebar" :class="{ 'collapsed': isCollapsed }">
       <div class="sidebar-header">
         <img src="/placeholder.svg?height=50&width=50" alt="MSWD Logo" class="logo">
-        <h1 class="sidebar-title">MSWD Admin</h1>
+        <h1 v-if="!isCollapsed" class="sidebar-title">MSWD Admin</h1>
       </div>
       <nav class="sidebar-nav">
-          <a href="#" class="nav-link active">
-            <i class="fas fa-chart-line"></i> <span>Dashboard</span>
-          </a>
-          <a href="#" class="nav-link">
-            <i class="fas fa-users"></i> <span>Users</span>
-          </a>
-          <a href="#" class="nav-link">
-            <i class="fas fa-file-alt"></i> <span>Reports</span>
-          </a>
-          <a href="#" class="nav-link">
-            <i class="fas fa-cog"></i> <span>Settings</span>
-          </a>
+        <router-link v-for="(item, index) in navItems" :key="index" :to="item.route" class="nav-link">
+          <component :is="item.icon" :size="24" />
+          <span v-if="!isCollapsed">{{ item.name }}</span>
+        </router-link>
       </nav>
       <div class="user-info">
         <img src="/placeholder.svg?height=40&width=40" alt="User Avatar" class="user-avatar">
-        <span class="user-name">Admin User</span>
+        <span v-if="!isCollapsed" class="user-name">Admin User</span>
         <button class="logout-button">
-          <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+          <LogOut :size="20" />
+          <span v-if="!isCollapsed">Logout</span>
         </button>
       </div>
+      <button class="toggle-button" @click="toggleSidebar">
+        <ChevronLeft v-if="!isCollapsed" :size="20" />
+        <ChevronRight v-else :size="20" />
+      </button>
     </aside>
 
     <main class="main-content">
@@ -33,7 +30,7 @@
         <h2 class="page-title">Barangay Dashboard</h2>
         <div class="header-actions">
           <div class="search-container">
-            <i class="fas fa-search search-icon"></i>
+            <Search :size="20" class="search-icon" />
             <input
               type="text"
               v-model="searchQuery"
@@ -42,32 +39,17 @@
             />
           </div>
           <button class="refresh-button">
-            <i class="fas fa-sync-alt"></i> Refresh Data
+            <RefreshCw :size="20" /> Refresh Data
           </button>
         </div>
       </header>
 
       <div class="dashboard-grid">
         <div class="summary-cards">
-          <div class="summary-card">
-            <i class="fas fa-map-marker-alt card-icon"></i>
-            <h4 class="card-title">Total Barangays</h4>
-            <p class="card-value">{{ barangays.length }}</p>
-          </div>
-          <div class="summary-card">
-            <i class="fas fa-user card-icon"></i>
-            <h4 class="card-title">Total Solo Parents</h4>
-            <p class="card-value">{{ totalSoloParents }}</p>
-          </div>
-          <div class="summary-card">
-            <i class="fas fa-user-friends card-icon"></i>
-            <h4 class="card-title">Total Seniors</h4>
-            <p class="card-value">{{ totalSeniors }}</p>
-          </div>
-          <div class="summary-card">
-            <i class="fas fa-wheelchair card-icon"></i>
-            <h4 class="card-title">Total PWDs</h4>
-            <p class="card-value">{{ totalPWDs }}</p>
+          <div class="summary-card" v-for="(card, index) in summaryCards" :key="index">
+            <component :is="card.icon" :size="24" class="card-icon" />
+            <h4 class="card-title">{{ card.title }}</h4>
+            <p class="card-value">{{ card.value }}</p>
           </div>
         </div>
 
@@ -87,17 +69,8 @@
             >
               <span class="barangay-name">{{ barangay.name }}</span>
               <div class="barangay-stats">
-                <span class="stat-item solo-parent">
-                  <i class="fas fa-user"></i> {{ barangay.soloParent }}
-                </span>
-                <span class="stat-item senior">
-                  <i class="fas fa-user-friends"></i> {{ barangay.senior }}
-                </span>
-                <span class="stat-item daycare">
-                  <i class="fas fa-baby"></i> {{ barangay.daycareCenter }}
-                </span>
-                <span class="stat-item pwd">
-                  <i class="fas fa-wheelchair"></i> {{ barangay.pwd }}
+                <span v-for="(stat, statName) in barangay.stats" :key="statName" :class="['stat-item', statName]">
+                  <component :is="stat.icon" :size="16" /> {{ stat.value }}
                 </span>
               </div>
             </li>
@@ -109,77 +82,134 @@
 </template>
 
 <script>
-import Chart from 'chart.js/auto';
+import { ref, computed, onMounted } from 'vue'
+import Chart from 'chart.js/auto'
+import { Home, Calendar, HandsHelping, CreditCard, BarChart2, Users, MapPin, User, UserPlus, Baby, Wheelchair, ChevronLeft, ChevronRight, Search, RefreshCw, LogOut } from 'lucide-vue-next'
 
 export default {
   name: 'Dashboard',
-  data() {
-    return {
-      searchQuery: '',
-      barangays: [
-        { id: 1, name: 'Barangay Ilag', soloParent: 10, senior: 20, daycareCenter: 15, pwd: 5 },
-        { id: 2, name: 'Barangay Poblacion', soloParent: 8, senior: 15, daycareCenter: 20, pwd: 3 },
-        { id: 3, name: 'Bigaan', soloParent: 20, senior: 50, daycareCenter: 30, pwd: 10 },
-        { id: 4, name: 'San Antonio', soloParent: 15, senior: 30, daycareCenter: 25, pwd: 8 },
-        { id: 5, name: 'Santa Cruz', soloParent: 12, senior: 40, daycareCenter: 18, pwd: 6 },
-      ],
-      chart: null,
-    };
+  components: {
+    Home, Calendar, HandsHelping, CreditCard, BarChart2, Users, MapPin, User, UserPlus, Baby, Wheelchair, ChevronLeft, ChevronRight, Search, RefreshCw, LogOut
   },
-  computed: {
-    filteredBarangays() {
-      return this.barangays.filter((barangay) => {
-        return barangay.name.toLowerCase().includes(this.searchQuery.toLowerCase());
-      });
-    },
-    totalSoloParents() {
-      return this.barangays.reduce((total, barangay) => total + barangay.soloParent, 0);
-    },
-    totalSeniors() {
-      return this.barangays.reduce((total, barangay) => total + barangay.senior, 0);
-    },
-    totalPWDs() {
-      return this.barangays.reduce((total, barangay) => total + barangay.pwd, 0);
-    },
-  },
-  mounted() {
-    this.renderChart();
-  },
-  methods: {
-    renderChart() {
-      const ctx = this.$refs.chartCanvas.getContext('2d');
-      this.chart = new Chart(ctx, {
+  setup() {
+    const isCollapsed = ref(false)
+    const searchQuery = ref('')
+    const chartCanvas = ref(null)
+    const chart = ref(null)
+
+    const navItems = [
+    { name: 'Dashboard', route: '/Dashboard' },
+        { name: 'Schedule', route: '/Schedule' },
+        { name: 'Barangay Management', route: '/Barangaym'},
+        { name: 'Assistance Management', route: '/AssistanceManagement'},
+        { name: 'Card Management', route: '/CardManagement' },
+        { name: 'User Management', route: '/user-management'},
+    ]
+
+    const summaryCards = [
+      { title: 'Total Barangays', value: 5, icon: MapPin },
+      { title: 'Total Solo Parents', value: 65, icon: User },
+      { title: 'Total Seniors', value: 155, icon: UserPlus },
+      { title: 'Total PWDs', value: 32, icon: Wheelchair },
+    ]
+
+    const barangays = [
+      { 
+        id: 1, 
+        name: 'Barangay Ilag', 
+        stats: {
+          soloParent: { value: 10, icon: User },
+          senior: { value: 20, icon: UserPlus },
+          daycareCenter: { value: 15, icon: Baby },
+          pwd: { value: 5, icon: Wheelchair }
+        }
+      },
+      { 
+        id: 2, 
+        name: 'Barangay Poblacion', 
+        stats: {
+          soloParent: { value: 8, icon: User },
+          senior: { value: 15, icon: UserPlus },
+          daycareCenter: { value: 20, icon: Baby },
+          pwd: { value: 3, icon: Wheelchair }
+        }
+      },
+      { 
+        id: 3, 
+        name: 'Bigaan', 
+        stats: {
+          soloParent: { value: 20, icon: User },
+          senior: { value: 50, icon: UserPlus },
+          daycareCenter: { value: 30, icon: Baby },
+          pwd: { value: 10, icon: Wheelchair }
+        }
+      },
+      { 
+        id: 4, 
+        name: 'San Antonio', 
+        stats: {
+          soloParent: { value: 15, icon: User },
+          senior: { value: 30, icon: UserPlus },
+          daycareCenter: { value: 25, icon: Baby },
+          pwd: { value: 8, icon: Wheelchair }
+        }
+      },
+      { 
+        id: 5, 
+        name: 'Santa Cruz', 
+        stats: {
+          soloParent: { value: 12, icon: User },
+          senior: { value: 40, icon: UserPlus },
+          daycareCenter: { value: 18, icon: Baby },
+          pwd: { value: 6, icon: Wheelchair }
+        }
+      },
+    ]
+
+    const filteredBarangays = computed(() => {
+      return barangays.filter((barangay) => {
+        return barangay.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+      })
+    })
+
+    const toggleSidebar = () => {
+      isCollapsed.value = !isCollapsed.value
+    }
+
+    const renderChart = () => {
+      const ctx = chartCanvas.value.getContext('2d')
+      chart.value = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: this.barangays.map((barangay) => barangay.name),
+          labels: barangays.map((barangay) => barangay.name),
           datasets: [
             {
               label: 'Solo Parent',
               backgroundColor: '#F7CAC9',
               borderColor: '#F7CAC9',
               borderWidth: 1,
-              data: this.barangays.map((barangay) => barangay.soloParent),
+              data: barangays.map((barangay) => barangay.stats.soloParent.value),
             },
             {
               label: 'Senior',
               backgroundColor: '#90CAF9',
               borderColor: '#90CAF9',
               borderWidth: 1,
-              data: this.barangays.map((barangay) => barangay.senior),
+              data: barangays.map((barangay) => barangay.stats.senior.value),
             },
             {
               label: 'Daycare Center',
               backgroundColor: '#FFEBEE',
               borderColor: '#FFEBEE',
               borderWidth: 1,
-              data: this.barangays.map((barangay) => barangay.daycareCenter),
+              data: barangays.map((barangay) => barangay.stats.daycareCenter.value),
             },
             {
               label: 'PWD',
               backgroundColor: '#C5CAE9',
               borderColor: '#C5CAE9',
               borderWidth: 1,
-              data: this.barangays.map((barangay) => barangay.pwd),
+              data: barangays.map((barangay) => barangay.stats.pwd.value),
             },
           ],
         },
@@ -197,18 +227,35 @@ export default {
             },
           },
         },
-      });
-    },
-    selectBarangay(barangay) {
-      this.chart.data.datasets.forEach((dataset) => {
-        dataset.backgroundColor = this.barangays.map((b) =>
+      })
+    }
+
+    const selectBarangay = (barangay) => {
+      chart.value.data.datasets.forEach((dataset) => {
+        dataset.backgroundColor = barangays.map((b) =>
           b.id === barangay.id ? '#FFD700' : dataset.borderColor
-        );
-      });
-      this.chart.update();
-    },
-  },
-};
+        )
+      })
+      chart.value.update()
+    }
+
+    onMounted(() => {
+      renderChart()
+    })
+
+    return {
+      isCollapsed,
+      searchQuery,
+      navItems,
+      summaryCards,
+      barangays,
+      filteredBarangays,
+      chartCanvas,
+      toggleSidebar,
+      selectBarangay,
+    }
+  }
+}
 </script>
 
 <style scoped>
@@ -228,6 +275,11 @@ export default {
   position: fixed;
   height: 100vh;
   overflow-y: auto;
+  transition: width 0.3s ease;
+}
+
+.sidebar.collapsed {
+  width: 80px;
 }
 
 .sidebar-header {
@@ -245,16 +297,13 @@ export default {
 .sidebar-title {
   font-size: 20px;
   font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sidebar-nav {
   flex-grow: 1;
-}
-
-.nav-links {
-  list-style-type: none;
-  padding: 0;
-  margin: 0;
 }
 
 .nav-link {
@@ -265,16 +314,15 @@ export default {
   text-decoration: none;
   transition: background-color 0.3s;
   border-radius: 5px;
+  margin-bottom: 5px;
 }
 
-.nav-link:hover, .nav-link.active {
+.nav-link:hover, .nav-link.router-link-active {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-.nav-link i {
+.nav-link svg {
   margin-right: 10px;
-  width: 20px;
-  text-align: center;
 }
 
 .user-info {
@@ -296,6 +344,9 @@ export default {
 .user-name {
   margin-bottom: 10px;
   font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .logout-button {
@@ -314,14 +365,40 @@ export default {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-.logout-button i {
+.logout-button svg {
   margin-right: 5px;
+}
+
+.toggle-button {
+  position: absolute;
+  top: 10px;
+  right: -15px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.toggle-button:hover {
+  background-color: #45a049;
 }
 
 .main-content {
   flex-grow: 1;
   padding: 20px;
   margin-left: 250px;
+  transition: margin-left 0.3s ease;
+}
+
+.sidebar.collapsed + .main-content {
+  margin-left: 80px;
 }
 
 .main-header {
@@ -391,7 +468,7 @@ export default {
   background-color: #45a049;
 }
 
-.refresh-button i {
+.refresh-button svg {
   margin-right: 5px;
 }
 
@@ -423,7 +500,6 @@ export default {
 }
 
 .card-icon {
-  font-size: 24px;
   color: #4CAF50;
   margin-bottom: 10px;
 }
@@ -510,13 +586,13 @@ export default {
   align-items: center;
 }
 
-.stat-item i {
+.stat-item svg {
   margin-right: 5px;
 }
 
-.solo-parent { background-color: #F7CAC9; }
+.soloParent { background-color: #F7CAC9; }
 .senior { background-color: #90CAF9; }
-.daycare { background-color: #FFEBEE; color: #333; }
+.daycareCenter { background-color: #FFEBEE; color: #333; }
 .pwd { background-color: #C5CAE9; }
 
 @media (max-width: 1200px) {
@@ -550,8 +626,12 @@ export default {
     padding: 8px;
   }
 
-  .logout-button i {
+  .logout-button svg {
     margin-right: 0;
+  }
+
+  .toggle-button {
+    display: none;
   }
 }
 

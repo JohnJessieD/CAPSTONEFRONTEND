@@ -1,36 +1,30 @@
 <template>
   <div class="dashboard">
-    <aside class="sidebar">
+    <aside class="sidebar" :class="{ 'collapsed': isCollapsed }">
       <div class="sidebar-header">
         <img src="/placeholder.svg?height=50&width=50" alt="MSWD Logo" class="logo">
-        <h1 class="sidebar-title">MSWD Admin</h1>
+        <h1 v-if="!isCollapsed" class="sidebar-title">MSWD Admin</h1>
       </div>
       <nav class="sidebar-nav">
-          <a href="#" class="nav-link" :class="{ active: activeSection === 'dashboard' }" @click="setActiveSection('dashboard')">
-            <i class="fas fa-chart-line"></i> <span>Dashboard</span>
-          </a>
-          <a href="#" class="nav-link" :class="{ active: activeSection === 'requests' }" @click="setActiveSection('requests')">
-            <i class="fas fa-hands-helping"></i> <span>Assistance Requests</span>
-          </a>
-          <a href="#" class="nav-link">
-            <i class="fas fa-users"></i> <span>Users</span>
-          </a>
-          <a href="#" class="nav-link">
-            <i class="fas fa-file-alt"></i> <span>Reports</span>
-          </a>
-          <a href="#" class="nav-link">
-            <i class="fas fa-cog"></i> <span>Settings</span>
-          </a>
+        <router-link v-for="(item, index) in navItems" :key="index" :to="item.route" class="nav-link">
+          <component :is="item.icon" :size="24" />
+          <span v-if="!isCollapsed">{{ item.name }}</span>
+        </router-link>
       </nav>
       <div class="user-info">
         <img src="/placeholder.svg?height=40&width=40" alt="User Avatar" class="user-avatar">
-        <span class="user-name">Admin User</span>
+        <span v-if="!isCollapsed" class="user-name">Admin User</span>
         <button class="logout-button">
-          <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+          <LogOut :size="20" />
+          <span v-if="!isCollapsed">Logout</span>
         </button>
       </div>
+      <button class="toggle-button" @click="toggleSidebar">
+        <ChevronLeft v-if="!isCollapsed" :size="20" />
+        <ChevronRight v-else :size="20" />
+      </button>
     </aside>
-
+    
     <main class="main-content">
       <div class="spacer"></div>
       <div class="container">
@@ -71,68 +65,86 @@
 </template>
 
 <script>
-import axios from 'axios';
+import { ref, onMounted } from 'vue'
+import { Home, Calendar, HandsHelping, CreditCard, Users, LogOut, ChevronLeft, ChevronRight, BarChart2 } from 'lucide-vue-next'
+import axios from 'axios'
 
 export default {
-  name: 'AdminDashboard',
-  data() {
+  name: 'Dashboard',
+  components: {
+    Home, Calendar, HandsHelping, CreditCard, Users, LogOut, ChevronLeft, ChevronRight
+  },
+  setup() {
+    const isCollapsed = ref(false)
+    const requestHistory = ref([])
+    const isLoading = ref(false)
+
+    const navItems = [
+    { name: 'Dashboard', route: '/Dashboard' },
+        { name: 'Schedule', route: '/Schedule' },
+        { name: 'Barangay Management', route: '/Barangaym'},
+        { name: 'Assistance Management', route: '/AssistanceManagement'},
+        { name: 'Card Management', route: '/CardManagement' },
+        { name: 'User Management', route: '/user-management'},
+    ]
+
+    const toggleSidebar = () => {
+      isCollapsed.value = !isCollapsed.value
+    }
+
+    const fetchRequestHistory = async () => {
+      isLoading.value = true
+      try {
+        const response = await axios.get('/api/PWD')
+        requestHistory.value = response.data
+      } catch (error) {
+        console.error(error)
+      } finally {
+        isLoading.value = false
+      }
+    }
+
+    const acceptRequest = async (request) => {
+      try {
+        const response = await axios.post('/api/acceptRequest', { requestId: request.id })
+        console.log('Request accepted:', response.data)
+        const index = requestHistory.value.indexOf(request)
+        if (index !== -1) {
+          requestHistory.value.splice(index, 1)
+        }
+      } catch (error) {
+        console.error('Error accepting request:', error)
+      }
+    }
+
+    const rejectRequest = async (request) => {
+      try {
+        const response = await axios.post('/api/rejectRequest', { requestId: request.id })
+        console.log('Request rejected:', response.data)
+        const index = requestHistory.value.indexOf(request)
+        if (index !== -1) {
+          requestHistory.value.splice(index, 1)
+        }
+      } catch (error) {
+        console.error('Error rejecting request:', error)
+      }
+    }
+
+    onMounted(() => {
+      fetchRequestHistory()
+    })
+
     return {
-      activeSection: 'requests',
-      requestHistory: [],
-      isLoading: false,
-    };
-  },
-  mounted() {
-    this.fetchRequestHistory();
-  },
-  methods: {
-    setActiveSection(section) {
-      this.activeSection = section;
-    },
-    fetchRequestHistory() {
-      this.isLoading = true;
-      axios
-        .get('/api/PWD')
-        .then((response) => {
-          this.requestHistory = response.data;
-        })
-        .catch((error) => {
-          console.error(error);
-        })
-        .finally(() => {
-          this.isLoading = false;
-        });
-    },
-    acceptRequest(request) {
-      axios
-        .post('/api/acceptRequest', { requestId: request.id })
-        .then((response) => {
-          console.log('Request accepted:', response.data);
-          const index = this.requestHistory.indexOf(request);
-          if (index !== -1) {
-            this.requestHistory.splice(index, 1);
-          }
-        })
-        .catch((error) => {
-          console.error('Error accepting request:', error);
-        });
-    },
-    rejectRequest(request) {
-      axios
-        .post('/api/rejectRequest', { requestId: request.id })
-        .then((response) => {
-          console.log('Request rejected:', response.data);
-          const index = this.requestHistory.indexOf(request);
-          if (index !== -1) {
-            this.requestHistory.splice(index, 1);
-          }
-        })
-        .catch((error) => {
-          console.error('Error rejecting request:', error);
-        });
-    },
-  },
-};
+      isCollapsed,
+      navItems,
+      toggleSidebar,
+      requestHistory,
+      isLoading,
+      acceptRequest,
+      rejectRequest
+    }
+  }
+}
 </script>
 
 <style scoped>
@@ -152,6 +164,11 @@ export default {
   position: fixed;
   height: 100vh;
   overflow-y: auto;
+  transition: width 0.3s ease;
+}
+
+.sidebar.collapsed {
+  width: 80px;
 }
 
 .sidebar-header {
@@ -169,16 +186,13 @@ export default {
 .sidebar-title {
   font-size: 20px;
   font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sidebar-nav {
   flex-grow: 1;
-}
-
-.nav-links {
-  list-style-type: none;
-  padding: 0;
-  margin: 0;
 }
 
 .nav-link {
@@ -189,16 +203,15 @@ export default {
   text-decoration: none;
   transition: background-color 0.3s;
   border-radius: 5px;
+  margin-bottom: 5px;
 }
 
-.nav-link:hover, .nav-link.active {
+.nav-link:hover, .nav-link.router-link-active {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-.nav-link i {
+.nav-link svg {
   margin-right: 10px;
-  width: 20px;
-  text-align: center;
 }
 
 .user-info {
@@ -220,6 +233,9 @@ export default {
 .user-name {
   margin-bottom: 10px;
   font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .logout-button {
@@ -238,13 +254,40 @@ export default {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-.logout-button i {
+.logout-button svg {
   margin-right: 5px;
+}
+
+.toggle-button {
+  position: absolute;
+  top: 10px;
+  right: -15px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.toggle-button:hover {
+  background-color: #45a049;
 }
 
 .main-content {
   flex-grow: 1;
-  margin-left: 250px;
+  margin-left: 250px; /* Adjusted margin to accommodate sidebar */
+  padding: 20px; /* Added padding for main content */
+  transition: margin-left 0.3s ease; /* Smooth transition for sidebar */
+}
+
+.sidebar.collapsed + .main-content {
+  margin-left: 80px; /* Adjusted margin when sidebar is collapsed */
 }
 
 .spacer {
@@ -344,71 +387,6 @@ export default {
   }
   to {
     transform: rotate(360deg);
-  }
-}
-
-@media (max-width: 992px) {
-  .sidebar {
-    width: 80px;
-  }
-
-  .sidebar-title, .user-name, .nav-link span, .logout-button span {
-    display: none;
-  }
-
-  .main-content {
-    margin-left: 80px;
-  }
-
-  .user-info {
-    align-items: center;
-  }
-
-  .logout-button {
-    padding: 8px;
-  }
-
-  .logout-button i {
-    margin-right: 0;
-  }
-}
-
-@media (max-width: 768px) {
-  .dashboard {
-    flex-direction: column;
-  }
-
-  .sidebar {
-    width: 100%;
-    height: auto;
-    position: static;
-    padding: 10px;
-  }
-
-  .sidebar-nav {
-    display: none;
-  }
-
-  .user-info {
-    display: none;
-  }
-
-  .main-content {
-    margin-left: 0;
-  }
-
-  .container {
-    padding: 10px;
-  }
-
-  .request-card {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .request-image {
-    margin-right: 0;
-    margin-bottom: 15px;
   }
 }
 </style>

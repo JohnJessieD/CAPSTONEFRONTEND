@@ -1,103 +1,132 @@
 <template>
-  <div>  <nav class="navbar">  <div class="navbar-brand">
+  <div class="app-container">
+    <nav class="navbar">
+      <div class="navbar-brand">
         <img src="/img/Download.jpg" class="logo-img" alt="Government Logo" />
         <span class="brand-text">Welcome to Municipal SWD!</span>
       </div>
       <div class="navbar-links">
         <router-link to="/temlpatep" class="nav-link">Home</router-link>
-        <br>
         <router-link to="/Pwd" class="nav-link">Assistance</router-link>
         <router-link to="/EventsPWD" class="nav-link">Upcoming Events</router-link>
         <router-link to="/ServicesPWD" class="nav-link">Services</router-link>
         <router-link to="/publicationsPWD" class="nav-link">Publications</router-link>
         <router-link to="/Status" class="nav-link">Status</router-link>
         <button class="logout-button" @click="logout">Sign Out</button>
+      </div>
+    </nav>
+
+    <main class="main-content">
+      <h1 class="page-title">Persons with Disabilities (PWD) Office</h1>
       
-    </div>  
-  </nav>
-
-    <div class="pwd-office">
-      <section class="office-info">
-        <h2 class="header">Persons with Disabilities (PWD) Office</h2>
-        <p class="description">Welcome to the PWD Office. This office provides support and services for individuals with disabilities.</p>
-        
-        <button @click="openMembershipFormModal" class="action-button">Apply for Membership</button>
-      </section>
-
-
-      <section class="request-form-container">
-        <section class="request-form">
-          <h3 class="header">Request Money Form</h3>
-          <button @click="openRequestModal" class="action-button">Request Money</button>
-          <p v-if="error" class="error-message">{{ error }}</p>
+      <div class="pwd-office">
+        <section class="office-info">
+          <h2 class="section-title">Welcome to the PWD Office</h2>
+          <p class="description">This office provides support and services for individuals with disabilities. We're here to assist you with various needs and ensure your well-being.</p>
+          <button @click="openMembershipFormModal" class="action-button">Apply for Membership</button>
         </section>
-      </section>
 
-      <div class="modal" :class="{ 'is-active': isRequestModalActive }">
-        <div class="modal-background" @click="closeRequestModal"></div>
-        <div class="modal-content">
-          <h3 class="header">Request Money</h3>
-          <form @submit.prevent="submitForm" class="money-form">
+        <section class="request-money">
+          <h2 class="section-title">Request Financial Assistance</h2>
+          <p class="description">If you need financial support, you can submit a request here. We'll review your application and get back to you as soon as possible.</p>
+          <button @click="openRequestModal" class="action-button">Make a Request</button>
+        </section>
 
-            <label for="reason" class="form-label">Reason:</label>
-            <textarea id="reason" v-model="formData.reason" required class="form-input"></textarea>
-
-            <button type="submit" class="action-button">Submit Request</button>
-           <button type="button" class="action-button" @click="closeRequestModal">Cancel</button>
-  </form>
-</div>
-<button class="modal-close is-large" aria-label="close" @click="closeRequestModal"></button>
-</div>
-<div class="request-history-container">
         <section class="request-history">
-          <h3 class="header">Request History</h3>
-          <div v-if="isLoading" class="loading">Loading...</div>
-          <ul v-else class="history-list">
+          <h2 class="section-title">Request History</h2>
+          <div v-if="isLoading" class="loading">
+            <div class="loading-spinner"></div>
+            <p>Loading your request history...</p>
+          </div>
+          <ul v-else-if="requestHistory.length > 0" class="request-list">
             <li v-for="(request, index) in requestHistory" :key="index" class="request-item">
               <div class="request-details">
-                <strong>Date:</strong> {{ request.date }} |
-                <strong>Reason:</strong> {{ request.reason }}
+                <span class="request-date">{{ formatDate(request.date) }}</span>
+                <p class="request-reason">{{ request.reason }}</p>
               </div>
               <div class="request-actions">
-                <button @click="editRequest(index)" class="action-button">Edit</button>
-                <button @click="deleteRequest(index)" class="action-button">Delete</button>
+                <button @click="editRequest(index)" class="action-button edit-button">
+                  <span class="icon">✏️</span> Edit
+                </button>
+                <button @click="deleteRequest(index)" class="action-button delete-button">
+                  <span class="icon">🗑️</span> Delete
+                </button>
               </div>
             </li>
           </ul>
+          <p v-else class="no-requests">You haven't made any requests yet.</p>
         </section>
       </div>
+    </main>
 
-      <!-- Edit Request Modal, Membership Application Modal -->
-      <!-- Keeping the structure similar to minimize redundancy -->
+    <!-- Membership Application Modal -->
+    <div v-if="isMembershipFormModalActive" class="modal">
+      <div class="modal-overlay" @click="closeMembershipFormModal"></div>
+      <div class="modal-container">
+        <h2 class="modal-title">Membership Application</h2>
+        <form @submit.prevent="submitMembershipForm" class="membership-form">
+          <div class="form-group">
+            <label for="name" class="form-label">Full Name:</label>
+            <input type="text" id="name" v-model="membershipFormData.name" required class="form-input">
+          </div>
+          
+          <div class="form-group">
+            <label for="dob" class="form-label">Date of Birth:</label>
+            <input type="date" id="dob" v-model="membershipFormData.dob" required class="form-input">
+          </div>
+          
+          <div class="form-group">
+            <label for="sickness" class="form-label">Disability or Medical Condition:</label>
+            <input type="text" id="sickness" v-model="membershipFormData.sickness" required class="form-input">
+          </div>
+          
+          <div class="form-group">
+            <label for="certificate" class="form-label">Copy of Certificate:</label>
+            <input type="file" id="certificate" @change="handleCertificateUpload" class="form-input file-input">
+          </div>
 
-      <div v-if="isEditModalActive || isMembershipFormModalActive" class="modal is-active">
-        <div class="modal-background" @click="closeModal"></div>
-        <div class="modal-content">
-          <h3 class="header">{{ isEditModalActive ? 'Edit Request' : 'Membership Application' }}</h3>
-          <form @submit.prevent="isEditModalActive ? updateRequest() : submitMembershipForm()" 
-                class="money-form membership-form">
+          <div class="form-actions">
+            <button type="submit" class="action-button submit-button">Submit Application</button>
+            <button type="button" class="action-button cancel-button" @click="closeMembershipFormModal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
 
-            <label for="reason" class="form-label">{{ isEditModalActive ? 'Reason' : 'Full Name' }}:</label>
-            <textarea v-if="!isEditModalActive" id="name" v-model="membershipFormData.name" required class="form-input"></textarea>
-            <input v-if="isEditModalActive" type="text" id="reason" v-model="editFormData.reason" required class="form-input">
-            
-            <!-- Additional fields for membership application -->
-            <template v-if="!isEditModalActive">
-              <label for="dob" class="form-label">Date of Birth:</label>
-              <input type="date" id="dob" v-model="membershipFormData.dob" required class="form-input">
-              
-              <label for="sickness" class="form-label">Sickness:</label>
-              <input type="text" id="sickness" v-model="membershipFormData.sickness" required class="form-input">
-              
-              <label for="certificate" class="form-label">Copy of Certificate:</label>
-              <input type="file" id="certificate" @change="handleCertificateUpload" class="form-input">
-            </template>
+    <!-- Request Money Modal -->
+    <div v-if="isRequestModalActive" class="modal">
+      <div class="modal-overlay" @click="closeRequestModal"></div>
+      <div class="modal-container">
+        <h2 class="modal-title">Request Financial Assistance</h2>
+        <form @submit.prevent="submitForm" class="money-form">
+          <div class="form-group">
+            <label for="reason" class="form-label">Reason for Request:</label>
+            <textarea id="reason" v-model="formData.reason" required class="form-input" rows="4"></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="action-button submit-button">Submit Request</button>
+            <button type="button" class="action-button cancel-button" @click="closeRequestModal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
 
-            <button type="submit" class="action-button">{{ isEditModalActive ? 'Update Request' : 'Submit Application' }}</button>
-  </form>
-</div>
-<button class="modal-close is-large" aria-label="close" @click="closeMembershipFormModal"></button>
-</div>
+    <!-- Edit Request Modal -->
+    <div v-if="isEditModalActive" class="modal">
+      <div class="modal-overlay" @click="closeEditModal"></div>
+      <div class="modal-container">
+        <h2 class="modal-title">Edit Request</h2>
+        <form @submit.prevent="updateRequest" class="edit-form">
+          <div class="form-group">
+            <label for="edit-reason" class="form-label">Reason:</label>
+            <textarea id="edit-reason" v-model="editFormData.reason" required class="form-input" rows="4"></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="action-button submit-button">Update Request</button>
+            <button type="button" class="action-button cancel-button" @click="closeEditModal">Cancel</button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 </template>
@@ -106,326 +135,444 @@
 import axios from 'axios';
 
 export default {
-
-name: 'PwdOffice',
-data() {
-  return {
-    formData: {
-      reason: '',
-    },
-    editFormData: {
-      reason: '',
-      index: null,
-    },
-    membershipFormData: {
-      name: '',
-      dob: '',
-      sickness: '',
-      certificate: null,
-    },
-    error: null,
-    requestHistory: [],
-    isLoading: true,
-    isRequestModalActive: false,
-    isEditModalActive: false,
-    isMembershipFormModalActive: false,
-  };
-},
-methods: {
-  
-  submitForm() {
-    axios.post('/api/req', this.formData)
-      .then(response => {
-        console.log(response.data);
-        // Update request history with timestamp
-        this.requestHistory.unshift({
-          date: response.data.created_at, // Adjust property name accordingly
-          reason: this.formData.reason,
-        });
-        // Clear form data
-        this.formData = { amount: 0, reason: '' };
-        // Clear error
-        this.error = null;
-        // Close the modal after submission
-        this.closeRequestModal();
-      })
-      .catch(error => {
-        this.error = error.response.data.message;
-        console.error(error);
-      });
+  name: 'PwdOffice',
+  data() {
+    return {
+      formData: {
+        reason: '',
+      },
+      editFormData: {
+        reason: '',
+        index: null,
+      },
+      membershipFormData: {
+        name: '',
+        dob: '',
+        sickness: '',
+        certificate: null,
+      },
+      error: null,
+      requestHistory: [],
+      isLoading: true,
+      isRequestModalActive: false,
+      isEditModalActive: false,
+      isMembershipFormModalActive: false,
+    };
   },
-
- 
-
-  fetchRequestHistory() {
-    axios.get('/api/PWD')
-      .then(response => {
-        this.requestHistory = response.data;
-        this.isLoading = false; // Set loading state to false when data is fetched
-      })
-      .catch(error => {
-        console.error(error);
-        this.isLoading = false; // Set loading state to false on error
-      });
-  },
-  updateRequest() {
-    const index = this.editFormData.index;
-
-    axios.post('/api/updateRequest', { requestId: this.requestHistory[index].id, updatedData: this.editFormData })
-      .then(response => {
-        console.log(response.data);
-        // Update request history with timestamp
-        this.requestHistory[index] = {
-          date: new Date().toLocaleString(), // Update with actual date if available
-          reason: this.editFormData.reason,
-        };
-        // Clear form data
-        this.editFormData = { amount: 0, reason: '', index: null };
-        // Close the modal after submission
-        this.closeEditModal();
-      })
-      .catch(error => {
-        this.error = error.response.data.message;
-        console.error(error);
-      });
-  },
-  deleteRequest(index) {
-    const confirmDelete = confirm('Are you sure you want to delete this request?');
-    if (confirmDelete) {
-      const requestId = this.requestHistory[index].id; // Assuming you have an 'id' property for each request
-
-      // Make a DELETE request to the backend
-      axios.delete(`/api/deleteRequest/${requestId}`)
+  methods: {
+    submitForm() {
+      axios.post('/api/req', this.formData)
         .then(response => {
           console.log(response.data);
-          // If deletion is successful, remove the request from the requestHistory array
-          this.requestHistory.splice(index, 1);
+          this.requestHistory.unshift({
+            date: new Date(),
+            reason: this.formData.reason,
+          });
+          this.formData = { reason: '' };
+          this.error = null;
+          this.closeRequestModal();
+        })
+        .catch(error => {
+          this.error = error.response.data.message;
+          console.error(error);
+        });
+    },
+    fetchRequestHistory() {
+      axios.get('/api/PWD')
+        .then(response => {
+          this.requestHistory = response.data;
+          this.isLoading = false;
         })
         .catch(error => {
           console.error(error);
-          // Handle error here
+          this.isLoading = false;
         });
+    },
+    updateRequest() {
+      const index = this.editFormData.index;
+      axios.post('/api/updateRequest', { requestId: this.requestHistory[index].id, updatedData: this.editFormData })
+        .then(response => {
+          console.log(response.data);
+          this.requestHistory[index] = {
+            date: new Date(),
+            reason: this.editFormData.reason,
+          };
+          this.editFormData = { reason: '', index: null };
+          this.closeEditModal();
+        })
+        .catch(error => {
+          this.error = error.response.data.message;
+          console.error(error);
+        });
+    },
+    deleteRequest(index) {
+      const confirmDelete = confirm('Are you sure you want to delete this request?');
+      if (confirmDelete) {
+        const requestId = this.requestHistory[index].id;
+        axios.delete(`/api/deleteRequest/${requestId}`)
+          .then(response => {
+            console.log(response.data);
+            this.requestHistory.splice(index, 1);
+          })
+          .catch(error => {
+            console.error(error);
+          });
+      }
+    },
+    editRequest(index) {
+      this.editFormData.reason = this.requestHistory[index].reason;
+      this.editFormData.index = index;
+      this.isEditModalActive = true;
+    },
+    openRequestModal() {
+      this.isRequestModalActive = true;
+    },
+    closeRequestModal() {
+      this.isRequestModalActive = false;
+    },
+    closeEditModal() {
+      this.isEditModalActive = false;
+    },
+    openMembershipFormModal() {
+      this.isMembershipFormModalActive = true;
+    },
+    closeMembershipFormModal() {
+      this.isMembershipFormModalActive = false;
+    },
+    submitMembershipForm() {
+      // Implement form submission logic here
+      console.log('Membership form submitted:', this.membershipFormData);
+      this.closeMembershipFormModal();
+    },
+    handleCertificateUpload(event) {
+      const file = event.target.files[0];
+      this.membershipFormData.certificate = file;
+    },
+    logout() {
+      // Implement logout logic here
+      this.$router.push('/');
+    },
+    formatDate(date) {
+      return new Date(date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
     }
   },
-
-  editRequest(index) {
-    // Set the edit form data with the selected request details for editing
-    this.editFormData.reason = this.requestHistory[index].reason;
-    this.editFormData.index = index;
-
-    // Open the edit request modal
-    this.isEditModalActive = true;
+  mounted() {
+    this.fetchRequestHistory();
   },
-
-  openRequestModal() {
-    // Open the request money modal
-    this.isRequestModalActive = true;
-  },
-
-  closeRequestModal() {
-    // Close the request money modal
-    this.isRequestModalActive = false;
-  },
-
-  closeEditModal() {
-    // Close the edit request modal
-    this.isEditModalActive = false;
-  },
-
-  openMembershipFormModal() {
-    // Open the membership form modal
-    this.isMembershipFormModalActive = true;
-  },
-
-  closeMembershipFormModal() {
-    // Close the membership form modal
-    this.isMembershipFormModalActive = false;
-  },
-
-  submitMembershipForm() {
-    // Implement form submission logic here
-    // You can use axios to send the form data to the backend
-    // Handle success and error cases accordingly
-  },
-  
-  handleCertificateUpload(event) {
-    // Handle file upload for the certificate
-    const file = event.target.files[0];
-    this.membershipFormData.certificate = file;
-  }
-},
-mounted() {
-  // Fetch request history when the component is mounted
-  this.fetchRequestHistory();
-},
 };
 </script>
 
-
-
 <style scoped>
-/* Modernized Styles */
-
-/* General Styles */
-* {
-box-sizing: border-box;
-margin: 0;
-padding: 0;
+.app-container {
+  font-family: Arial, sans-serif;
+  background-color: #f0f4f8;
+  min-height: 100vh;
 }
 
-body {
-font-family: 'Roboto', sans-serif;
-background-color: #f0f2f5;
+.navbar {
+  background-color: white;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.container {
-max-width: 1200px;
-margin: 0 auto;
-padding: 20px;
+.navbar-brand {
+  display: flex;
+  align-items: center;
 }
 
-/* Header */
-.header {
-color: #333;
-text-align: center;
-margin-bottom: 30px;
+.logo-img {
+  height: 40px;
+  margin-right: 1rem;
 }
 
-/* Office Info */
-.office-info {
-background-color: #fff;
-border-radius: 10px;
-padding: 10%;
+.brand-text {
+  color: #004d7a;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
 
-box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
-margin-bottom: 30px;
+.navbar-links {
+  display: flex;
+  gap: 1rem;
+}
+
+.nav-link {
+  color: #333;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.nav-link:hover {
+  background-color: #f0f4f8;
+  color: #004d7a;
+}
+
+.logout-button {
+  background-color: #ff6b6b;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.logout-button:hover {
+  background-color: #ff5252;
+}
+
+.main-content {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-title {
+  text-align: center;
+  font-size: 2.5rem;
+  color: #004d7a;
+  margin-bottom: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.pwd-office {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.office-info, .request-money, .request-history {
+  background-color: white;
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.section-title {
+  font-size: 1.5rem;
+  color: #004d7a;
+  margin-bottom: 1rem;
 }
 
 .description {
-text-align: center;
-color: #666;
-margin-bottom: 20px;
+  color: #666;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
 }
 
-/* Buttons */
 .action-button {
-padding: 10px 20px;
-background-color: #336699;
-color: #fff;
-border: none;
-border-radius: 5px;
-cursor: pointer;
-transition: background-color 0.3s ease;
+  background-color: #004d7a;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-size: 1rem;
 }
 
 .action-button:hover {
-background-color: #254e77;
+  background-color: #003a5c;
 }
 
-/* Request History */
-.request-history-container {
-background-color: #fff;
-border-radius: 10px;
-padding: 20px;
-box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
-margin-bottom: 30px;
-}
-
-.request-history {
-margin-bottom: 20px;
+.request-list {
+  list-style: none;
+  padding: 0;
 }
 
 .request-item {
-border-bottom: 1px solid #ccc;
-padding: 15px 0;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 1rem 0;
 }
 
-.request-details {
-display: flex;
-justify-content: space-between;
-align-items: center;
+.request-item:last-child {
+  border-bottom: none;
+}
+
+.request-date {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.request-reason {
+  margin: 0.5rem 0;
+  color: #333;
 }
 
 .request-actions {
-display: flex;
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
 }
 
-.request-actions button {
-margin-left: 10px;
+.edit-button, .delete-button {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
 }
 
-/* Forms */
-.money-form,
-.membership-form {
-background-color: #fff;
-border-radius: 10px;
-padding: 20px;
-box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
+.edit-button {
+  background-color: #4caf50;
+}
+
+.edit-button:hover {
+  background-color: #45a049;
+}
+
+.delete-button {
+  background-color: #f44336;
+}
+
+.delete-button:hover {
+  background-color: #da190b;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-overlay {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-container {
+  background-color: white;
+  border-radius: 8px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 500px;
+  z-index: 1001;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modal-title {
+  font-size: 1.5rem;
+  color: #004d7a;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
 }
 
 .form-label {
-margin-bottom: 10px;
-color: #333;
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #333;
 }
 
 .form-input {
-width: 100%;
-padding: 10px;
-margin-bottom: 15px;
-border: 1px solid #ccc;
-border-radius: 5px;
-font-size: 16px;
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
 }
 
-.error-message {
-color: #ff0000;
-margin-top: 10px;
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
 }
 
-/* Modal */
-.modal {
-display: none;
-position: fixed;
-top: 0;
-left: 0;
-width: 100%;
-height: 100%;
-background-color: rgba(0, 0, 0, 0.5);
-z-index: 9999;
+.submit-button {
+  background-color: #4caf50;
 }
 
-.modal.is-active {
-display: flex;
-justify-content: center;
-align-items: center;
+.submit-button:hover {
+  background-color: #45a049;
 }
 
-.modal-content {
-background-color: #fff;
-border-radius: 10px;
-padding: 20px;
-box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
-position: relative;
+.cancel-button {
+  background-color: #f44336;
 }
 
-.request-form-container {
-  margin-bottom: 200px; /* Adjust the value as needed */
-}
-.modal-close {
-position: absolute;
-top: 10px;
-right: 10px;
-cursor: pointer;
+.cancel-button:hover {
+  background-color: #da190b;
 }
 
-/* Responsive */
-@media screen and (max-width: 768px) {
-.container {
-  padding: 10px;
+.loading {
+  text-align: center;
+  color: #666;
 }
 
-.modal-content {
-  width: 90%;
+.loading-spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #004d7a;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
 }
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.no-requests {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+}
+
+.icon {
+  margin-right: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+    padding: 1rem;
+  }
+
+  .navbar-brand {
+    margin-bottom: 1rem;
+  }
+
+  .navbar-links {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .nav-link {
+    margin-bottom: 0.5rem;
+  }
+
+  .pwd-office {
+    grid-template-columns: 1fr;
+  }
+
+  .page-title {
+    font-size: 2rem;
+  }
+
+  .modal-container {
+    width: 95%;
+  }
 }
 </style>
