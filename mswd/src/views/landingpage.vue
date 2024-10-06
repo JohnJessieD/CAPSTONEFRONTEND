@@ -1,495 +1,484 @@
 <template>
-  <div class="page-wrapper">
-    <header class="header">
-      <nav class="navbar">
-        <div class="navbar-brand">
-          <img src="/img/Download.jpg" class="logo-img" alt="Government Logo" />
-          <span class="brand-text">Welcome to Municipal SWD!</span>
+  <div class="mswd-container">
+    <div class="mswd-content">
+      <div class="mswd-card">
+        <h1 class="mswd-title">Welcome to MSWD</h1>
+        <p class="mswd-subtitle">Empowering communities, one step at a time</p>
+        <div class="mswd-buttons">
+          <router-link to="/registercomponent" class="mswd-button mswd-button-primary">
+            <span class="mswd-icon">+</span>
+            Register
+          </router-link>
+          <router-link to="/login" class="mswd-button mswd-button-secondary">
+            <span class="mswd-icon">→</span>
+            Login
+          </router-link>
         </div>
-        <button class="menu-toggle" @click="toggleMenu" aria-label="Toggle menu">
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
-        <div class="navbar-links" :class="{ 'active': isMenuOpen }">
-          <a href="#home" class="nav-link">Home</a>
-          <a href="#departments" class="nav-link">Meet Our Departments</a>
-          <a href="#events" class="nav-link">Upcoming Events</a>
-          <a href="#services" class="nav-link">Services</a>
-          <a href="#publications" class="nav-link">Publications</a>
-          <a href="#login" class="nav-link">Login</a>
-        </div>
-      </nav>
-    </header>
-
-    <section class="hero" id="home">
-      <div class="hero-content">
-        <h1>Welcome to Municipal Social Welfare and Development</h1>
-        <p>Empowering communities for a better tomorrow</p>
-        <button class="cta-button">Learn More</button>
-      </div>
-    </section>
-
-    <section class="services" id="services">
-      <h2>Our Services</h2>
-      <div class="service-list">
-        <div class="service" v-for="service in services" :key="service.title">
-          <div class="service-icon">{{ service.icon }}</div>
-          <h3>{{ service.title }}</h3>
-          <p>{{ service.description }}</p>
+        <div class="mswd-divider"></div>
+        <div class="mswd-services">
+          <div class="mswd-service" v-for="service in services" :key="service.title">
+            <div class="mswd-service-icon" :class="service.icon"></div>
+            <h3 class="mswd-service-title">{{ service.title }}</h3>
+            <p class="mswd-service-description">{{ service.description }}</p>
+          </div>
         </div>
       </div>
-    </section>
-
-    <section class="contact" id="contact">
-      <h2>Contact Us</h2>
-      <p>If you have any questions or need assistance, feel free to get in touch with us.</p>
-      <div class="contact-info">
-        <div class="contact-item" v-for="item in contactInfo" :key="item.icon">
-          <i :class="item.icon"></i>
-          <span>{{ item.text }}</span>
-        </div>
+    </div>
+    <div class="mswd-image">
+      <div class="mswd-image-overlay">
+        <h2 class="mswd-image-title">Our Mission</h2>
+        <p class="mswd-image-description">
+          To provide comprehensive social welfare and development services to empower individuals, families, and communities.
+        </p>
       </div>
-    </section>
+    </div>
+    <button class="mswd-feedback-button" @click="openFeedback">
+      <span class="mswd-feedback-icon">!</span>
+      Feedback
+    </button>
+    <button class="mswd-feedback-button" @click="openFeedback">
+      <span class="mswd-feedback-icon">!</span>
+      Feedback
+    </button>
 
-    <footer class="footer">
-      <h2>We Value Your Feedback</h2>
-      <p>Please let us know your thoughts or any concerns.</p>
-      <form @submit.prevent="submitFeedback" class="feedback-form">
-        <div class="form-group">
-          <label for="feedback">Your Feedback:</label>
-          <textarea id="feedback" v-model="feedback" placeholder="Enter your feedback here" required></textarea>
-        </div>
-        <button type="submit" class="submit-button">Submit Feedback</button>
-      </form>
-    </footer>
+    <!-- Privacy-Focused Feedback Modal -->
+    <div v-if="showFeedbackModal" class="mswd-modal-overlay" @click="closeFeedback">
+      <div class="mswd-modal" @click.stop>
+        <h2 class="mswd-modal-title">Provide Feedback</h2>
+        <p class="mswd-modal-description">Your privacy is important to us. We do not collect any personal information with this feedback.</p>
+        <form @submit.prevent="submitFeedback" class="mswd-feedback-form">
+          <div class="mswd-form-group">
+            <label for="category">Category:</label>
+            <select id="category" v-model="feedbackForm.category" required>
+              <option value="">Select a category</option>
+              <option value="general">General Feedback</option>
+              <option value="bug">Report a Bug</option>
+              <option value="feature">Feature Request</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="mswd-form-group">
+            <label for="message">Feedback:</label>
+            <textarea id="message" v-model="feedbackForm.message" required></textarea>
+          </div>
+          <div class="mswd-form-group">
+            <label>
+              <input type="checkbox" v-model="feedbackForm.termsAccepted" required>
+              I agree that this feedback does not contain any personal or sensitive information.
+            </label>
+          </div>
+          <button type="submit" class="mswd-button mswd-button-primary" :disabled="!feedbackForm.termsAccepted">
+            Submit Feedback
+          </button>
+        </form>
+        <button class="mswd-modal-close" @click="closeFeedback">&times;</button>
+      </div>
+    </div>
   </div>
 </template>
-<script>
-export default {
-  name: 'MswdLandingPage',
-  data() {
-    return {
-      isMenuOpen: false,
-      feedback: '',
-      services: [
-        {
-          icon: '📦',
-          title: 'Family Assistance Program',
-          description: 'Providing support to families in need through various assistance programs.'
-        },
-        {
-          icon: '👶',
-          title: 'Child Welfare Program',
-          description: 'Ensuring the protection and welfare of children in the community.'
-        },
-        {
-          icon: '👵',
-          title: 'Elderly Assistance Program',
-          description: 'Supporting the elderly population with healthcare, social services, and more.'
-        }
-      ],
-      contactInfo: [
-        {
-          icon: 'fas fa-map-marker-alt',
-          text: 'Poblacion, San Teodoro Oriental Mindoro'
-        },
-        {
-          icon: 'fas fa-phone-alt',
-          text: '09178906047'
-        },
-        {
-          icon: 'fas fa-envelope',
-          text: 'mswdosanteodorooffice@gmail.com'
-        }
-      ]
-    };
+
+<script setup>
+import { ref, reactive } from 'vue';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+
+const services = ref([
+  {
+    icon: 'mswd-icon-heart',
+    title: 'Support',
+    description: 'Providing essential assistance to those in need'
   },
-  methods: {
-    toggleMenu() {
-      this.isMenuOpen = !this.isMenuOpen;
-    },
-    submitFeedback() {
-      if (this.feedback.trim()) {
-        alert(`Thank you for your feedback: "${this.feedback}"`);
-        this.feedback = '';
-      } else {
-        alert('Please enter your feedback before submitting.');
-      }
-    }
+  {
+    icon: 'mswd-icon-users',
+    title: 'Community',
+    description: 'Building stronger, more resilient communities'
+  },
+  {
+    icon: 'mswd-icon-shield',
+    title: 'Protection',
+    description: 'Ensuring safety and well-being for all'
   }
-}
+]);
+const showFeedbackModal = ref(false);
+const feedbackForm = reactive({
+  category: '',
+  message: '',
+  termsAccepted: false
+});
+
+const openFeedback = () => {
+  showFeedbackModal.value = true;
+};
+
+const closeFeedback = () => {
+  showFeedbackModal.value = false;
+  resetFeedbackForm();
+};
+
+const resetFeedbackForm = () => {
+  feedbackForm.category = '';
+  feedbackForm.message = '';
+  feedbackForm.termsAccepted = false;
+};
+
+const submitFeedback = () => {
+  if (!feedbackForm.termsAccepted) {
+    alert('Please agree to the terms before submitting.');
+    return;
+  }
+
+  // Here you would typically send the feedback to a server
+  // Ensure to only send non-personal information
+  const feedbackData = {
+    category: feedbackForm.category,
+    message: feedbackForm.message,
+    timestamp: new Date().toISOString()
+  };
+
+  console.log('Feedback submitted:', feedbackData);
+  // In a real application, you would send this data to your server
+  // using a secure method, ensuring no personal data is transmitted
+
+  alert('Thank you for your feedback!');
+  closeFeedback();
+};
 </script>
-<style>
-/* Navbar */
-.navbar {
+
+<style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --primary-color: #2ecc71;
+  --primary-dark: #27ae60;
+  --primary-light: #a9dfbf;
+  --accent-color: #3498db;
+  --text-color: #333333;
+  --text-light: #777777;
+  --background-color: #f0f8f1;
+  --card-background: #ffffff;
+}
+
+.mswd-container {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--background-color) 0%, #e8f6e8 100%);
+  font-family: 'Poppins', sans-serif;
+  position: relative;
+}
+
+.mswd-content {
+  flex: 1;
+  display: flex;
+  justify-content: center;
   align-items: center;
-  padding: 0.5rem 1rem; /* Reduced padding */
-  background-color: white;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  position: fixed;
+  padding: 2rem;
+}
+
+.mswd-card {
+  background-color: var(--card-background);
+  border-radius: 20px;
+  padding: 3rem;
+  max-width: 600px;
   width: 100%;
-  top: 0;
-  left: 0;
-  z-index: 1000;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
 }
 
-.navbar-brand {
+.mswd-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+}
+
+.mswd-title {
+  font-size: 2.5rem;
+  color: var(--primary-color);
+  text-align: center;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.mswd-subtitle {
+  font-size: 1.2rem;
+  color: var(--text-light);
+  text-align: center;
+  margin-bottom: 2rem;
+  font-weight: 300;
+}
+
+.mswd-buttons {
   display: flex;
-  align-items: center;
-  gap: 0.5rem; /* Adjusted gap */
+  gap: 1rem;
+  margin-bottom: 2rem;
 }
 
-.logo-img {
-  width: 40px;
-}
-
-.brand-text {
-  font-size: 1rem;
-  font-weight: bold;
-}
-
-.navbar-links {
-  display: flex;
-  gap: 2rem;
-  margin-right: 2rem;
-}
-
-.navbar-links a {
-  text-decoration: none;
-  color: black;
+.mswd-button {
+  flex: 1;
+  padding: 1rem;
   font-size: 1rem;
   font-weight: 500;
-  transition: color 0.3s ease;
-}
-
-.navbar-links a:hover {
-  color: #3498db;
-}
-
-/* Banner Area */
-.banner {
-  margin-top: 3rem; /* Adjust based on navbar height */
-  padding: 2rem 0; /* Reduced padding */
-  background-image: url('');
-  background-size: cover;
-  background-position: center;
-  text-align: center;
-  color: white;
-}
-
-.banner h1 {
-  font-size: 3rem;
-  font-weight: bold;
-  margin-bottom: 1rem;
-}
-
-.banner p {
-  font-size: 1.25rem;
-  margin-bottom: 1rem;
-}
-
-/* Main Section */
-section {
-  padding: 3rem 1rem; /* Reduced padding */
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .navbar {
-    padding: 0.5rem; /* Smaller padding on mobile */
-  }
-
-  .navbar-brand {
-    gap: 0.5rem;
-  }
-
-  .logo-img {
-    width: 35px;
-  }
-
-  .brand-text {
-    font-size: 0.9rem;
-  }
-
-  .menu-toggle {
-    display: flex; /* Show menu toggle on smaller screens */
-  }
-
-  .navbar-links {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    background-color: #fff;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    padding: 1rem;
-    display: none;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .navbar-links.active {
-    display: flex;
-  }
-
-  .banner {
-    margin-top: 2rem; /* Adjust banner top margin on mobile */
-    padding: 1.5rem 0; /* Reduce banner padding on mobile */
-  }
-}
-
-
-.menu-toggle {
-  display: none;
-  flex-direction: column;
-  justify-content: space-around;
-  width: 30px;
-  height: 25px;
-  background: transparent;
   border: none;
+  border-radius: 50px;
   cursor: pointer;
-  padding: 0;
-  z-index: 10;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
 }
 
-.menu-toggle span {
-  width: 30px;
-  height: 3px;
-  background: #2c3e50;
-  border-radius: 10px;
-  transition: all 0.3s linear;
-  position: relative;
-  transform-origin: 1px;
+.mswd-button-primary {
+  background-color: var(--primary-color);
+  color: rgb(0, 0, 0);
 }
 
-.hero {
-  background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('C:\laragon\www\CAPSTONEFRONTEND\mswd\public\img\DSC01382-1080x675.jpg');
+.mswd-button-secondary {
+  background-color: white;
+  color: var(--primary-color);
+  border: 2px solid var(--primary-color);
+}
+
+.mswd-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(46, 204, 113, 0.3);
+}
+
+.mswd-button-primary:hover {
+  background-color: var(--primary-dark);
+}
+
+.mswd-button-secondary:hover {
+  background-color: var(--primary-light);
+  color: var(--primary-dark);
+}
+
+.mswd-icon {
+  margin-right: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.mswd-divider {
+  height: 2px;
+  background: linear-gradient(to right, var(--primary-light), var(--primary-color), var(--primary-light));
+  margin: 2rem 0;
+  border-radius: 2px;
+}
+
+.mswd-services {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1.5rem;
+}
+
+.mswd-service {
+  text-align: center;
+  padding: 1.5rem;
+  background-color: var(--primary-light);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.mswd-service:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(46, 204, 113, 0.2);
+}
+
+.mswd-service-icon {
+  font-size: 2.5rem;
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+}
+
+.mswd-icon-heart::before { content: '♥'; }
+.mswd-icon-users::before { content: '👥'; }
+.mswd-icon-shield::before { content: '🛡'; }
+
+.mswd-service-title {
+  font-size: 1.2rem;
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.mswd-service-description {
+  font-size: 0.9rem;
+  color: var(--text-light);
+  font-weight: 400;
+}
+
+.mswd-image {
+  flex: 1;
   background-size: cover;
   background-position: center;
-  color: white;
-  text-align: center;
-  padding: 150px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: relative;
+  overflow: hidden;
 }
 
-.hero-content {
-  max-width: 800px;
-  margin: 0 auto;
+.mswd-image::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(46, 204, 113, 0.8) 0%, rgba(39, 174, 96, 0.8) 100%);
 }
 
-.hero h1 {
-  font-size: 3.5rem;
-  margin-bottom: 1.5rem;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-  animation: fadeInDown 1s ease-out;
-}
-
-.hero p {
-  font-size: 1.5rem;
-  margin-bottom: 2rem;
-  animation: fadeInUp 1s ease-out 0.5s both;
-}
-
-.cta-button {
-  background-color: #3498db;
+.mswd-image-overlay {
+  position: relative;
+  padding: 3rem;
+  text-align: center;
   color: white;
+  max-width: 80%;
+}
+
+.mswd-image-title {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.mswd-image-description {
+  font-size: 1.2rem;
+  line-height: 1.6;
+  font-weight: 300;
+}
+
+.mswd-feedback-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 50px;
   padding: 15px 30px;
   font-size: 1.2rem;
-  border: none;
-  border-radius: 5px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.3s ease;
-  animation: fadeInUp 1s ease-out 1s both;
-}
-
-.cta-button:hover {
-  background-color: #2980b9;
-  transform: translateY(-3px);
-}
-.services {
-  background-color: #fff;
-  padding: 80px 20px;
-}
-
-.service-list {
+  transition: all 0.3s ease;
   display: flex;
-  justify-content: space-around;
-  flex-wrap: wrap;
-  gap: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
+  align-items: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.service {
-  flex: 1;
-  min-width: 250px;
-  max-width: 350px;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  padding: 2rem;
-  text-align: center;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.service:hover {
-  transform: translateY(-5px);
+.mswd-feedback-button:hover {
+  background-color: #2980b9;
+  transform: translateY(-2px) scale(1.05);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
-.service-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
+.mswd-feedback-icon {
+  margin-right: 0.5rem;
+  font-size: 1.4rem;
 }
 
-.service h3 {
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
-  color: #2c3e50;
-}
-
-.service p {
-  font-size: 1rem;
-  color: #666;
-}
-
-.contact {
-  background-color: #f8f9fa;
-  padding: 80px 20px;
-}
-
-.contact-info {
+/* Modal Styles */
+.mswd-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
-  flex-wrap: wrap;
-  gap: 2rem;
-  margin-top: 2rem;
-  max-width: 1200px;
-  margin: 2rem auto 0;
+  align-items: center;
+  z-index: 1000;
 }
 
-.contact-item {
+.mswd-modal {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 500px;
+  position: relative;
+}
+
+.mswd-modal-title {
+  font-size: 1.5rem;
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+}
+
+.mswd-feedback-form {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 1rem;
 }
 
-.contact-item i {
-  color: #3498db;
-  font-size: 1.5rem;
+.mswd-form-group {
+  display: flex;
+  flex-direction: column;
 }
 
-.footer {
-  background-color: #2c3e50;
-  color: white;
-  padding: 60px 20px;
-  margin-top: auto;
-}
-
-.feedback-form {
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.form-group {
-  margin-bottom: 1.5rem;
-}
-
-label {
-  display: block;
+.mswd-form-group label {
   margin-bottom: 0.5rem;
+  color: var(--text-color);
 }
 
-textarea {
-  width: 100%;
-  height: 120px;
-  padding: 10px;
-  font-size: 1rem;
+.mswd-form-group select,
+.mswd-form-group textarea {
+  padding: 0.5rem;
+  border: 1px solid var(--primary-light);
   border-radius: 5px;
-  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+
+.mswd-form-group textarea {
+  min-height: 100px;
   resize: vertical;
 }
 
-.submit-button {
-  background-color: #3498db;
-  color: white;
-  padding: 12px 24px;
+.mswd-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 1.5rem;
+  background: none;
   border: none;
-  border-radius: 5px;
-  font-size: 1.1rem;
   cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.3s ease;
+  color: var(--text-light);
 }
 
-.submit-button:hover {
-  background-color: #2980b9;
-  transform: translateY(-3px);
-}
-
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@media (max-width: 768px) {
-  .navbar {
-    flex-wrap: wrap;
-  }
-
-  .menu-toggle {
-    display: flex;
-  }
-
-  .navbar-links {
+@media (max-width: 960px) {
+  .mswd-container {
     flex-direction: column;
-    width: 100%;
-    display: none;
   }
 
-  .navbar-links.active {
-    display: flex;
+  .mswd-image {
+    min-height: 50vh;
+  }
+}
+
+@media (max-width: 600px) {
+  .mswd-card {
+    padding: 2rem;
   }
 
-  .nav-link {
-    width: 100%;
-    text-align: center;
-    padding: 0.75rem;
-  }
-
-  .hero h1 {
-    font-size: 2.5rem;
-  }
-
-  .hero p {
-    font-size: 1.2rem;
-  }
-
-  .service {
-    min-width: 100%;
-  }
-
-  .contact-item {
+  .mswd-buttons {
     flex-direction: column;
-    text-align: center;
+  }
+
+  .mswd-services {
+    grid-template-columns: 1fr;
+  }
+
+  .mswd-feedback-button {
+    bottom: 10px;
+    right: 10px;
+    font-size: 1rem;
+    padding: 10px 20px;
+  }
+
+  .mswd-modal {
+    width: 95%;
+    padding: 1.5rem;
   }
 }
 </style>

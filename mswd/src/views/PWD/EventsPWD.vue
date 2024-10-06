@@ -15,7 +15,6 @@
         <button class="logout-button" @click="logout">Sign Out</button>
       </div>
     </nav>
-
     <main class="main-content">
       <h1 class="title">MSWD Events</h1>
       <ul v-if="adminEvents.length" class="event-list">
@@ -102,11 +101,14 @@ export default {
 };
 </script>
 
+
 <style scoped>
 .app-container {
   font-family: Arial, sans-serif;
   background-color: #f0f4f8;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .navbar {
@@ -116,6 +118,11 @@ export default {
   justify-content: space-between;
   align-items: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
 }
 
 .navbar-brand {
@@ -170,6 +177,8 @@ export default {
   padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
+  margin-top: 80px; /* Add margin to push content below fixed navbar */
+  flex-grow: 1;
 }
 
 .title {
@@ -279,6 +288,10 @@ export default {
 
   .event-list {
     grid-template-columns: 1fr;
+  }
+
+  .main-content {
+    margin-top: 160px; /* Increase top margin for mobile to accommodate larger navbar */
   }
 }
 </style>

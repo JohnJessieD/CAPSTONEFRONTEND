@@ -15,6 +15,7 @@
         <button class="logout-button" @click="logout">Sign Out</button>
       </div>
     </nav>
+    <div class="spacer"></div>
 
     <main class="main-content">
       <h1 class="page-title">Persons with Disabilities (PWD) Office</h1>
@@ -23,13 +24,17 @@
         <section class="office-info">
           <h2 class="section-title">Welcome to the PWD Office</h2>
           <p class="description">This office provides support and services for individuals with disabilities. We're here to assist you with various needs and ensure your well-being.</p>
-          <button @click="openMembershipFormModal" class="action-button">Apply for Membership</button>
+          <button @click="openMembershipFormModal" class="action-button">
+            <span class="icon">📋</span> Apply for Membership
+          </button>
         </section>
 
         <section class="request-money">
           <h2 class="section-title">Request Financial Assistance</h2>
           <p class="description">If you need financial support, you can submit a request here. We'll review your application and get back to you as soon as possible.</p>
-          <button @click="openRequestModal" class="action-button">Make a Request</button>
+          <button @click="openRequestModal" class="action-button">
+            <span class="icon">💰</span> Make a Request
+          </button>
         </section>
 
         <section class="request-history">
@@ -38,22 +43,24 @@
             <div class="loading-spinner"></div>
             <p>Loading your request history...</p>
           </div>
-          <ul v-else-if="requestHistory.length > 0" class="request-list">
-            <li v-for="(request, index) in requestHistory" :key="index" class="request-item">
+          <div v-else-if="requestHistory.length > 0" class="request-list">
+            <div v-for="(request, index) in requestHistory" :key="index" class="request-item">
               <div class="request-details">
                 <span class="request-date">{{ formatDate(request.date) }}</span>
                 <p class="request-reason">{{ request.reason }}</p>
+                <span class="request-status" :class="request.status.toLowerCase()">{{ request.status }}</span>
+                <span class="request-amount">₱{{ request.amount.toLocaleString() }}</span>
               </div>
               <div class="request-actions">
-                <button @click="editRequest(index)" class="action-button edit-button">
+                <button @click="editRequest(index)" class="action-button edit-button" :disabled="request.status !== 'Pending'">
                   <span class="icon">✏️</span> Edit
                 </button>
-                <button @click="deleteRequest(index)" class="action-button delete-button">
+                <button @click="deleteRequest(index)" class="action-button delete-button" :disabled="request.status !== 'Pending'">
                   <span class="icon">🗑️</span> Delete
                 </button>
               </div>
-            </li>
-          </ul>
+            </div>
+          </div>
           <p v-else class="no-requests">You haven't made any requests yet.</p>
         </section>
       </div>
@@ -67,29 +74,34 @@
         <form @submit.prevent="submitMembershipForm" class="membership-form">
           <div class="form-group">
             <label for="name" class="form-label">Full Name:</label>
-            <input type="text" id="name" v-model="membershipFormData.name" required class="form-input">
+            <input type="text" id="name" v-model="membershipFormData.name" required class="form-input" />
           </div>
           
           <div class="form-group">
             <label for="dob" class="form-label">Date of Birth:</label>
-            <input type="date" id="dob" v-model="membershipFormData.dob" required class="form-input">
+            <input type="date" id="dob" v-model="membershipFormData.dob" required class="form-input" />
           </div>
           
           <div class="form-group">
             <label for="sickness" class="form-label">Disability or Medical Condition:</label>
-            <input type="text" id="sickness" v-model="membershipFormData.sickness" required class="form-input">
+            <input type="text" id="sickness" v-model="membershipFormData.sickness" required class="form-input" />
           </div>
           
           <div class="form-group">
             <label for="certificate" class="form-label">Copy of Certificate:</label>
-            <input type="file" id="certificate" @change="handleCertificateUpload" class="form-input file-input">
+            <input type="file" id="certificate" @change="handleCertificateUpload" required class="form-input file-input" />
           </div>
 
           <div class="form-actions">
-            <button type="submit" class="action-button submit-button">Submit Application</button>
-            <button type="button" class="action-button cancel-button" @click="closeMembershipFormModal">Cancel</button>
+            <button type="submit" class="action-button submit-button">
+              <span class="icon">📤</span> Submit Application
+            </button>
+            <button type="button" class="action-button cancel-button" @click="closeMembershipFormModal">
+              <span class="icon">❌</span> Cancel
+            </button>
           </div>
         </form>
+        <p v-if="membershipError" class="error-message">{{ membershipError }}</p>
       </div>
     </div>
 
@@ -103,9 +115,17 @@
             <label for="reason" class="form-label">Reason for Request:</label>
             <textarea id="reason" v-model="formData.reason" required class="form-input" rows="4"></textarea>
           </div>
+          <div class="form-group">
+            <label for="amount" class="form-label">Amount Requested (PHP):</label>
+            <input type="number" id="amount" v-model="formData.amount" required class="form-input" min="0" step="100" />
+          </div>
           <div class="form-actions">
-            <button type="submit" class="action-button submit-button">Submit Request</button>
-            <button type="button" class="action-button cancel-button" @click="closeRequestModal">Cancel</button>
+            <button type="submit" class="action-button submit-button">
+              <span class="icon">📤</span> Submit Request
+            </button>
+            <button type="button" class="action-button cancel-button" @click="closeRequestModal">
+              <span class="icon">❌</span> Cancel
+            </button>
           </div>
         </form>
       </div>
@@ -121,9 +141,17 @@
             <label for="edit-reason" class="form-label">Reason:</label>
             <textarea id="edit-reason" v-model="editFormData.reason" required class="form-input" rows="4"></textarea>
           </div>
+          <div class="form-group">
+            <label for="edit-amount" class="form-label">Amount Requested (PHP):</label>
+            <input type="number" id="edit-amount" v-model="editFormData.amount" required class="form-input" min="0" step="100" />
+          </div>
           <div class="form-actions">
-            <button type="submit" class="action-button submit-button">Update Request</button>
-            <button type="button" class="action-button cancel-button" @click="closeEditModal">Cancel</button>
+            <button type="submit" class="action-button submit-button">
+              <span class="icon">💾</span> Update Request
+            </button>
+            <button type="button" class="action-button cancel-button" @click="closeEditModal">
+              <span class="icon">❌</span> Cancel
+            </button>
           </div>
         </form>
       </div>
@@ -140,9 +168,11 @@ export default {
     return {
       formData: {
         reason: '',
+        amount: 0,
       },
       editFormData: {
         reason: '',
+        amount: 0,
         index: null,
       },
       membershipFormData: {
@@ -157,6 +187,7 @@ export default {
       isRequestModalActive: false,
       isEditModalActive: false,
       isMembershipFormModalActive: false,
+      membershipError: null,
     };
   },
   methods: {
@@ -167,8 +198,10 @@ export default {
           this.requestHistory.unshift({
             date: new Date(),
             reason: this.formData.reason,
+            amount: this.formData.amount,
+            status: 'Pending',
           });
-          this.formData = { reason: '' };
+          this.formData = { reason: '', amount: 0 };
           this.error = null;
           this.closeRequestModal();
         })
@@ -180,7 +213,10 @@ export default {
     fetchRequestHistory() {
       axios.get('/api/PWD')
         .then(response => {
-          this.requestHistory = response.data;
+          this.requestHistory = response.data.map(request => ({
+            ...request,
+            status: request.status || 'Pending',
+          }));
           this.isLoading = false;
         })
         .catch(error => {
@@ -194,10 +230,11 @@ export default {
         .then(response => {
           console.log(response.data);
           this.requestHistory[index] = {
-            date: new Date(),
+            ...this.requestHistory[index],
             reason: this.editFormData.reason,
+            amount: this.editFormData.amount,
           };
-          this.editFormData = { reason: '', index: null };
+          this.editFormData = { reason: '', amount: 0, index: null };
           this.closeEditModal();
         })
         .catch(error => {
@@ -216,41 +253,69 @@ export default {
           })
           .catch(error => {
             console.error(error);
+            this.error = 'Failed to delete the request.';
           });
       }
-    },
-    editRequest(index) {
-      this.editFormData.reason = this.requestHistory[index].reason;
-      this.editFormData.index = index;
-      this.isEditModalActive = true;
     },
     openRequestModal() {
       this.isRequestModalActive = true;
     },
     closeRequestModal() {
       this.isRequestModalActive = false;
+      this.formData = { reason: '', amount: 0 };
+      this.error = null;
+    },
+    editRequest(index) {
+      this.editFormData = { 
+        reason: this.requestHistory[index].reason, 
+        amount: this.requestHistory[index].amount,
+        index 
+      };
+      this.isEditModalActive = true;
     },
     closeEditModal() {
       this.isEditModalActive = false;
+      this.editFormData = { reason: '', amount: 0, index: null };
     },
     openMembershipFormModal() {
       this.isMembershipFormModalActive = true;
     },
     closeMembershipFormModal() {
       this.isMembershipFormModalActive = false;
+      this.membershipFormData = { name: '', dob: '', sickness: '', certificate: null };
+      this.membershipError = null;
     },
     submitMembershipForm() {
-      // Implement form submission logic here
-      console.log('Membership form submitted:', this.membershipFormData);
-      this.closeMembershipFormModal();
+      const formData = new FormData();
+      formData.append('name', this.membershipFormData.name);
+      formData.append('dob', this.membershipFormData.dob);
+      formData.append('sickness', this.membershipFormData.sickness);
+      if (this.membershipFormData.certificate) {
+        formData.append('certificate', this.membershipFormData.certificate);
+      }
+
+      axios.post('http://localhost:8080/api/membership', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+      .then(response => {
+        console.log(response.data);
+        this.membershipFormData = { name: '', dob: '', sickness: '', certificate: null };
+        this.closeMembershipFormModal();
+      })
+      .catch(error => {
+        if (error.response && error.response.data) {
+          this.membershipError = error.response.data.message || 'An error occurred.';
+        } else {
+          this.membershipError = 'An unexpected error occurred. Please try again.';
+        }
+        console.error(error);
+      });
     },
     handleCertificateUpload(event) {
       const file = event.target.files[0];
       this.membershipFormData.certificate = file;
-    },
-    logout() {
-      // Implement logout logic here
-      this.$router.push('/');
     },
     formatDate(date) {
       return new Date(date).toLocaleDateString('en-US', {
@@ -260,7 +325,10 @@ export default {
         hour: '2-digit',
         minute: '2-digit'
       });
-    }
+    },
+    logout() {
+      this.$router.push('/');
+    },
   },
   mounted() {
     this.fetchRequestHistory();
@@ -355,15 +423,23 @@ export default {
 
 .office-info, .request-money, .request-history {
   background-color: white;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 2rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.office-info:hover, .request-money:hover, .request-history:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
 .section-title {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   color: #004d7a;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #004d7a;
+  padding-bottom: 0.5rem;
 }
 
 .description {
@@ -373,48 +449,95 @@ export default {
 }
 
 .action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background-color: #004d7a;
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s, transform 0.3s;
   font-size: 1rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .action-button:hover {
   background-color: #003a5c;
+  transform: translateY(-2px);
+}
+
+.action-button:active {
+  transform: translateY(0);
 }
 
 .request-list {
-  list-style: none;
-  padding: 0;
+  display: grid;
+  gap: 1rem;
 }
 
 .request-item {
-  border-bottom: 1px solid #e0e0e0;
-  padding: 1rem 0;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background-color 0.3s;
 }
 
-.request-item:last-child {
-  border-bottom: none;
+.request-item:hover {
+  background-color: #e9ecef;
 }
 
 .request-date {
   font-size: 0.9rem;
-  color: #666;
+  color: #6c757d;
+  display: block;
+  margin-bottom: 0.5rem;
 }
 
 .request-reason {
   margin: 0.5rem 0;
   color: #333;
+  font-weight: 500;
+}
+
+.request-status {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.request-status.pending {
+  background-color: #ffc107;
+  color: #000;
+}
+
+.request-status.approved {
+  background-color: #28a745;
+  color: #fff;
+}
+
+.request-status.rejected {
+  background-color: #dc3545;
+  color: #fff;
+}
+
+.request-amount {
+  font-weight: bold;
+  color: #004d7a;
 }
 
 .request-actions {
   display: flex;
   gap: 0.5rem;
-  margin-top: 0.5rem;
 }
 
 .edit-button, .delete-button {
@@ -459,18 +582,19 @@ export default {
 
 .modal-container {
   background-color: white;
-  border-radius: 8px;
-  padding: 2rem;
+  border-radius: 12px;
+  padding: 2.5rem;
   width: 90%;
   max-width: 500px;
   z-index: 1001;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
 }
 
 .modal-title {
-  font-size: 1.5rem;
+  font-size: 2rem;
   color: #004d7a;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  text-align: center;
 }
 
 .form-group {
@@ -481,37 +605,43 @@ export default {
   display: block;
   margin-bottom: 0.5rem;
   color: #333;
+  font-weight: 500;
 }
 
 .form-input {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  border: 2px solid #ccc;
+  border-radius: 8px;
   font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #004d7a;
+}
+
+.file-input {
+  padding: 0.5rem 0;
 }
 
 .form-actions {
   display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 1.5rem;
+  justify-content: space-between;
+  margin-top: 2rem;
 }
 
-.submit-button {
-  background-color: #4caf50;
+.submit-button, .cancel-button {
+  flex: 1;
+  margin: 0 0.5rem;
 }
 
-.submit-button:hover {
-  background-color: #45a049;
-}
-
-.cancel-button {
-  background-color: #f44336;
-}
-
-.cancel-button:hover {
-  background-color: #da190b;
+.error-message {
+  color: #dc3545;
+  margin-top: 1rem;
+  text-align: center;
+  font-weight: 500;
 }
 
 .loading {
@@ -539,9 +669,14 @@ export default {
   color: #666;
   font-style: italic;
 }
+.spacer {
+    width: 100%; /* Full width by default */
+    height: 50px; /* Default height */
+}
 
 .icon {
   margin-right: 0.5rem;
+  font-size: 1.2rem;
 }
 
 @media (max-width: 768px) {
@@ -573,6 +708,16 @@ export default {
 
   .modal-container {
     width: 95%;
+    padding: 2rem;
+  }
+
+  .form-actions {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .submit-button, .cancel-button {
+    margin: 0;
   }
 }
 </style>

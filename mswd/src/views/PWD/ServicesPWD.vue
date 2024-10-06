@@ -15,6 +15,7 @@
         <button class="logout-button" @click="logout">Sign Out</button>
       </div>
     </nav>
+    <div class="spacer"></div>
 
     <main class="main-content">
       <h1 class="page-title">MSWD Services</h1>
@@ -281,6 +282,17 @@ export default {
   .nav-link {
     margin-bottom: 0.5rem;
   }
+  .spacer {
+  width: 100%;
+  height: 20px; /* Default height for desktop */
+}
+
+@media (max-width: 768px) {
+  .spacer {
+    height: 10px; /* Reduced height for mobile */
+  }
+}
+
 
   .page-title {
     font-size: 2rem;

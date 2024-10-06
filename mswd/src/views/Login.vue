@@ -1,69 +1,95 @@
 <template>
   <v-app>
-    <v-container class="login-container" fluid fill-height>
-      <v-row justify="center" align="center">
-        <v-col cols="12" sm="8" md="6" lg="4">
-          <v-card class="login-card" elevation="10">
-            <v-img
-              src="/placeholder.svg?height=100&width=100"
-              alt="Logo"
-              class="mx-auto mt-6"
-              max-width="100"
-            ></v-img>
-            <v-card-title class="title text-h4 font-weight-bold">Welcome Back</v-card-title>
-            <v-card-subtitle class="sub-title text-subtitle-1">Please login to your account</v-card-subtitle>
-            <v-card-text class="form">
-              <v-form @submit.prevent="login" ref="form" v-model="valid" lazy-validation>
-                <v-text-field
-                  v-model="username"
-                  :rules="usernameRules"
-                  label="Username"
-                  prepend-icon="mdi-account"
-                  outlined
-                  dense
-                  color="primary"
-                  required
-                ></v-text-field>
-                <v-text-field
-                  v-model="password"
-                  :rules="passwordRules"
-                  label="Password"
-                  prepend-icon="mdi-lock"
-                  :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                  :type="showPassword ? 'text' : 'password'"
-                  @click:append="showPassword = !showPassword"
-                  outlined
-                  dense
-                  color="primary"
-                  required
-                ></v-text-field>
-                <v-btn
-                  type="submit"
-                  block
-                  class="login-button mt-6"
-                  :loading="loading"
-                  :disabled="!valid || loading"
-                >
-                  Login
-                </v-btn>
-              </v-form>
-            </v-card-text>
-            <v-card-actions class="justify-center">
-              <router-link to="/forgot-password" class="forgot-password">Forgot Password?</router-link>
-            </v-card-actions>
-            <v-card-actions class="justify-center">
-              <router-link to="/RegisterComponent" class="register-link">Don't have an account? Register here</router-link>
-            </v-card-actions>
-            <v-snackbar v-model="snackbar" :color="snackbarColor" :timeout="4000" top>
-              {{ message }}
-              <template v-slot:action="{ attrs }">
-                <v-btn text v-bind="attrs" @click="snackbar = false">Close</v-btn>
-              </template>
-            </v-snackbar>
-          </v-card>
-        </v-col>
-      </v-row>
-    </v-container>
+    <v-row no-gutters class="fill-height">
+      <!-- Image Section -->
+      <v-col cols="12" md="6" class="d-none d-md-flex login-image-col">
+        <v-img
+          src="/placeholder.svg?height=1080&width=1080"
+          aspect-ratio="1"
+          class="login-image"
+          alt="MSWD Community Support"
+        >
+          <div class="image-overlay d-flex flex-column justify-center align-center text-center pa-6">
+            <v-avatar size="120" class="mb-6">
+              <v-img src="/placeholder.svg?height=120&width=120" alt="MSWD Logo"></v-img>
+            </v-avatar>
+            <h1 class="text-h2 font-weight-bold white--text mb-4">Welcome to MSWD</h1>
+            <p class="text-h6 white--text">Empowering communities, one login at a time.</p>
+          </div>
+        </v-img>
+      </v-col>
+
+      <!-- Login Form Section -->
+      <v-col cols="12" md="6" class="d-flex align-center justify-center login-form-col">
+        <v-sheet class="login-form pa-8" rounded elevation="0" max-width="500" width="100%">
+          <h2 class="text-h4 font-weight-bold text-center mb-6 primary--text">Welcome Back</h2>
+          <p class="text-subtitle-1 text-center mb-8 secondary--text">
+            Please login to your account
+          </p>
+          <v-form @submit.prevent="login" ref="form" v-model="valid" lazy-validation>
+            <v-text-field
+              v-model="username"
+              :rules="usernameRules"
+              label="Username"
+              prepend-inner-icon="mdi-account"
+              required
+              filled
+              rounded
+              dense
+              color="primary"
+              class="mb-4"
+            ></v-text-field>
+            
+            <v-text-field
+              v-model="password"
+              :rules="passwordRules"
+              label="Password"
+              prepend-inner-icon="mdi-lock"
+              :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+              :type="showPassword ? 'text' : 'password'"
+              @click:append="showPassword = !showPassword"
+              required
+              filled
+              rounded
+              dense
+              color="primary"
+              class="mb-6"
+            ></v-text-field>
+            
+            <v-btn
+              type="submit"
+              block
+              x-large
+              rounded
+              class="mt-6 custom-btn"
+              color="primary"
+              :loading="loading"
+              :disabled="!valid || loading"
+            >
+              <v-icon left>mdi-login</v-icon>
+              Login
+            </v-btn>
+          </v-form>
+          <div class="text-center mt-6">
+            <v-btn text color="primary" to="/forgot-password" class="text-body-2 mb-2">
+              Forgot Password?
+            </v-btn>
+            <br>
+            <v-btn text color="primary" to="/RegisterComponent" class="text-body-2">
+              Don't have an account? Register here
+            </v-btn>
+          </div>
+        </v-sheet>
+      </v-col>
+    </v-row>
+
+    <!-- Snackbar Notification -->
+    <v-snackbar v-model="snackbar" :color="snackbarColor" :timeout="4000" top>
+      {{ message }}
+      <template v-slot:action="{ attrs }">
+        <v-btn text v-bind="attrs" @click="snackbar = false">Close</v-btn>
+      </template>
+    </v-snackbar>
   </v-app>
 </template>
 
@@ -86,7 +112,7 @@ export default {
     ],
     passwordRules: [
       v => !!v || 'Password is required',
-      v => v.length >= 6 || 'Password must be at least 6 characters',
+      v => v.length >= 5 || 'Password must be at least 5 characters',
     ],
   }),
   methods: {
@@ -154,88 +180,60 @@ export default {
 </script>
 
 <style scoped>
-.v-application {
-  background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
-}
-
-.login-container {
+.fill-height {
   height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
-.login-card {
+.login-image-col {
+  background-color: #4caf50;
+}
+
+.login-image {
+  height: 100%;
+}
+
+.image-overlay {
+  background-color: rgba(76, 175, 80, 0.8);
+  height: 100%;
+}
+
+.login-form-col {
+  background: linear-gradient(135deg, #f1f8e9 0%, #c8e6c9 100%);
+}
+
+.login-form {
+  background-color: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
   border-radius: 16px;
-  overflow: hidden;
-  transition: all 0.3s ease;
 }
 
-.login-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
-}
-
-.title {
-  text-align: center;
-  color: #4caf50;
-  margin-bottom: 8px;
-  font-size: 28px;
-  font-weight: 700;
-}
-
-.sub-title {
-  text-align: center;
-  color: #757575;
-  margin-bottom: 24px;
-  font-size: 16px;
-}
-
-.form {
-  padding: 0 32px;
-}
-
-.login-button {
-  margin-top: 24px;
-  background-color: #4caf50 !important;
-  color: #fff !important;
+.custom-btn {
+  text-transform: none;
+  font-size: 18px;
   font-weight: 600;
-  letter-spacing: 1px;
-  text-transform: uppercase;
+  letter-spacing: 0.5px;
   transition: all 0.3s ease;
 }
 
-.login-button:hover {
-  background-color: #45a049 !important;
+.custom-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.forgot-password,
-.register-link {
-  text-align: center;
-  margin-top: 16px;
-  color: #4caf50;
-  text-decoration: none;
-  display: inline-block;
-  font-weight: 500;
-  transition: color 0.3s ease;
+.v-text-field >>> .v-input__slot,
+.v-select >>> .v-input__slot {
+  border-radius: 28px;
 }
 
-.forgot-password:hover,
-.register-link:hover {
-  color: #45a049;
+.v-text-field >>> .v-label,
+.v-select >>> .v-label {
+  font-size: 14px;
 }
 
-.v-text-field >>> .v-input__slot {
-  background-color: #f5f5f5 !important;
-}
-
-.v-text-field >>> .v-label {
-  color: #757575;
-}
-
-.v-text-field >>> .v-input__icon {
-  color: #4caf50;
+@media (max-width: 960px) {
+  .login-form {
+    border-radius: 0;
+    height: 100%;
+  }
 }
 </style>

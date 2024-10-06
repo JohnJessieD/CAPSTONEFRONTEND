@@ -1,83 +1,113 @@
 <template>
   <v-app>
-    <v-container fluid fill-height class="background">
-      <v-row align="center" justify="center">
-        <v-col cols="12" sm="8" md="6" lg="4">
-          <v-card class="registration-card" elevation="10">
-            <v-card-title class="text-h4 font-weight-bold text-center mb-4">
-              MSWD Registration
-            </v-card-title>
-            <v-card-subtitle class="text-subtitle-1 text-center mb-6">
-              Welcome to MSWD registration portal. Please fill out the form below to create your account.
-            </v-card-subtitle>
-            <v-card-text>
-              <v-form @submit.prevent="register" ref="form" v-model="valid" lazy-validation>
-                <v-text-field
-                  v-model="username"
-                  :rules="usernameRules"
-                  label="Username"
-                  prepend-icon="mdi-account"
-                  required
-                  outlined
-                  dense
-                ></v-text-field>
-                
-                <v-select
-                  v-model="selectedCategory"
-                  :items="categories"
-                  :rules="[v => !!v || 'Category is required']"
-                  label="Category"
-                  prepend-icon="mdi-format-list-bulleted"
-                  required
-                  outlined
-                  dense
-                ></v-select>
-                
-                <v-text-field
-                  v-model="password"
-                  :rules="passwordRules"
-                  label="Password"
-                  prepend-icon="mdi-lock"
-                  :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                  :type="showPassword ? 'text' : 'password'"
-                  @click:append="showPassword = !showPassword"
-                  required
-                  outlined
-                  dense
-                ></v-text-field>
-                
-                <v-text-field
-                  v-model="passwordConfirm"
-                  :rules="[v => v === password || 'Passwords do not match']"
-                  label="Confirm Password"
-                  prepend-icon="mdi-lock-check"
-                  :type="showPassword ? 'text' : 'password'"
-                  required
-                  outlined
-                  dense
-                ></v-text-field>
-                
-                <v-btn
-                  type="submit"
-                  block
-                  class="mt-6 custom-btn"
-                  color="primary"
-                  :loading="loading"
-                  :disabled="!valid || loading"
-                >
-                  Register
-                </v-btn>
-              </v-form>
-            </v-card-text>
-            <v-card-actions class="justify-center">
-              <v-btn text color="primary" to="/Login" class="text-caption">
-                Already have an account? Login here
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-col>
-      </v-row>
-    </v-container>
+    <v-row no-gutters class="fill-height">
+      <!-- Image Section -->
+      <v-col cols="12" md="6" class="d-none d-md-flex registration-image-col">
+        <v-img
+          src="/placeholder.svg?height=1080&width=1080"
+          aspect-ratio="1"
+          class="registration-image"
+          alt="MSWD Community Support"
+        >
+          <div class="image-overlay d-flex flex-column justify-center align-center text-center pa-6">
+            <v-avatar size="120" class="mb-6">
+              <v-img src="/placeholder.svg?height=120&width=120" alt="MSWD Logo"></v-img>
+            </v-avatar>
+            <h1 class="text-h2 font-weight-bold white--text mb-4">Welcome to MSWD</h1>
+            <p class="text-h6 white--text">Empowering communities, one registration at a time.</p>
+          </div>
+        </v-img>
+      </v-col>
+
+      <!-- Registration Form Section -->
+      <v-col cols="12" md="6" class="d-flex align-center justify-center registration-form-col">
+        <v-sheet class="registration-form pa-8" rounded elevation="0" max-width="500" width="100%">
+          <h2 class="text-h4 font-weight-bold text-center mb-6 primary--text">MSWD Registration</h2>
+          <p class="text-subtitle-1 text-center mb-8 secondary--text">
+            Create your account to access MSWD services
+          </p>
+          <v-form @submit.prevent="register" ref="form" v-model="valid" lazy-validation>
+            <v-text-field
+              v-model="username"
+              :rules="usernameRules"
+              label="Username"
+              prepend-inner-icon="mdi-account"
+              required
+              filled
+              rounded
+              dense
+              color="primary"
+              class="mb-4"
+            ></v-text-field>
+            
+            <v-select
+              v-model="selectedCategory"
+              :items="categories"
+              :rules="[v => !!v || 'Category is required']"
+              label="Category"
+              prepend-inner-icon="mdi-format-list-bulleted"
+              required
+              filled
+              rounded
+              dense
+              color="primary"
+              class="mb-4"
+            ></v-select>
+            
+            <v-text-field
+              v-model="password"
+              :rules="passwordRules"
+              label="Password"
+              prepend-inner-icon="mdi-lock"
+              :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+              :type="showPassword ? 'text' : 'password'"
+              @click:append="showPassword = !showPassword"
+              required
+              filled
+              rounded
+              dense
+              color="primary"
+              class="mb-4"
+            ></v-text-field>
+            
+            <v-text-field
+              v-model="passwordConfirm"
+              :rules="[v => v === password || 'Passwords do not match']"
+              label="Confirm Password"
+              prepend-inner-icon="mdi-lock-check"
+              :type="showPassword ? 'text' : 'password'"
+              required
+              filled
+              rounded
+              dense
+              color="primary"
+              class="mb-6"
+            ></v-text-field>
+            
+            <v-btn
+              type="submit"
+              block
+              x-large
+              rounded
+              class="mt-6 custom-btn"
+              color="primary"
+              :loading="loading"
+              :disabled="!valid || loading"
+            >
+              <v-icon left>mdi-account-plus</v-icon>
+              Register
+            </v-btn>
+          </v-form>
+          <div class="text-center mt-6">
+            <v-btn text color="primary" to="/Login" class="text-body-2">
+              Already have an account? Login here
+            </v-btn>
+          </div>
+        </v-sheet>
+      </v-col>
+    </v-row>
+
+    <!-- Snackbar Notification -->
     <v-snackbar v-model="snackbar" :color="snackbarColor" :timeout="4000" top>
       {{ message }}
       <template v-slot:action="{ attrs }">
@@ -110,7 +140,11 @@ export default {
       ],
       passwordRules: [
         v => !!v || 'Password is required',
-        v => v.length >= 6 || 'Password must be at least 6 characters',
+        v => v.length >= 8 || 'Password must be at least 8 characters',
+        v => /\d/.test(v) || 'Password must contain at least one number',
+        v => /[A-Z]/.test(v) || 'Password must contain at least one uppercase letter',
+        v => /[a-z]/.test(v) || 'Password must contain at least one lowercase letter',
+        v => /[!@#$%^&*(),.?":{}|<>]/.test(v) || 'Password must contain at least one special character',
       ],
     };
   },
@@ -151,60 +185,60 @@ export default {
 </script>
 
 <style scoped>
-.background {
-  background: linear-gradient(135deg, #91a79b 0%, #6b8e7d 100%);
-  min-height: 100vh;
+.fill-height {
+  height: 100vh;
 }
 
-.registration-card {
+.registration-image-col {
+  background-color: #4caf50;
+}
+
+.registration-image {
+  height: 100%;
+}
+
+.image-overlay {
+  background-color: rgba(76, 175, 80, 0.8);
+  height: 100%;
+}
+
+.registration-form-col {
+  background-color: #f1f8e9;
+}
+
+.registration-form {
+  background-color: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
   border-radius: 16px;
-  overflow: hidden;
-  transition: all 0.3s ease;
-}
-
-.registration-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
-}
-
-.v-card__title {
-  color: #2e7d32;
-  font-size: 28px !important;
-  font-weight: 700 !important;
-}
-
-.v-card__subtitle {
-  color: #4caf50;
-  font-size: 16px !important;
 }
 
 .custom-btn {
-  background-color: #4caf50 !important;
-  color: #ffffff !important;
+  text-transform: none;
+  font-size: 18px;
   font-weight: 600;
-  letter-spacing: 1px;
-  text-transform: uppercase;
+  letter-spacing: 0.5px;
   transition: all 0.3s ease;
 }
 
 .custom-btn:hover {
-  background-color: #45a049 !important;
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .v-text-field >>> .v-input__slot,
 .v-select >>> .v-input__slot {
-  background-color: #f5f5f5 !important;
+  border-radius: 28px;
 }
 
 .v-text-field >>> .v-label,
 .v-select >>> .v-label {
-  color: #757575;
+  font-size: 14px;
 }
 
-.v-text-field >>> .v-input__icon,
-.v-select >>> .v-input__icon {
-  color: #4caf50;
+@media (max-width: 960px) {
+  .registration-form {
+    border-radius: 0;
+    height: 100%;
+  }
 }
 </style>
