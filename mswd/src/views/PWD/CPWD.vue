@@ -12,7 +12,6 @@
       <router-link to="/EventsPWD" class="nav-link">Upcoming Events</router-link>
       <router-link to="/ServicesPWD" class="nav-link">Services</router-link>
       <router-link to="/publicationsPWD" class="nav-link">Publications</router-link>
-      <router-link to="/CPWD" class="nav-link">Contact Us</router-link>
       <button class="logout-button" @click="logout">Sign Out</button>
     </div>
   </nav>

@@ -1,25 +1,16 @@
 <template>
   <div :class="['app-container', { 'dark-mode': isDarkMode }]">
     <nav class="navbar">
-      <div class="navbar-container">
-        <div class="navbar-brand">
-          <img src="@/assets/logo.png" class="logo-img" alt="MSWD Logo" />
-          <span class="brand-text">Municipal SWD</span>
-        </div>
-        <button class="menu-toggle" @click="toggleMenu" aria-label="Toggle menu">
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
-        <div :class="['navbar-links', { 'active': isMenuOpen }]">
-          <router-link to="/templatep" class="nav-link">Home</router-link>
-          <router-link to="/Pwd" class="nav-link">Assistance</router-link>
-          <router-link to="/EventsPWD" class="nav-link">Events</router-link>
-          <router-link to="/ServicesPWD" class="nav-link">Services</router-link>
-          <router-link to="/publicationsPWD" class="nav-link">Publications</router-link>
-          <router-link to="/Status" class="nav-link">Status</router-link>
-          <button class="logout-button" @click="logout">Sign Out</button>
-        </div>
+      <div class="navbar-brand">
+        <img src="/img/Download.jpg" class="logo-img" alt="Government Logo" />
+        <span class="brand-text">Welcome to Municipal SWD!</span>
+      </div>
+      <div class="navbar-links">
+        <router-link to="/Pwd" class="nav-link">Assistance</router-link>
+        <router-link to="/EventsPWD" class="nav-link">Upcoming Events</router-link>
+        <router-link to="/ServicesPWD" class="nav-link">Services</router-link>
+        <router-link to="/publicationsPWD" class="nav-link">Publications</router-link>
+        <button class="logout-button" @click="logout">Sign Out</button>
       </div>
     </nav>
 
@@ -176,92 +167,67 @@
 </template>
 
 <script>
-import { ref, computed } from 'vue'
-
 export default {
-  name: 'ModernizedHomepage',
-  setup() {
-    const isDarkMode = ref(false)
-    const isMenuOpen = ref(false)
-    const contactForm = ref({
-      name: '',
-      email: '',
-      message: ''
-    })
-
-    const services = [
-      { title: 'Persons with Disabilities (PWDs)', description: 'Support and services for individuals with disabilities', icon: '👥', color: '#4CAF50' },
-      { title: 'Solo Parents', description: 'Assistance programs for single parents', icon: '❤️', color: '#2196F3' },
-      { title: 'Senior Citizens', description: 'Care and support for our elderly community members', icon: '👴', color: '#FFC107' },
-      { title: 'Daycare Services', description: 'Early childhood care and development programs', icon: '📚', color: '#9C27B0' },
-    ]
-
-    const coreValues = [
-      { title: 'Service Excellence', description: 'Committed to providing the highest quality of service', icon: '🌟' },
-      { title: 'Community Empowerment', description: 'Enabling individuals and communities to thrive', icon: '💪' },
-      { title: 'Transparency', description: 'Open and honest in all our operations', icon: '🔍' },
-      { title: 'Social Justice', description: 'Promoting fairness and equality for all', icon: '⚖️' },
-    ]
-
-    const objectives = [
-      'Provide accessible social welfare services to all community members',
-      'Promote the well-being and empowerment of marginalized sectors',
-      'Implement government programs for social development effectively',
-      'Foster partnerships for sustainable community development',
-    ]
-
-    const featuredPrograms = [
-      { title: 'Livelihood Assistance', description: 'Supporting individuals in starting small businesses', image: '/placeholder.svg?height=200&width=300', link: '#' },
-      { title: 'Healthcare Subsidies', description: 'Providing financial assistance for medical needs', image: '/placeholder.svg?height=200&width=300', link: '#' },
-      { title: 'Education Support', description: 'Scholarships and educational assistance for students', image: '/placeholder.svg?height=200&width=300', link: '#' },
-    ]
-
-    const newsUpdates = [
-      { title: 'New Community Center Opens', date: '2024-05-15', excerpt: 'A state-of-the-art community center has been inaugurated...', image: '/placeholder.svg?height=200&width=300', link: '#' },
-      { title: 'Successful Health Camp', date: '2024-05-10', excerpt: 'Over 500 residents benefited from our recent health camp...', image: '/placeholder.svg?height=200&width=300', link: '#' },
-      { title: 'Youth Skills Program Launch', date: '2024-05-05', excerpt: 'A new program aimed at developing skills among the youth...', image: '/placeholder.svg?height=200&width=300', link: '#' },
-    ]
-
-    const currentYear = computed(() => new Date().getFullYear())
-
-    const toggleDarkMode = () => {
-      isDarkMode.value = !isDarkMode.value
+  name: 'IntegratedMSWDHomepage',
+  data() {
+    return {
+      isDarkMode: false,
+      contactForm: {
+        name: '',
+        email: '',
+        message: ''
+      },
+      services: [
+        { title: 'Persons with Disabilities (PWDs)', description: 'Support and services for individuals with disabilities', icon: '👥', color: '#4CAF50' },
+        { title: 'Solo Parents', description: 'Assistance programs for single parents', icon: '❤️', color: '#2196F3' },
+        { title: 'Senior Citizens', description: 'Care and support for our elderly community members', icon: '👴', color: '#FFC107' },
+        { title: 'Daycare Services', description: 'Early childhood care and development programs', icon: '📚', color: '#9C27B0' },
+      ],
+      coreValues: [
+        { title: 'Service Excellence', description: 'Committed to providing the highest quality of service', icon: '🌟' },
+        { title: 'Community Empowerment', description: 'Enabling individuals and communities to thrive', icon: '💪' },
+        { title: 'Transparency', description: 'Open and honest in all our operations', icon: '🔍' },
+        { title: 'Social Justice', description: 'Promoting fairness and equality for all', icon: '⚖️' },
+      ],
+      objectives: [
+        'Provide accessible social welfare services to all community members',
+        'Promote the well-being and empowerment of marginalized sectors',
+        'Implement government programs for social development effectively',
+        'Foster partnerships for sustainable community development',
+      ],
+      featuredPrograms: [
+        { title: 'Livelihood Assistance', description: 'Supporting individuals in starting small businesses', image: '/placeholder.svg?height=200&width=300', link: '#' },
+        { title: 'Healthcare Subsidies', description: 'Providing financial assistance for medical needs', image: '/placeholder.svg?height=200&width=300', link: '#' },
+        { title: 'Education Support', description: 'Scholarships and educational assistance for students', image: '/placeholder.svg?height=200&width=300', link: '#' },
+      ],
+      newsUpdates: [
+        { title: 'New Community Center Opens', date: '2024-05-15', excerpt: 'A state-of-the-art community center has been inaugurated...', image: '/placeholder.svg?height=200&width=300', link: '#' },
+        { title: 'Successful Health Camp', date: '2024-05-10', excerpt: 'Over 500 residents benefited from our recent health camp...', image: '/placeholder.svg?height=200&width=300', link: '#' },
+        { title: 'Youth Skills Program Launch', date: '2024-05-05', excerpt: 'A new program aimed at developing skills among the youth...', image: '/placeholder.svg?height=200&width=300', link: '#' },
+      ],
     }
-
-    const toggleMenu = () => {
-      isMenuOpen.value = !isMenuOpen.value
+  },
+  computed: {
+    currentYear() {
+      return new Date().getFullYear()
     }
-
-    const submitContactForm = () => {
-      console.log('Form submitted:', contactForm.value)
+  },
+  methods: {
+    toggleDarkMode() {
+      this.isDarkMode = !this.isDarkMode
+    },
+    submitContactForm() {
+      console.log('Form submitted:', this.contactForm)
       // Reset form after submission
-      contactForm.value = { name: '', email: '', message: '' }
-    }
-
-    const formatDate = (dateString) => {
+      this.contactForm = { name: '', email: '', message: '' }
+    },
+    formatDate(dateString) {
       return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-    }
-
-    const logout = () => {
+    },
+    logout() {
       // Implement logout logic here
       console.log('Logging out...')
-    }
-
-    return {
-      isDarkMode,
-      isMenuOpen,
-      contactForm,
-      services,
-      coreValues,
-      objectives,
-      featuredPrograms,
-      newsUpdates,
-      currentYear,
-      toggleDarkMode,
-      toggleMenu,
-      submitContactForm,
-      formatDate,
-      logout
+      this.$router.push('/')
     }
   }
 }
@@ -283,15 +249,11 @@ export default {
   justify-content: space-between;
   align-items: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.navbar-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 1rem 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
 }
 
 .navbar-brand {
@@ -300,15 +262,14 @@ export default {
 }
 
 .logo-img {
-  width: 40px;
   height: 40px;
   margin-right: 1rem;
 }
 
 .brand-text {
+  color: #004d7a;
   font-size: 1.2rem;
-  font-weight: 700;
-  color: #1a73e8;
+  font-weight: bold;
 }
 
 .navbar-links {
@@ -319,33 +280,28 @@ export default {
 .nav-link {
   color: #333;
   text-decoration: none;
-  font-weight: 500;
   padding: 0.5rem 1rem;
   border-radius: 4px;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.3s, color 0.3s;
 }
 
-.nav-link:hover, .nav-link:focus {
-  background-color: #f0f0f0;
-  color: #1a73e8;
+.nav-link:hover {
+  background-color: #f0f4f8;
+  color: #004d7a;
 }
 
 .logout-button {
-  background-color: #1a73e8;
-  color: #ffffff;
+  background-color: #ff6b6b;
+  color: white;
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s;
 }
 
-.logout-button:hover, .logout-button:focus {
-  background-color: #1557b0;
-}
-
-.menu-toggle {
-  display: none;
+.logout-button:hover {
+  background-color: #ff5252;
 }
 
 .homepage {
@@ -353,14 +309,13 @@ export default {
 }
 
 .hero {
-  background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('');
+  background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('C:\laragon\www\CAPSTONEFRONTEND\mswd\public\img\DSC01382-1080x675.jpg');
   background-size: cover;
   background-position: center;
   color: #ffffff;
   text-align: center;
   padding: 6rem 2rem;
 }
-
 .hero-content {
   max-width: 800px;
   margin: 0 auto;
@@ -374,7 +329,7 @@ export default {
 .hero-subtitle {
   font-size: 1.2rem;
   opacity: 0.9;
-  margin-bottom: 2rem;
+  margin-bottom:  2rem;
 }
 
 .cta-button {
@@ -760,39 +715,22 @@ export default {
 }
 
 @media (max-width: 768px) {
-  .navbar-container {
-    flex-wrap: wrap;
+  .navbar {
+    flex-direction: column;
+    padding: 1rem;
   }
 
-  .menu-toggle {
-    display: block;
-    background: none;
-    border: none;
-    cursor: pointer;
-  }
-
-  .menu-toggle span {
-    display: block;
-    width: 25px;
-    height: 3px;
-    background-color: #333;
-    margin: 5px 0;
-    transition: 0.3s;
+  .navbar-brand {
+    margin-bottom: 1rem;
   }
 
   .navbar-links {
-    flex-direction: column;
-    width: 100%;
-    display: none;
-    padding: 1rem 0;
-  }
-
-  .navbar-links.active {
-    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
   }
 
   .nav-link {
-    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
   }
 
   .hero-title {

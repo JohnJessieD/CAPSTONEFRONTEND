@@ -1,9 +1,9 @@
 <template>
   <div class="dashboard">
-    <!-- Sidebar -->
+    <!-- Sidebar (unchanged) -->
     <aside class="sidebar" :class="{ 'collapsed': isCollapsed }">
       <div class="sidebar-header">
-        <img src="/placeholder.svg?height=50&width=50" alt="MSWD Logo" class="logo">
+        <img src="/img/Download.jpg" class="logo-img" alt="Government Logo" />
         <h1 v-if="!isCollapsed" class="sidebar-title">MSWD Admin</h1>
       </div>
       <nav class="sidebar-nav">
@@ -13,7 +13,6 @@
         </router-link>
       </nav>
       <div class="user-info">
-        <img src="/placeholder.svg?height=40&width=40" alt="User Avatar" class="user-avatar">
         <span v-if="!isCollapsed" class="user-name">Admin User</span>
         <button class="logout-button">
           <LogOut :size="20" />
@@ -30,7 +29,7 @@
     <main class="main-content" :style="{ marginLeft: isCollapsed ? '80px' : '250px' }">
       <div class="schedule-container">
         <header class="content-header">
-          <h1>Schedule Management</h1>
+          <h1 class="page-title">Schedule Management</h1>
           <button @click="openModal()" class="add-schedule-btn">
             <PlusIcon :size="20" />
             Add New Schedule
@@ -193,7 +192,7 @@ export default {
 </script>
 
 <style scoped>
-/* Sidebar styles */
+/* Sidebar styles (unchanged) */
 .dashboard {
   display: flex;
   min-height: 100vh;
@@ -325,11 +324,12 @@ export default {
   background-color: #45a049;
 }
 
-/* Main content styles */
+/* Enhanced Main content styles */
 .main-content {
   margin-left: 250px;
-  padding: 20px;
+  padding: 40px;
   transition: margin-left 0.3s ease;
+  background-color: #f8f9fa;
 }
 
 .schedule-container {
@@ -341,7 +341,14 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
+}
+
+.page-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #333;
+  margin: 0;
 }
 
 .add-schedule-btn {
@@ -351,14 +358,19 @@ export default {
   background-color: #4CAF50;
   color: white;
   border: none;
-  padding: 10px 15px;
-  border-radius: 5px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .add-schedule-btn:hover {
   background-color: #45a049;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .loading-overlay {
@@ -366,15 +378,15 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 200px;
+  height: 300px;
 }
 
 .spinner {
   border: 4px solid rgba(0, 0, 0, 0.1);
   border-left-color: #4CAF50;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   animation: spin 1s linear infinite;
 }
 
@@ -388,63 +400,80 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 200px;
+  height: 300px;
   color: #666;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  padding: 40px;
+}
+
+.empty-state svg {
+  margin-bottom: 20px;
+  color: #4CAF50;
 }
 
 .schedule-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
 }
 
 .schedule-card {
   background-color: white;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  
   overflow: hidden;
-  transition: transform 0.3s, box-shadow 0.3s;
+  transition: all 0.3s ease;
 }
 
 .schedule-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
 }
 
 .schedule-info {
-  padding: 20px;
+  padding: 24px;
 }
 
 .schedule-date {
-  font-size: 0.9em;
+  font-size: 0.9rem;
   color: #666;
-  margin-bottom: 5px;
+  margin-bottom: 8px;
 }
 
 .schedule-user {
-  font-size: 1.2em;
-  margin: 0 0 10px;
+  font-size: 1.4rem;
+  margin: 0 0 12px;
+  color: #333;
 }
 
 .schedule-description {
-  color: #333;
+  color: #555;
+  line-height: 1.5;
 }
 
 .schedule-actions {
   display: flex;
   justify-content: space-between;
-  padding: 10px 20px;
-  background-color: #f5f5f5;
+  padding: 16px 24px;
+  background-color: #f8f9fa;
+  border-top: 1px solid #eee;
 }
 
 .action-btn {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
   background-color: transparent;
   border: none;
   cursor: pointer;
-  transition: color 0.3s;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 6px;
 }
 
 .notify-btn {
@@ -456,7 +485,7 @@ export default {
 }
 
 .action-btn:hover {
-  opacity: 0.8;
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 .modal-overlay {
@@ -469,22 +498,23 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 1000;
 }
 
 .modal {
   position: relative;
   background-color: white;
-  padding: 30px;
-  border-radius: 10px;
-  width: 400px;
+  padding: 40px;
+  border-radius: 12px;
+  width: 500px;
   max-width: 90%;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
 .close-btn {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 20px;
+  right: 20px;
   background: none;
   border: none;
   cursor: pointer;
@@ -496,42 +526,58 @@ export default {
   color: #333;
 }
 
+.modal h3 {
+  font-size: 1.8rem;
+  margin-bottom: 24px;
+  color: #333;
+}
+
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #555;
 }
 
 .form-group input,
 .form-group textarea {
   width: 100%;
-  padding: 8px;
+  padding: 12px;
   border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1em;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #4CAF50;
 }
 
 .form-group textarea {
-  height: 100px;
+  height: 120px;
   resize: vertical;
 }
 
 .modal-buttons {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 12px;
 }
 
 .modal-btn {
-  padding: 10px 20px;
+  padding: 12px 24px;
   border: none;
-  border-radius: 5px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 .submit-btn {
@@ -550,5 +596,31 @@ export default {
 
 .cancel-btn:hover {
   background-color: #d32f2f;
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+    padding: 20px;
+  }
+
+  .content-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .add-schedule-btn {
+    margin-top: 20px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .schedule-list {
+    grid-template-columns: 1fr;
+  }
+
+  .modal {
+    padding: 30px;
+  }
 }
 </style>

@@ -1,7 +1,6 @@
 <template>
   <v-app>
     <v-row no-gutters class="fill-height">
-      <!-- Image Section -->
       <v-col cols="12" md="6" class="d-none d-md-flex registration-image-col">
         <v-img
           src="/placeholder.svg?height=1080&width=1080"
@@ -19,7 +18,6 @@
         </v-img>
       </v-col>
 
-      <!-- Registration Form Section -->
       <v-col cols="12" md="6" class="d-flex align-center justify-center registration-form-col">
         <v-sheet class="registration-form pa-8" rounded elevation="0" max-width="500" width="100%">
           <h2 class="text-h4 font-weight-bold text-center mb-6 primary--text">MSWD Registration</h2>
@@ -32,6 +30,19 @@
               :rules="usernameRules"
               label="Username"
               prepend-inner-icon="mdi-account"
+              required
+              filled
+              rounded
+              dense
+              color="primary"
+              class="mb-4"
+            ></v-text-field>
+            
+            <v-text-field
+              v-model="email"
+              :rules="emailRules"
+              label="Email"
+              prepend-inner-icon="mdi-email"
               required
               filled
               rounded
@@ -107,7 +118,6 @@
       </v-col>
     </v-row>
 
-    <!-- Snackbar Notification -->
     <v-snackbar v-model="snackbar" :color="snackbarColor" :timeout="4000" top>
       {{ message }}
       <template v-slot:action="{ attrs }">
@@ -124,6 +134,7 @@ export default {
   data() {
     return {
       username: '',
+      email: '',
       password: '',
       passwordConfirm: '',
       selectedCategory: null,
@@ -137,6 +148,10 @@ export default {
       usernameRules: [
         v => !!v || 'Username is required',
         v => v.length >= 3 || 'Username must be at least 3 characters',
+      ],
+      emailRules: [
+        v => !!v || 'Email is required',
+        v => /.+@.+\..+/.test(v) || 'Email must be valid',
       ],
       passwordRules: [
         v => !!v || 'Password is required',
@@ -153,27 +168,28 @@ export default {
       if (this.$refs.form.validate()) {
         this.loading = true;
         try {
-          const response = await axios.post('api/register', {
+          const response = await axios.post('/api/register', {
             username: this.username,
+            email: this.email,
             password: this.password,
             role: 'user',
-            category: this.selectedCategory
+            category: this.selectedCategory,
+            registration_date: new Date().toISOString()
           });
 
-          if (response.data.msg === 'okay') {
-            this.snackbarColor = 'success';
-            this.message = 'Registered successfully';
-            this.snackbar = true;
+          this.snackbarColor = 'success';
+          this.message = response.data.msg;
+          this.snackbar = true;
+
+          if (response.data.msg === 'Registration successful. Please check your email to verify your account.') {
             setTimeout(() => {
               this.$router.push('/Login');
-            }, 2000);
-          } else {
-            this.message = 'Registration failed. Please try again.';
-            this.snackbar = true;
+            }, 4000);
           }
         } catch (error) {
           console.error('Error during registration:', error);
-          this.message = 'An error occurred. Please try again later.';
+          this.snackbarColor = 'error';
+          this.message = error.response?.data?.msg || 'An error occurred. Please try again later.';
           this.snackbar = true;
         } finally {
           this.loading = false;

@@ -2,7 +2,7 @@
   <div class="dashboard">
     <aside class="sidebar" :class="{ 'collapsed': isCollapsed }">
       <div class="sidebar-header">
-        <img src="/placeholder.svg?height=50&width=50" alt="MSWD Logo" class="logo">
+        <img src="/img/Download.jpg" class="logo-img" alt="Government Logo" />
         <h1 v-if="!isCollapsed" class="sidebar-title">MSWD Admin</h1>
       </div>
       <nav class="sidebar-nav">
@@ -12,7 +12,6 @@
         </router-link>
       </nav>
       <div class="user-info">
-        <img src="/placeholder.svg?height=40&width=40" alt="User Avatar" class="user-avatar">
         <span v-if="!isCollapsed" class="user-name">Admin User</span>
         <button class="logout-button" @click="logout">
           <LogOut :size="20" />

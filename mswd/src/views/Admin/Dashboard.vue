@@ -1,8 +1,9 @@
 <template>
   <div class="dashboard">
+    <!-- Sidebar (unchanged) -->
     <aside class="sidebar" :class="{ 'collapsed': isCollapsed }">
       <div class="sidebar-header">
-        <img src="/placeholder.svg?height=50&width=50" alt="MSWD Logo" class="logo">
+        <img src="/img/Download.jpg" class="logo-img" alt="Government Logo" />
         <h1 v-if="!isCollapsed" class="sidebar-title">MSWD Admin</h1>
       </div>
       <nav class="sidebar-nav">
@@ -12,7 +13,6 @@
         </router-link>
       </nav>
       <div class="user-info">
-        <img src="/placeholder.svg?height=40&width=40" alt="User Avatar" class="user-avatar">
         <span v-if="!isCollapsed" class="user-name">Admin User</span>
         <button class="logout-button">
           <LogOut :size="20" />
@@ -25,9 +25,10 @@
       </button>
     </aside>
 
-    <main class="main-content">
+    <!-- Enhanced Main Content -->
+    <main class="main-content" :class="{ 'expanded': isCollapsed }">
       <header class="main-header">
-        <h2 class="page-title">Barangay Dashboard</h2>
+        <h2 class="page-title">Barangay Information System</h2>
         <div class="header-actions">
           <div class="search-container">
             <Search :size="20" class="search-icon" />
@@ -47,19 +48,40 @@
       <div class="dashboard-grid">
         <div class="summary-cards">
           <div class="summary-card" v-for="(card, index) in summaryCards" :key="index">
-            <component :is="card.icon" :size="24" class="card-icon" />
-            <h4 class="card-title">{{ card.title }}</h4>
-            <p class="card-value">{{ card.value }}</p>
+            <component :is="card.icon" :size="32" class="card-icon" />
+            <div class="card-content">
+              <h4 class="card-title">{{ card.title }}</h4>
+              <p class="card-value">{{ card.value }}</p>
+            </div>
           </div>
         </div>
 
         <div class="chart-container">
-          <h3 class="section-title">Barangay Statistics</h3>
+          <div class="chart-header">
+            <h3 class="section-title">Barangay Statistics</h3>
+            <select v-model="selectedChartType" class="chart-type-select">
+              <option value="bar">Bar Chart</option>
+              <option value="line">Line Chart</option>
+              <option value="pie">Pie Chart</option>
+            </select>
+          </div>
           <canvas ref="chartCanvas"></canvas>
         </div>
 
         <div class="barangay-list-container">
           <h3 class="section-title">Barangay List</h3>
+          <div class="barangay-filters">
+            <select v-model="selectedCategory" class="category-filter">
+              <option value="all">All Categories</option>
+              <option value="soloParent">Solo Parents</option>
+              <option value="senior">Seniors</option>
+              <option value="daycareCenter">Daycare Centers</option>
+              <option value="pwd">PWDs</option>
+            </select>
+            <button class="export-btn">
+              <Download :size="16" /> Export Data
+            </button>
+          </div>
           <ul class="barangay-list">
             <li
               v-for="barangay in filteredBarangays"
@@ -67,7 +89,10 @@
               class="barangay-item"
               @click="selectBarangay(barangay)"
             >
-              <span class="barangay-name">{{ barangay.name }}</span>
+              <div class="barangay-header">
+                <span class="barangay-name">{{ barangay.name }}</span>
+                <ChevronRight :size="16" class="barangay-arrow" />
+              </div>
               <div class="barangay-stats">
                 <span v-for="(stat, statName) in barangay.stats" :key="statName" :class="['stat-item', statName]">
                   <component :is="stat.icon" :size="16" /> {{ stat.value }}
@@ -82,20 +107,22 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import Chart from 'chart.js/auto'
-import { Home, Calendar, HandsHelping, CreditCard, BarChart2, Users, MapPin, User, UserPlus, Baby, Wheelchair, ChevronLeft, ChevronRight, Search, RefreshCw, LogOut } from 'lucide-vue-next'
+import { Home, Calendar, HandsHelping, CreditCard, BarChart2, Users, MapPin, User, UserPlus, Baby, Wheelchair, ChevronLeft, ChevronRight, Search, RefreshCw, LogOut, Download } from 'lucide-vue-next'
 
 export default {
   name: 'Dashboard',
   components: {
-    Home, Calendar, HandsHelping, CreditCard, BarChart2, Users, MapPin, User, UserPlus, Baby, Wheelchair, ChevronLeft, ChevronRight, Search, RefreshCw, LogOut
+    Home, Calendar, HandsHelping, CreditCard, BarChart2, Users, MapPin, User, UserPlus, Baby, Wheelchair, ChevronLeft, ChevronRight, Search, RefreshCw, LogOut, Download
   },
   setup() {
     const isCollapsed = ref(false)
     const searchQuery = ref('')
     const chartCanvas = ref(null)
     const chart = ref(null)
+    const selectedChartType = ref('bar')
+    const selectedCategory = ref('all')
 
     const navItems = [
     { name: 'Dashboard', route: '/Dashboard' },
@@ -168,7 +195,9 @@ export default {
 
     const filteredBarangays = computed(() => {
       return barangays.filter((barangay) => {
-        return barangay.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+        const nameMatch = barangay.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+        const categoryMatch = selectedCategory.value === 'all' || barangay.stats[selectedCategory.value]
+        return nameMatch && categoryMatch
       })
     })
 
@@ -177,42 +206,44 @@ export default {
     }
 
     const renderChart = () => {
+      if (chart.value) {
+        chart.value.destroy()
+      }
+
       const ctx = chartCanvas.value.getContext('2d')
+      const chartData = {
+        labels: barangays.map((barangay) => barangay.name),
+        datasets: [
+          {
+            label: 'Solo Parent',
+            backgroundColor: 'rgba(255, 99, 132, 0.5)',
+            borderColor: 'rgb(255, 99, 132)',
+            data: barangays.map((barangay) => barangay.stats.soloParent.value),
+          },
+          {
+            label: 'Senior',
+            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+            borderColor: 'rgb(54, 162, 235)',
+            data: barangays.map((barangay) => barangay.stats.senior.value),
+          },
+          {
+            label: 'Daycare Center',
+            backgroundColor: 'rgba(255, 206, 86, 0.5)',
+            borderColor: 'rgb(255, 206, 86)',
+            data: barangays.map((barangay) => barangay.stats.daycareCenter.value),
+          },
+          {
+            label: 'PWD',
+            backgroundColor: 'rgba(75, 192, 192, 0.5)',
+            borderColor: 'rgb(75, 192, 192)',
+            data: barangays.map((barangay) => barangay.stats.pwd.value),
+          },
+        ],
+      }
+
       chart.value = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: barangays.map((barangay) => barangay.name),
-          datasets: [
-            {
-              label: 'Solo Parent',
-              backgroundColor: '#F7CAC9',
-              borderColor: '#F7CAC9',
-              borderWidth: 1,
-              data: barangays.map((barangay) => barangay.stats.soloParent.value),
-            },
-            {
-              label: 'Senior',
-              backgroundColor: '#90CAF9',
-              borderColor: '#90CAF9',
-              borderWidth: 1,
-              data: barangays.map((barangay) => barangay.stats.senior.value),
-            },
-            {
-              label: 'Daycare Center',
-              backgroundColor: '#FFEBEE',
-              borderColor: '#FFEBEE',
-              borderWidth: 1,
-              data: barangays.map((barangay) => barangay.stats.daycareCenter.value),
-            },
-            {
-              label: 'PWD',
-              backgroundColor: '#C5CAE9',
-              borderColor: '#C5CAE9',
-              borderWidth: 1,
-              data: barangays.map((barangay) => barangay.stats.pwd.value),
-            },
-          ],
-        },
+        type: selectedChartType.value,
+        data: chartData,
         options: {
           responsive: true,
           maintainAspectRatio: false,
@@ -231,15 +262,15 @@ export default {
     }
 
     const selectBarangay = (barangay) => {
-      chart.value.data.datasets.forEach((dataset) => {
-        dataset.backgroundColor = barangays.map((b) =>
-          b.id === barangay.id ? '#FFD700' : dataset.borderColor
-        )
-      })
-      chart.value.update()
+      // Implement barangay selection logic here
+      console.log('Selected barangay:', barangay.name)
     }
 
     onMounted(() => {
+      renderChart()
+    })
+
+    watch(selectedChartType, () => {
       renderChart()
     })
 
@@ -251,6 +282,8 @@ export default {
       barangays,
       filteredBarangays,
       chartCanvas,
+      selectedChartType,
+      selectedCategory,
       toggleSidebar,
       selectBarangay,
     }
@@ -262,9 +295,11 @@ export default {
 .dashboard {
   display: flex;
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background-color: #f0f2f5;
+  font-family: 'Inter', sans-serif;
 }
 
+/* Sidebar styles (unchanged) */
 .sidebar {
   width: 250px;
   background-color: #4CAF50;
@@ -276,6 +311,7 @@ export default {
   height: 100vh;
   overflow-y: auto;
   transition: width 0.3s ease;
+  z-index: 1000;
 }
 
 .sidebar.collapsed {
@@ -377,6 +413,7 @@ export default {
   color: white;
   border: none;
   border-radius: 50%;
+  
   width: 30px;
   height: 30px;
   display: flex;
@@ -390,14 +427,15 @@ export default {
   background-color: #45a049;
 }
 
+/* Enhanced Main Content styles */
 .main-content {
   flex-grow: 1;
-  padding: 20px;
+  padding: 30px;
   margin-left: 250px;
   transition: margin-left 0.3s ease;
 }
 
-.sidebar.collapsed + .main-content {
+.main-content.expanded {
   margin-left: 80px;
 }
 
@@ -405,17 +443,18 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
   background-color: white;
-  padding: 15px 20px;
+  padding: 20px;
   border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .page-title {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: bold;
   color: #333;
+  margin: 0;
 }
 
 .header-actions {
@@ -437,16 +476,16 @@ export default {
 }
 
 .search-input {
-  padding: 8px 8px 8px 35px;
+  padding: 10px 10px 10px 35px;
   font-size: 14px;
-  border: 1px solid #ccc;
+  border: 1px solid #e0e0e0;
   border-radius: 20px;
-  width: 200px;
+  width: 250px;
   transition: all 0.3s ease;
 }
 
 .search-input:focus {
-  width: 250px;
+  width: 300px;
   outline: none;
   border-color: #4CAF50;
   box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
@@ -456,12 +495,13 @@ export default {
   background-color: #4CAF50;
   color: white;
   border: none;
-  padding: 8px 15px;
+  padding: 10px 20px;
   border-radius: 20px;
   cursor: pointer;
   transition: background-color 0.3s;
   display: flex;
   align-items: center;
+  font-weight: 600;
 }
 
 .refresh-button:hover {
@@ -469,19 +509,19 @@ export default {
 }
 
 .refresh-button svg {
-  margin-right: 5px;
+  margin-right: 8px;
 }
 
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  gap: 30px;
 }
 
 .summary-cards {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 20px;
 }
 
@@ -489,31 +529,37 @@ export default {
   background-color: white;
   border-radius: 10px;
   padding: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  text-align: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .summary-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
 }
 
 .card-icon {
   color: #4CAF50;
-  margin-bottom: 10px;
+  margin-right: 20px;
+}
+
+.card-content {
+  flex-grow: 1;
 }
 
 .card-title {
   font-size: 16px;
   color: #757575;
-  margin-bottom: 10px;
+  margin: 0 0 5px;
 }
 
 .card-value {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: bold;
-  color: #4CAF50;
+  color: #333;
+  margin: 0;
 }
 
 .chart-container {
@@ -521,8 +567,25 @@ export default {
   background-color: white;
   border-radius: 10px;
   padding: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   height: 400px;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.chart-type-select {
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 5px;
+  font-size: 14px;
+  color: #333;
+  background-color: white;
+  cursor: pointer;
 }
 
 .barangay-list-container {
@@ -530,16 +593,55 @@ export default {
   background-color: white;
   border-radius: 10px;
   padding: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   max-height: 400px;
   overflow-y: auto;
 }
 
 .section-title {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: bold;
   color: #333;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
+}
+
+.barangay-filters {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.category-filter {
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 5px;
+  font-size: 14px;
+  color: #333;
+  background-color: white;
+  cursor: pointer;
+}
+
+.export-btn {
+  display: flex;
+  align-items: center;
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.export-btn:hover {
+  background-color: #1976D2;
+}
+
+.export-btn svg {
+  margin-right: 5px;
 }
 
 .barangay-list {
@@ -563,12 +665,21 @@ export default {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
+.barangay-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
 .barangay-name {
   font-size: 16px;
   font-weight: bold;
   color: #333;
-  display: block;
-  margin-bottom: 10px;
+}
+
+.barangay-arrow {
+  color: #757575;
 }
 
 .barangay-stats {
@@ -590,10 +701,10 @@ export default {
   margin-right: 5px;
 }
 
-.soloParent { background-color: #F7CAC9; }
-.senior { background-color: #90CAF9; }
-.daycareCenter { background-color: #FFEBEE; color: #333; }
-.pwd { background-color: #C5CAE9; }
+.soloParent { background-color: #FF7043; }
+.senior { background-color: #42A5F5; }
+.daycareCenter { background-color: #FFCA28; color: #333; }
+.pwd { background-color: #66BB6A; }
 
 @media (max-width: 1200px) {
   .dashboard-grid {
@@ -657,6 +768,7 @@ export default {
 
   .main-content {
     margin-left: 0;
+    padding: 20px;
   }
 
   .main-header {
@@ -665,7 +777,7 @@ export default {
   }
 
   .header-actions {
-    margin-top: 10px;
+    margin-top: 20px;
     width: 100%;
   }
 
@@ -691,6 +803,16 @@ export default {
   .chart-container, .barangay-list-container {
     height: auto;
     max-height: none;
+  }
+
+  .barangay-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .category-filter, .export-btn {
+    width: 100%;
+    margin-bottom: 10px;
   }
 }
 </style>

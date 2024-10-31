@@ -1,7 +1,6 @@
 <template>
   <v-app>
     <v-row no-gutters class="fill-height">
-      <!-- Image Section -->
       <v-col cols="12" md="6" class="d-none d-md-flex login-image-col">
         <v-img
           src="/placeholder.svg?height=1080&width=1080"
@@ -19,7 +18,6 @@
         </v-img>
       </v-col>
 
-      <!-- Login Form Section -->
       <v-col cols="12" md="6" class="d-flex align-center justify-center login-form-col">
         <v-sheet class="login-form pa-8" rounded elevation="0" max-width="500" width="100%">
           <h2 class="text-h4 font-weight-bold text-center mb-6 primary--text">Welcome Back</h2>
@@ -71,7 +69,7 @@
             </v-btn>
           </v-form>
           <div class="text-center mt-6">
-            <v-btn text color="primary" to="/forgot-password" class="text-body-2 mb-2">
+            <v-btn text color="primary" @click="showForgotPasswordDialog = true" class="text-body-2 mb-2">
               Forgot Password?
             </v-btn>
             <br>
@@ -83,7 +81,39 @@
       </v-col>
     </v-row>
 
-    <!-- Snackbar Notification -->
+    <v-dialog v-model="showForgotPasswordDialog" max-width="500px">
+      <v-card>
+        <v-card-title class="text-h5">Forgot Password</v-card-title>
+        <v-card-text>
+          <v-form @submit.prevent="forgotPassword" ref="forgotPasswordForm" v-model="forgotPasswordValid" lazy-validation>
+            <v-text-field
+              v-model="forgotPasswordEmail"
+              :rules="emailRules"
+              label="Email"
+              prepend-inner-icon="mdi-email"
+              required
+              filled
+              rounded
+              dense
+              color="primary"
+              class="mb-4"
+            ></v-text-field>
+            <v-btn
+              type="submit"
+              block
+              rounded
+              class="mt-6 custom-btn"
+              color="primary"
+              :loading="forgotPasswordLoading"
+              :disabled="!forgotPasswordValid || forgotPasswordLoading"
+            >
+              Reset Password
+            </v-btn>
+          </v-form>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+
     <v-snackbar v-model="snackbar" :color="snackbarColor" :timeout="4000" top>
       {{ message }}
       <template v-slot:action="{ attrs }">
@@ -112,7 +142,7 @@ export default {
     ],
     passwordRules: [
       v => !!v || 'Password is required',
-      v => v.length >= 5 || 'Password must be at least 5 characters',
+      v => v.length >= 6 || 'Password must be at least 6 characters',
     ],
   }),
   methods: {
@@ -175,9 +205,33 @@ export default {
         }
       }
     },
+
+    async forgotPassword() {
+      if (this.$refs.forgotPasswordForm.validate()) {
+        this.forgotPasswordLoading = true;
+        try {
+          const response = await axios.post('/api/forgot-password', {
+            email: this.forgotPasswordEmail,
+          });
+
+          this.snackbarColor = 'success';
+          this.message = response.data.msg || 'Password reset instructions have been sent to your email.';
+          this.snackbar = true;
+          this.showForgotPasswordDialog = false;
+        } catch (error) {
+          this.snackbarColor = 'error';
+          this.message = error.response?.data?.msg || 'Error processing your request. Please try again later.';
+          this.snackbar = true;
+          console.error('Error during forgot password:', error);
+        } finally {
+          this.forgotPasswordLoading = false;
+        }
+      }
+    },
   },
 };
 </script>
+
 
 <style scoped>
 .fill-height {
