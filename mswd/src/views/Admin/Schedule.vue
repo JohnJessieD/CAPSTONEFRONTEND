@@ -1,6 +1,6 @@
 <template>
   <div class="dashboard">
-    <!-- Sidebar (unchanged) -->
+    <!-- Sidebar -->
     <aside class="sidebar" :class="{ 'collapsed': isCollapsed }">
       <div class="sidebar-header">
         <img src="/img/Download.jpg" class="logo-img" alt="Government Logo" />
@@ -25,7 +25,7 @@
       </button>
     </aside>
 
-    <!-- Enhanced Main Content: Schedule Management -->
+    <!-- Main Content: Schedule Management -->
     <main class="main-content" :style="{ marginLeft: isCollapsed ? '80px' : '250px' }">
       <div class="schedule-container">
         <header class="content-header">
@@ -47,7 +47,7 @@
         </div>
 
         <div v-else class="schedule-list">
-          <div v-for="(schedule, index) in schedules" :key="index" class="schedule-card">
+          <div v-for="schedule in schedules" :key="schedule.id" class="schedule-card">
             <div class="schedule-info">
               <div class="schedule-date">{{ formatDate(schedule.date) }}</div>
               <h3 class="schedule-user">{{ schedule.user }}</h3>
@@ -58,9 +58,13 @@
                 <BellIcon :size="16" />
                 Notify
               </button>
-              <button @click="openModal(schedule.user)" class="action-btn edit-btn" :title="`Edit ${schedule.user}'s schedule`">
+              <button @click="openModal(schedule)" class="action-btn edit-btn" :title="`Edit ${schedule.user}'s schedule`">
                 <EditIcon :size="16" />
                 Edit
+              </button>
+              <button @click="deleteSchedule(schedule.id)" class="action-btn delete-btn" :title="`Delete ${schedule.user}'s schedule`">
+                <TrashIcon :size="16" />
+                Delete
               </button>
             </div>
           </div>
@@ -68,7 +72,7 @@
 
         <div v-if="showModal" class="modal-overlay">
           <div class="modal">
-            <button class="close-btn" @click="showModal = false">
+            <button class="close-btn" @click="closeModal">
               <XIcon :size="24" />
             </button>
             <h3>{{ editingSchedule ? 'Edit Schedule' : 'Add New Schedule' }}</h3>
@@ -89,7 +93,7 @@
                 <button type="submit" class="modal-btn submit-btn">
                   {{ editingSchedule ? 'Update' : 'Submit' }}
                 </button>
-                <button type="button" @click="showModal = false" class="modal-btn cancel-btn">Cancel</button>
+                <button type="button" @click="closeModal" class="modal-btn cancel-btn">Cancel</button>
               </div>
             </form>
           </div>
@@ -100,49 +104,52 @@
 </template>
 
 <script>
-import { ref } from 'vue';
-import { Home, Calendar, HandsHelping, CreditCard, Users, ChevronLeft, ChevronRight, LogOut, PlusIcon, BellIcon, EditIcon, XIcon, CalendarX } from 'lucide-vue-next';
+import { ref, onMounted } from 'vue';
+import { Home, Calendar, HandsHelping, CreditCard, Users, ChevronLeft, ChevronRight, LogOut, PlusIcon, BellIcon, EditIcon, XIcon, CalendarX, TrashIcon } from 'lucide-vue-next';
+import axios from 'axios';
 
 export default {
   name: 'Dashboard',
   components: {
-    Home, Calendar, HandsHelping, CreditCard, Users, ChevronLeft, ChevronRight, LogOut, PlusIcon, BellIcon, EditIcon, XIcon, CalendarX
+    Home, Calendar, HandsHelping, CreditCard, Users, ChevronLeft, ChevronRight, LogOut, PlusIcon, BellIcon, EditIcon, XIcon, CalendarX, TrashIcon
   },
   setup() {
     const isCollapsed = ref(false);
     const showModal = ref(false);
-    const isLoading = ref(false);
+    const isLoading = ref(true);
     const newSchedule = ref({ user: '', date: '', description: '' });
-    const schedules = ref([
-      { user: "John Doe", date: "2024-05-01", description: "Annual performance review meeting" },
-      { user: "Jane Smith", date: "2024-05-02", description: "Team building workshop" },
-      { user: "Mike Johnson", date: "2024-05-03", description: "Project kickoff presentation" },
-      { user: "Emily Brown", date: "2024-05-04", description: "Client consultation" },
-      { user: "Alex Wilson", date: "2024-05-05", description: "Budget planning session" },
-      { user: "Sarah Davis", date: "2024-05-06", description: "Department heads meeting" },
-      { user: "Chris Taylor", date: "2024-05-07", description: "Employee orientation" },
-      { user: "Lisa Anderson", date: "2024-05-08", description: "Quarterly review" }
-    ]);
+    const schedules = ref([]);
+    const editingSchedule = ref(null);
 
     const navItems = [
-      { name: 'Dashboard', route: '/Dashboard' },
-      { name: 'Schedule', route: '/Schedule' },
-      { name: 'Barangay Management', route: '/Barangaym' },
-      { name: 'Assistance Management', route: '/AssistanceManagement' },
-      { name: 'Card Management', route: '/CardManagement'},
-      { name: 'User Management', route: '/user-management' },
+      { name: 'Dashboard', route: '/Dashboard', icon: Home },
+      { name: 'Schedule', route: '/Schedule', icon: Calendar },
+      { name: 'Barangay Management', route: '/Barangaym', icon: HandsHelping },
+      { name: 'Assistance Management', route: '/AssistanceManagement', icon: CreditCard },
+      { name: 'User Management', route: '/user-management', icon: Users },
     ];
 
     const toggleSidebar = () => {
       isCollapsed.value = !isCollapsed.value;
     };
 
-    const editingSchedule = ref(null);
+    const fetchSchedules = async () => {
+      try {
+        isLoading.value = true;
+        const response = await axios.get('/api/schedules');
+        schedules.value = response.data;
+      } catch (error) {
+        console.error('Error fetching schedules:', error);
+        // TODO: Add error handling, e.g., show an error message to the user
+      } finally {
+        isLoading.value = false;
+      }
+    };
 
-    const openModal = (user = '') => {
-      if (user) {
-        editingSchedule.value = schedules.value.find(s => s.user === user);
-        newSchedule.value = { ...editingSchedule.value };
+    const openModal = (schedule = null) => {
+      if (schedule) {
+        editingSchedule.value = schedule;
+        newSchedule.value = { ...schedule };
       } else {
         editingSchedule.value = null;
         newSchedule.value = { user: '', date: '', description: '' };
@@ -150,19 +157,48 @@ export default {
       showModal.value = true;
     };
 
-    const addOrUpdateSchedule = () => {
-      if (editingSchedule.value) {
-        const index = schedules.value.findIndex(s => s.user === editingSchedule.value.user);
-        schedules.value[index] = { ...newSchedule.value };
-      } else {
-        schedules.value.push({ ...newSchedule.value });
-      }
+    const closeModal = () => {
       showModal.value = false;
+      editingSchedule.value = null;
+      newSchedule.value = { user: '', date: '', description: '' };
     };
 
-    const notifyUser = (schedule) => {
-      console.log('Notifying user about schedule:', schedule);
-      // Implement actual notification logic here
+    const addOrUpdateSchedule = async () => {
+      try {
+        if (editingSchedule.value) {
+          await axios.put(`/api/editschedules/${editingSchedule.value.id}`, newSchedule.value);
+        } else {
+          await axios.post('/api/Createschedules', newSchedule.value);
+        }
+        await fetchSchedules();
+        closeModal();
+      } catch (error) {
+        console.error('Error saving schedule:', error);
+        // TODO: Add error handling, e.g., show an error message to the user
+      }
+    };
+
+    const deleteSchedule = async (id) => {
+      if (confirm('Are you sure you want to delete this schedule?')) {
+        try {
+          await axios.delete(`/api/deleteschedules/${id}`);
+          await fetchSchedules();
+        } catch (error) {
+          console.error('Error deleting schedule:', error);
+          // TODO: Add error handling, e.g., show an error message to the user
+        }
+      }
+    };
+
+    const notifyUser = async (schedule) => {
+      try {
+        await axios.post(`/api/schedules/${schedule.id}/notify`);
+        console.log('User notified about schedule:', schedule);
+        // TODO: Add success message to the user
+      } catch (error) {
+        console.error('Error notifying user:', error);
+        // TODO: Add error handling, e.g., show an error message to the user
+      }
     };
 
     const formatDate = (date) => {
@@ -173,6 +209,21 @@ export default {
       });
     };
 
+    // Function to push PWD to schedule after accepting request or assistance
+    const pushPWDToSchedule = async (pwdId, assistanceId) => {
+      try {
+        const response = await axios.post('/api/push-pwd-to-schedule', { pwdId, assistanceId });
+        console.log('PWD pushed to schedule:', response.data);
+        await fetchSchedules(); // Refresh schedules after pushing
+        // TODO: Add success message to the user
+      } catch (error) {
+        console.error('Error pushing PWD to schedule:', error);
+        // TODO: Add error handling, e.g., show an error message to the user
+      }
+    };
+
+    onMounted(fetchSchedules);
+
     return {
       isCollapsed,
       navItems,
@@ -180,19 +231,22 @@ export default {
       schedules,
       newSchedule,
       addOrUpdateSchedule,
+      deleteSchedule,
       notifyUser,
       formatDate,
       showModal,
       openModal,
+      closeModal,
       isLoading,
-      editingSchedule
+      editingSchedule,
+      pushPWDToSchedule
     };
   }
 };
 </script>
 
 <style scoped>
-/* Sidebar styles (unchanged) */
+/* Sidebar styles */
 .dashboard {
   display: flex;
   min-height: 100vh;
@@ -222,7 +276,7 @@ export default {
   margin-bottom: 30px;
 }
 
-.logo {
+.logo-img {
   width: 50px;
   height: 50px;
   margin-right: 10px;
@@ -266,13 +320,6 @@ export default {
   align-items: center;
   padding-top: 20px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.user-avatar {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  margin-bottom: 10px;
 }
 
 .user-name {
@@ -324,7 +371,7 @@ export default {
   background-color: #45a049;
 }
 
-/* Enhanced Main content styles */
+/* Main content styles */
 .main-content {
   margin-left: 250px;
   padding: 40px;
@@ -386,7 +433,7 @@ export default {
   border-left-color: #4CAF50;
   border-radius: 50%;
   width: 50px;
-  height: 50px;
+  height:  50px;
   animation: spin 1s linear infinite;
 }
 
@@ -423,7 +470,6 @@ export default {
   background-color: white;
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  
   overflow: hidden;
   transition: all 0.3s ease;
 }
@@ -482,6 +528,10 @@ export default {
 
 .edit-btn {
   color: #2196F3;
+}
+
+.delete-btn {
+  color: #f44336;
 }
 
 .action-btn:hover {

@@ -309,7 +309,8 @@ export default {
 }
 
 .hero {
-  background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('C:\laragon\www\CAPSTONEFRONTEND\mswd\public\img\DSC01382-1080x675.jpg');
+  background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('@/assets/DSC01382-1080x675.jpg');
+
   background-size: cover;
   background-position: center;
   color: #ffffff;

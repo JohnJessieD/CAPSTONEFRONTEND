@@ -25,10 +25,40 @@
     </aside>
     
     <main class="main-content">
-      <div class="spacer"></div>
+      <div class="top-bar">
+        <h2>Assistance Requests</h2>
+        <div class="notifications">
+          <button @click="toggleNotifications" class="notifications-toggle">
+            <Bell :size="24" />
+            <span v-if="unreadCount" class="unread-count">{{ unreadCount }}</span>
+          </button>
+          <transition name="fade">
+            <div v-if="showNotifications" class="notifications-panel">
+              <h3>Notifications</h3>
+              <div class="notifications-list">
+                <div v-for="notification in notifications" :key="notification.id" 
+                    :class="['notification-item', { 'unread': !notification.is_read }]">
+                  <div class="notification-icon">
+                    <component :is="getNotificationIcon(notification.type)" :size="24" />
+                  </div>
+                  <div class="notification-content">
+                    <p class="notification-message">{{ notification.message }}</p>
+                    <p class="notification-time">{{ formatTime(notification.created_at) }}</p>
+                  </div>
+                  <button v-if="!notification.is_read" @click="markAsRead(notification.id)" class="mark-read-button">
+                    <Check :size="16" />
+                  </button>
+                </div>
+              </div>
+              <button v-if="notifications.length > 0" @click="markAllAsRead" class="mark-all-read-button">
+                Mark all as read
+              </button>
+            </div>
+          </transition>
+        </div>
+      </div>
       <div class="container">
         <div class="content">
-          <h2>Assistance Requests</h2>
           <div v-if="isLoading">
             <div class="loading-overlay">
               <div class="spinner"></div>
@@ -47,11 +77,11 @@
                     <strong>Reason:</strong> {{ request.reason }}
                   </p>
                   <p>
-                    <strong>Created At:</strong> {{ request.created_at }}
+                    <strong>Created At:</strong> {{ formatTime(request.created_at) }}
                   </p>
                   <div class="action-buttons">
-                    <button @click="acceptRequest(request)">Accept</button>
-                    <button @click="rejectRequest(request)">Reject</button>
+                    <button @click="acceptRequest(request)" class="accept-button">Accept</button>
+                    <button @click="rejectRequest(request)" class="reject-button">Reject</button>
                   </div>
                 </div>
               </div>
@@ -64,27 +94,29 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
-import { Home, Calendar, HandsHelping, CreditCard, Users, LogOut, ChevronLeft, ChevronRight, BarChart2 } from 'lucide-vue-next'
+import { ref, onMounted, computed } from 'vue'
+import { Home, Calendar, HandsHelping, CreditCard, Users, LogOut, ChevronLeft, ChevronRight, Bell, Check, AlertCircle, UserPlus } from 'lucide-vue-next'
 import axios from 'axios'
 
 export default {
   name: 'Dashboard',
   components: {
-    Home, Calendar, HandsHelping, CreditCard, Users, LogOut, ChevronLeft, ChevronRight
+    Home, Calendar, HandsHelping, CreditCard, Users, LogOut, ChevronLeft, ChevronRight, Bell, Check, AlertCircle, UserPlus
   },
   setup() {
     const isCollapsed = ref(false)
     const requestHistory = ref([])
     const isLoading = ref(false)
+    const notifications = ref([])
+    const showNotifications = ref(false)
 
     const navItems = [
-    { name: 'Dashboard', route: '/Dashboard' },
-        { name: 'Schedule', route: '/Schedule' },
-        { name: 'Barangay Management', route: '/Barangaym'},
-        { name: 'Assistance Management', route: '/AssistanceManagement'},
-        { name: 'Card Management', route: '/CardManagement' },
-        { name: 'User Management', route: '/user-management'},
+      { name: 'Dashboard', route: '/Dashboard', icon: Home },
+      { name: 'Schedule', route: '/Schedule', icon: Calendar },
+      { name: 'Barangay Management', route: '/Barangaym', icon: Users },
+      { name: 'Assistance Management', route: '/AssistanceManagement', icon: HandsHelping },
+      { name: 'Card Management', route: '/CardManagement', icon: CreditCard },
+      { name: 'User Management', route: '/user-management', icon: Users },
     ]
 
     const toggleSidebar = () => {
@@ -111,6 +143,7 @@ export default {
         if (index !== -1) {
           requestHistory.value.splice(index, 1)
         }
+        await fetchNotifications()
       } catch (error) {
         console.error('Error accepting request:', error)
       }
@@ -124,13 +157,65 @@ export default {
         if (index !== -1) {
           requestHistory.value.splice(index, 1)
         }
+        await fetchNotifications()
       } catch (error) {
         console.error('Error rejecting request:', error)
       }
     }
 
+    const fetchNotifications = async () => {
+      try {
+        const response = await axios.get('/api/getNotifications')
+        notifications.value = response.data
+      } catch (error) {
+        console.error('Error fetching notifications:', error)
+      }
+    }
+
+    const markAsRead = async (id) => {
+      try {
+        await axios.post(`/api/markNotificationAsRead/${id}`)
+        await fetchNotifications()
+      } catch (error) {
+        console.error('Error marking notification as read:', error)
+      }
+    }
+
+    const markAllAsRead = async () => {
+      try {
+        await Promise.all(notifications.value.filter(n => !n.is_read).map(n => markAsRead(n.id)))
+      } catch (error) {
+        console.error('Error marking all notifications as read:', error)
+      }
+    }
+
+    const toggleNotifications = () => {
+      showNotifications.value = !showNotifications.value
+    }
+
+    const unreadCount = computed(() => {
+      return notifications.value.filter(n => !n.is_read).length
+    })
+
+    const getNotificationIcon = (type) => {
+      switch (type) {
+        case 'assistance':
+          return HandsHelping
+        case 'membership':
+          return UserPlus
+        default:
+          return AlertCircle
+      }
+    }
+
+    const formatTime = (timestamp) => {
+      const date = new Date(timestamp)
+      return date.toLocaleString()
+    }
+
     onMounted(() => {
       fetchRequestHistory()
+      fetchNotifications()
     })
 
     return {
@@ -140,7 +225,15 @@ export default {
       requestHistory,
       isLoading,
       acceptRequest,
-      rejectRequest
+      rejectRequest,
+      notifications,
+      showNotifications,
+      toggleNotifications,
+      markAsRead,
+      markAllAsRead,
+      unreadCount,
+      getNotificationIcon,
+      formatTime
     }
   }
 }
@@ -176,7 +269,7 @@ export default {
   margin-bottom: 30px;
 }
 
-.logo {
+.logo-img {
   width: 50px;
   height: 50px;
   margin-right: 10px;
@@ -220,13 +313,6 @@ export default {
   align-items: center;
   padding-top: 20px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.user-avatar {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  margin-bottom: 10px;
 }
 
 .user-name {
@@ -280,17 +366,135 @@ export default {
 
 .main-content {
   flex-grow: 1;
-  margin-left: 250px; /* Adjusted margin to accommodate sidebar */
-  padding: 20px; /* Added padding for main content */
-  transition: margin-left 0.3s ease; /* Smooth transition for sidebar */
+  margin-left: 250px;
+  padding: 20px;
+  transition: margin-left 0.3s ease;
 }
 
 .sidebar.collapsed + .main-content {
-  margin-left: 80px; /* Adjusted margin when sidebar is collapsed */
+  margin-left: 80px;
 }
 
-.spacer {
-  height: 100px;
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.notifications {
+  position: relative;
+}
+
+.notifications-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  position: relative;
+}
+
+.unread-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: #ff4757;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.notifications-panel {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  width: 350px;
+  max-height: 500px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.notifications-panel h3 {
+  padding: 15px;
+  border-bottom: 1px solid #e1e1e1;
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.notifications-list {
+  padding: 10px;
+}
+
+.notification-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px;
+  border-bottom: 1px solid #e1e1e1;
+  transition: background-color 0.2s;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-item:hover {
+  background-color: #f9f9f9;
+}
+
+.notification-item.unread {
+  background-color: #e8f5e9;
+}
+
+.notification-icon {
+  margin-right: 12px;
+  color: #4CAF50;
+}
+
+.notification-content {
+  flex-grow: 1;
+}
+
+.notification-message {
+  margin: 0 0 5px;
+  font-size: 14px;
+  color: #333;
+}
+
+.notification-time {
+  margin: 0;
+  font-size: 12px;
+  color: #777;
+}
+
+.mark-read-button {
+  background: none;
+  border: none;
+  color: #4CAF50;
+  cursor: pointer;
+  padding: 4px;
+  margin-left:  8px;
+}
+
+.mark-all-read-button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.mark-all-read-button:hover {
+  background-color: #45a049;
 }
 
 .container {
@@ -299,9 +503,9 @@ export default {
 }
 
 .content {
-  background-color: #f5f5f5;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   padding: 20px;
 }
 
@@ -309,22 +513,22 @@ export default {
   display: flex;
   align-items: center;
   border: none;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  margin-bottom: 15px;
-  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  padding: 20px;
   background-color: #fff;
   transition: all 0.2s ease-in-out;
 }
 
 .request-card:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
   transform: translateY(-2px);
 }
 
 .request-image {
-  width: 80px;
-  height: 80px;
+  width: 100px;
+  height: 100px;
   object-fit: cover;
   border-radius: 50%;
   margin-right: 20px;
@@ -332,16 +536,17 @@ export default {
 
 .request-details {
   flex-grow: 1;
-  font-family: sans-serif;
-  line-height: 1.5;
+  font-family: 'Arial', sans-serif;
+  line-height: 1.6;
 }
 
 .request-details strong {
   font-weight: bold;
+  color: #333;
 }
 
 .action-buttons {
-  margin-top: 10px;
+  margin-top: 15px;
 }
 
 .action-buttons button {
@@ -350,16 +555,32 @@ export default {
   border: none;
   border-radius: 4px;
   font-size: 14px;
+  font-weight: bold;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
 }
 
-.action-buttons button:hover {
-  background-color: #f0f0f0;
+.accept-button {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.accept-button:hover {
+  background-color: #45a049;
+}
+
+.reject-button {
+  background-color: #ff4757;
+  color: white;
+}
+
+.reject-button:hover {
+  background-color: #e04146;
 }
 
 .loading-overlay {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   position: absolute;
@@ -367,25 +588,28 @@ export default {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(255, 255, 255, 0.8);
   z-index: 10;
 }
 
 .spinner {
   width: 50px;
   height: 50px;
-  border: 5px solid #fff;
+  border: 5px solid #4CAF50;
   border-radius: 50%;
-  border-top-color: #3498db;
+  border-top-color: #45a049;
   animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s;
+}
+.fade-enter, .fade-leave-to {
+  opacity: 0;
 }
 </style>
