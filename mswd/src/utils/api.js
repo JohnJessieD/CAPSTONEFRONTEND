@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8080/', // Replace with your actual API URL
+  baseURL: 'https://stmsdapp.space/', // Replace with your actual API URL
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',

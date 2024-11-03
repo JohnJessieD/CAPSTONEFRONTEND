@@ -7,7 +7,7 @@ import store from './store'
 import axios from 'axios'
 
 // Set the base URL for axios
-axios.defaults.baseURL = "http://localhost:8080/"
+axios.defaults.baseURL = "https://stmsdapp.space/"
 
 // Load fonts
 loadFonts()

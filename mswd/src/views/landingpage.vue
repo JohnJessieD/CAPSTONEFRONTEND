@@ -5,19 +5,19 @@
         <h1 class="mswd-title">Welcome to MSWD</h1>
         <p class="mswd-subtitle">Empowering communities, one step at a time</p>
         <div class="mswd-buttons">
-          <router-link to="/registercomponent" class="mswd-button mswd-button-primary">
-            <span class="mswd-icon">+</span>
+          <router-link to="/registercomponent" class="mswd-button mswd-button-primary" aria-label="Register">
+            <span class="mswd-icon" aria-hidden="true">+</span>
             Register
           </router-link>
-          <router-link to="/login" class="mswd-button mswd-button-secondary">
-            <span class="mswd-icon">→</span>
+          <router-link to="/login" class="mswd-button mswd-button-secondary" aria-label="Login">
+            <span class="mswd-icon" aria-hidden="true">→</span>
             Login
           </router-link>
         </div>
-        <div class="mswd-divider"></div>
+        <div class="mswd-divider" role="separator"></div>
         <div class="mswd-services">
           <div class="mswd-service" v-for="service in services" :key="service.title">
-            <div class="mswd-service-icon" :class="service.icon"></div>
+            <div class="mswd-service-icon" :class="service.icon" aria-hidden="true"></div>
             <h3 class="mswd-service-title">{{ service.title }}</h3>
             <p class="mswd-service-description">{{ service.description }}</p>
           </div>
@@ -32,12 +32,8 @@
         </p>
       </div>
     </div>
-    <button class="mswd-feedback-button" @click="openFeedback">
-      <span class="mswd-feedback-icon">!</span>
-      Feedback
-    </button>
-    <button class="mswd-feedback-button" @click="openFeedback">
-      <span class="mswd-feedback-icon">!</span>
+    <button class="mswd-feedback-button" @click="openFeedback" aria-label="Provide feedback">
+      <span class="mswd-feedback-icon" aria-hidden="true">💬</span>
       Feedback
     </button>
 
@@ -62,23 +58,23 @@
             <textarea id="message" v-model="feedbackForm.message" required></textarea>
           </div>
           <div class="mswd-form-group">
-            <label>
+            <label class="mswd-checkbox-label">
               <input type="checkbox" v-model="feedbackForm.termsAccepted" required>
-              I agree that this feedback does not contain any personal or sensitive information.
+              <span class="mswd-checkbox-text">I agree that this feedback does not contain any personal or sensitive information.</span>
             </label>
           </div>
-          <button type="submit" class="mswd-button mswd-button-primary" :disabled="!feedbackForm.termsAccepted">
+          <button type="submit" class="mswd-button mswd-button-primary" :disabled="!isFormValid">
             Submit Feedback
           </button>
         </form>
-        <button class="mswd-modal-close" @click="closeFeedback">&times;</button>
+        <button class="mswd-modal-close" @click="closeFeedback" aria-label="Close feedback modal">&times;</button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
+import { ref, reactive, computed } from 'vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
@@ -100,11 +96,16 @@ const services = ref([
     description: 'Ensuring safety and well-being for all'
   }
 ]);
+
 const showFeedbackModal = ref(false);
 const feedbackForm = reactive({
   category: '',
   message: '',
   termsAccepted: false
+});
+
+const isFormValid = computed(() => {
+  return feedbackForm.category && feedbackForm.message && feedbackForm.termsAccepted;
 });
 
 const openFeedback = () => {
@@ -123,13 +124,11 @@ const resetFeedbackForm = () => {
 };
 
 const submitFeedback = () => {
-  if (!feedbackForm.termsAccepted) {
-    alert('Please agree to the terms before submitting.');
+  if (!isFormValid.value) {
+    alert('Please fill out all fields and agree to the terms before submitting.');
     return;
   }
 
-  // Here you would typically send the feedback to a server
-  // Ensure to only send non-personal information
   const feedbackData = {
     category: feedbackForm.category,
     message: feedbackForm.message,
@@ -309,6 +308,7 @@ const submitFeedback = () => {
 
 .mswd-image {
   flex: 1;
+ /* background-image: url('/placeholder.svg?height=600&width=800');*/
   background-size: cover;
   background-position: center;
   display: flex;
@@ -316,6 +316,7 @@ const submitFeedback = () => {
   justify-content: center;
   position: relative;
   overflow: hidden;
+  min-height: 300px;
 }
 
 .mswd-image::before {
@@ -330,21 +331,21 @@ const submitFeedback = () => {
 
 .mswd-image-overlay {
   position: relative;
-  padding: 3rem;
+  padding: 2rem;
   text-align: center;
   color: white;
-  max-width: 80%;
+  max-width: 90%;
 }
 
 .mswd-image-title {
-  font-size: 2.5rem;
-  margin-bottom: 1rem;
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
   font-weight: 700;
 }
 
 .mswd-image-description {
-  font-size: 1.2rem;
-  line-height: 1.6;
+  font-size: 1rem;
+  line-height: 1.4;
   font-weight: 300;
 }
 
@@ -435,6 +436,18 @@ const submitFeedback = () => {
   resize: vertical;
 }
 
+.mswd-checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.mswd-checkbox-text {
+  font-size:  0.9rem;
+  color: var(--text-light);
+}
+
 .mswd-modal-close {
   position: absolute;
   top: 10px;
@@ -458,27 +471,73 @@ const submitFeedback = () => {
 
 @media (max-width: 600px) {
   .mswd-card {
-    padding: 2rem;
+    padding: 1.5rem;
   }
-
+  .mswd-title {
+    font-size: 2rem;
+  }
+  .mswd-subtitle {
+    font-size: 1rem;
+  }
   .mswd-buttons {
     flex-direction: column;
   }
-
+  .mswd-button {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
   .mswd-services {
     grid-template-columns: 1fr;
   }
-
+  .mswd-service {
+    padding: 1rem;
+  }
   .mswd-feedback-button {
     bottom: 10px;
     right: 10px;
-    font-size: 1rem;
-    padding: 10px 20px;
+    font-size: 0.9rem;
+    padding: 8px 16px;
   }
-
   .mswd-modal {
     width: 95%;
     padding: 1.5rem;
   }
+  .mswd-modal-title {
+    font-size: 1.2rem;
+  }
+  .mswd-form-group label,
+  .mswd-form-group select,
+  .mswd-form-group textarea {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .mswd-card {
+    padding: 1rem;
+  }
+  .mswd-title {
+    font-size: 1.8rem;
+  }
+  .mswd-subtitle {
+    font-size: 0.9rem;
+  }
+  .mswd-service-icon {
+    font-size: 2rem;
+  }
+  .mswd-service-title {
+    font-size: 1rem;
+  }
+  .mswd-service-description {
+    font-size: 0.8rem;
+  }
+  .mswd-feedback-button {
+    font-size: 0.8rem;
+    padding: 6px 12px;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
 }
 </style>

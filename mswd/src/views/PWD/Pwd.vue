@@ -10,7 +10,6 @@
         <router-link to="/Pwd" class="nav-link">Assistance</router-link>
         <router-link to="/EventsPWD" class="nav-link">Upcoming Events</router-link>
         <router-link to="/ServicesPWD" class="nav-link">Services</router-link>
-        
         <router-link to="/publicationsPWD" class="nav-link">Publications</router-link>
       </div>
     </nav>
@@ -87,8 +86,23 @@
           </div>
           
           <div class="form-group">
+            <label for="category" class="form-label">Category:</label>
+            <select id="category" v-model="membershipFormData.category" required class="form-input">
+              <option value="" disabled>Select a category</option>
+              <option value="Senior">Senior</option>
+              <option value="PWD">PWD</option>
+              <option value="Solo Parent">Solo Parent</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="address" class="form-label">Address:</label>
+            <textarea id="address" v-model="membershipFormData.address" required class="form-input" rows="3"></textarea>
+          </div>
+          
+          <div class="form-group">
             <label for="certificate" class="form-label">Copy of Certificate:</label>
-            <input type="file" id="certificate" @change="handleCertificateUpload" required class="form-input file-input" />
+            <input type="file" id="certificate" @change="handleCertificateUpload" required class="form-input file-input" accept="image/*,.pdf" />
           </div>
 
           <div class="form-actions">
@@ -158,184 +172,212 @@
   </div>
 </template>
 
-<script>
-import axios from 'axios';
+<script setup>
+import { ref, onMounted } from 'vue'
+import axios from 'axios'
+import { useRouter } from 'vue-router'
 
-export default {
-  name: 'PwdOffice',
-  data() {
-    return {
-      formData: {
-        reason: '',
-        amount: 0,
-      },
-      editFormData: {
-        reason: '',
-        amount: 0,
-        index: null,
-      },
-      membershipFormData: {
-        name: '',
-        dob: '',
-        sickness: '',
-        certificate: null,
-      },
-      error: null,
-      requestHistory: [],
-      isLoading: true,
-      isRequestModalActive: false,
-      isEditModalActive: false,
-      isMembershipFormModalActive: false,
-      membershipError: null,
-    };
-  },
-  methods: {
-    submitForm() {
-      axios.post('/api/req', this.formData)
-        .then(response => {
-          console.log(response.data);
-          this.requestHistory.unshift({
-            date: new Date(),
-            reason: this.formData.reason,
-            amount: this.formData.amount,
-            status: 'Pending',
-          });
-          this.formData = { reason: '', amount: 0 };
-          this.error = null;
-          this.closeRequestModal();
-        })
-        .catch(error => {
-          this.error = error.response.data.message;
-          console.error(error);
-        });
-    },
-    fetchRequestHistory() {
-      axios.get('/api/PWD')
-        .then(response => {
-          this.requestHistory = response.data.map(request => ({
-            ...request,
-            status: request.status || 'Pending',
-          }));
-          this.isLoading = false;
-        })
-        .catch(error => {
-          console.error(error);
-          this.isLoading = false;
-        });
-    },
-    updateRequest() {
-      const index = this.editFormData.index;
-      axios.post('/api/updateRequest', { requestId: this.requestHistory[index].id, updatedData: this.editFormData })
-        .then(response => {
-          console.log(response.data);
-          this.requestHistory[index] = {
-            ...this.requestHistory[index],
-            reason: this.editFormData.reason,
-            amount: this.editFormData.amount,
-          };
-          this.editFormData = { reason: '', amount: 0, index: null };
-          this.closeEditModal();
-        })
-        .catch(error => {
-          this.error = error.response.data.message;
-          console.error(error);
-        });
-    },
-    deleteRequest(index) {
-      const confirmDelete = confirm('Are you sure you want to delete this request?');
-      if (confirmDelete) {
-        const requestId = this.requestHistory[index].id;
-        axios.delete(`/api/deleteRequest/${requestId}`)
-          .then(response => {
-            console.log(response.data);
-            this.requestHistory.splice(index, 1);
-          })
-          .catch(error => {
-            console.error(error);
-            this.error = 'Failed to delete the request.';
-          });
-      }
-    },
-    openRequestModal() {
-      this.isRequestModalActive = true;
-    },
-    closeRequestModal() {
-      this.isRequestModalActive = false;
-      this.formData = { reason: '', amount: 0 };
-      this.error = null;
-    },
-    editRequest(index) {
-      this.editFormData = { 
-        reason: this.requestHistory[index].reason, 
-        amount: this.requestHistory[index].amount,
-        index 
-      };
-      this.isEditModalActive = true;
-    },
-    closeEditModal() {
-      this.isEditModalActive = false;
-      this.editFormData = { reason: '', amount: 0, index: null };
-    },
-    openMembershipFormModal() {
-      this.isMembershipFormModalActive = true;
-    },
-    closeMembershipFormModal() {
-      this.isMembershipFormModalActive = false;
-      this.membershipFormData = { name: '', dob: '', sickness: '', certificate: null };
-      this.membershipError = null;
-    },
-    submitMembershipForm() {
-      const formData = new FormData();
-      formData.append('name', this.membershipFormData.name);
-      formData.append('dob', this.membershipFormData.dob);
-      formData.append('sickness', this.membershipFormData.sickness);
-      if (this.membershipFormData.certificate) {
-        formData.append('certificate', this.membershipFormData.certificate);
-      }
+const router = useRouter()
 
-      axios.post('http://localhost:8080/api/membership', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      })
-      .then(response => {
-        console.log(response.data);
-        this.membershipFormData = { name: '', dob: '', sickness: '', certificate: null };
-        this.closeMembershipFormModal();
-      })
-      .catch(error => {
-        if (error.response && error.response.data) {
-          this.membershipError = error.response.data.message || 'An error occurred.';
-        } else {
-          this.membershipError = 'An unexpected error occurred. Please try again.';
-        }
-        console.error(error);
-      });
-    },
-    handleCertificateUpload(event) {
-      const file = event.target.files[0];
-      this.membershipFormData.certificate = file;
-    },
-    formatDate(date) {
-      return new Date(date).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    },
-    logout() {
-      this.$router.push('/');
-    },
-  },
-  mounted() {
-    this.fetchRequestHistory();
-  },
-};
+const formData = ref({
+  reason: '',
+  amount: 0,
+})
+
+const editFormData = ref({
+  reason: '',
+  amount: 0,
+  index: null,
+})
+
+const membershipFormData = ref({
+  name: '',
+  dob: '',
+  sickness: '',
+  category: '',
+  address: '',
+  certificate: null,
+})
+
+const error = ref(null)
+const requestHistory = ref([])
+const isLoading = ref(true)
+const isRequestModalActive = ref(false)
+const isEditModalActive = ref(false)
+const isMembershipFormModalActive = ref(false)
+const membershipError = ref(null)
+
+const submitForm = async () => {
+  try {
+    const response = await axios.post('/api/req', formData.value)
+    console.log(response.data)
+    requestHistory.value.unshift({
+      date: new Date(),
+      reason: formData.value.reason,
+      amount: formData.value.amount,
+      status: 'Pending',
+    })
+    formData.value = { reason: '', amount: 0 }
+    error.value = null
+    closeRequestModal()
+  } catch (err) {
+    error.value = err.response?.data?.message || 'An error occurred while submitting the request.'
+    console.error(err)
+  }
+}
+
+const fetchRequestHistory = async () => {
+  try {
+    const response = await axios.get('/api/PWD')
+    requestHistory.value = response.data.map(request => ({
+      ...request,
+      status: request.status || 'Pending',
+    }))
+    isLoading.value = false
+  } catch (err) {
+    console.error(err)
+    isLoading.value = false
+    error.value = 'Failed to load request history.'
+  }
+}
+
+const updateRequest = async () => {
+  try {
+    const index = editFormData.value.index
+    const response = await axios.post('/api/updateRequest', { 
+      requestId: requestHistory.value[index].id, 
+      updatedData: {
+        reason: editFormData.value.reason,
+        amount: editFormData.value.amount
+      }
+    })
+    console.log(response.data)
+    requestHistory.value[index] = {
+      ...requestHistory.value[index],
+      reason: editFormData.value.reason,
+      amount: editFormData.value.amount,
+    }
+    editFormData.value = { reason: '', amount: 0, index: null }
+    closeEditModal()
+  } catch (err) {
+    error.value = err.response?.data?.message || 'Failed to update the request.'
+    console.error(err)
+  }
+}
+
+const deleteRequest = async (index) => {
+  const confirmDelete = confirm('Are you sure you want to delete this request?')
+  if (confirmDelete) {
+    try {
+      const requestId = requestHistory.value[index].id
+      await axios.delete(`/api/deleteRequest/${requestId}`)
+      requestHistory.value.splice(index, 1)
+    } catch (err) {
+      console.error(err)
+      error.value = 'Failed to delete the request.'
+    }
+  }
+}
+
+const openRequestModal = () => {
+  isRequestModalActive.value = true
+}
+
+const closeRequestModal = () => {
+  isRequestModalActive.value = false
+  formData.value = { reason: '', amount: 0 }
+  error.value = null
+}
+
+const editRequest = (index) => {
+  editFormData.value = { 
+    reason: requestHistory.value[index].reason, 
+    amount: requestHistory.value[index].amount,
+    index 
+  }
+  isEditModalActive.value = true
+}
+
+const closeEditModal = () => {
+  isEditModalActive.value = false
+  editFormData.value = { reason: '', amount: 0, index: null }
+}
+
+const openMembershipFormModal = () => {
+  isMembershipFormModalActive.value = true
+}
+
+const closeMembershipFormModal = () => {
+  isMembershipFormModalActive.value = false
+  membershipFormData.value = { 
+    name: '', 
+    dob: '', 
+    sickness: '', 
+    category: '',
+    address: '',
+    certificate: null 
+  }
+  membershipError.value = null
+}
+
+const submitMembershipForm = async () => {
+  try {
+    const formData = new FormData()
+    for (const key in membershipFormData.value) {
+      if (key !== 'certificate') {
+        formData.append(key, membershipFormData.value[key])
+      }
+    }
+    if (membershipFormData.value.certificate) {
+      formData.append('certificate', membershipFormData.value.certificate)
+    }
+
+    const response = await axios.post('/api/membership', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+    console.log(response.data)
+    membershipFormData.value = { 
+      name: '', 
+      dob: '', 
+      sickness: '', 
+      category: '',
+      address: '',
+      certificate: null 
+    }
+    closeMembershipFormModal()
+  } catch (err) {
+    if (err.response && err.response.data) {
+      membershipError.value = err.response.data.message || 'An error occurred.'
+    } else {
+      membershipError.value = 'An unexpected error occurred. Please try again.'
+    }
+    console.error(err)
+  }
+}
+
+const handleCertificateUpload = (event) => {
+  membershipFormData.value.certificate = event.target.files[0]
+}
+
+const formatDate = (date) => {
+  return new Date(date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+onMounted(() => {
+  fetchRequestHistory()
+})
 </script>
 
 <style scoped>
+/* The  CSS styles remain unchanged */
 .app-container {
   font-family: Arial, sans-serif;
   background-color: #f0f4f8;
@@ -383,20 +425,6 @@ export default {
 .nav-link:hover {
   background-color: #f0f4f8;
   color: #004d7a;
-}
-
-.logout-button {
-  background-color: #ff6b6b;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.logout-button:hover {
-  background-color: #ff5252;
 }
 
 .main-content {
@@ -668,9 +696,10 @@ export default {
   color: #666;
   font-style: italic;
 }
+
 .spacer {
-    width: 100%; /* Full width by default */
-    height: 50px; /* Default height */
+  width: 100%;
+  height: 50px;
 }
 
 .icon {
