@@ -55,6 +55,7 @@
                 <th>Category</th>
                 <th>Date of Birth</th>
                 <th>Contact Number</th>
+                <th>Details</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -65,6 +66,11 @@
                 <td>{{ resident.category }}</td>
                 <td>{{ formatDate(resident.date_of_birth) }}</td>
                 <td>{{ resident.contact_number }}</td>
+                <td>
+                  <button @click="showDetails(resident)" class="action-btn details-btn">
+                    View Details
+                  </button>
+                </td>
                 <td>
                   <button @click="openModal(resident)" class="action-btn edit-btn">
                     <Edit :size="16" />
@@ -159,7 +165,11 @@
           <div v-if="form.category === 'Senior Citizen'">
             <div class="form-group">
               <label for="pension_type">Pension Type:</label>
-              <input v-model="form.details.pension_type" id="pension_type">
+              <select v-model="form.details.pension_type" id="pension_type">
+                <option value="Government">Government</option>
+                <option value="Private">Private</option>
+                <option value="None">None</option>
+              </select>
             </div>
             <div class="form-group">
               <label for="health_condition">Health Condition:</label>
@@ -183,6 +193,38 @@
             <button @click="closeModal" type="button" class="cancel-btn">Cancel</button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- Details Modal -->
+    <div v-if="isDetailsModalOpen" class="modal">
+      <div class="modal-content">
+        <h2>Resident Details</h2>
+        <div v-if="selectedResident">
+          <p><strong>ID Number:</strong> {{ selectedResident.id_number }}</p>
+          <p><strong>Name:</strong> {{ selectedResident.last_name }}, {{ selectedResident.first_name }} {{ selectedResident.middle_name }}</p>
+          <p><strong>Category:</strong> {{ selectedResident.category }}</p>
+          <p><strong>Date of Birth:</strong> {{ formatDate(selectedResident.date_of_birth) }}</p>
+          <p><strong>Gender:</strong> {{ selectedResident.gender }}</p>
+          <p><strong>Address:</strong> {{ selectedResident.address }}</p>
+          <p><strong>Contact Number:</strong> {{ selectedResident.contact_number }}</p>
+          <p><strong>Email:</strong> {{ selectedResident.email }}</p>
+          <h3>Additional Details:</h3>
+          <div v-if="selectedResident.category === 'PWD'">
+            <p><strong>Disability Type:</strong> {{ selectedResident.details.disability_type }}</p>
+            <p><strong>Disability Cause:</strong> {{ selectedResident.details.disability_cause }}</p>
+            <p><strong>Disability Duration:</strong> {{ selectedResident.details.disability_duration }}</p>
+          </div>
+          <div v-else-if="selectedResident.category === 'Senior Citizen'">
+            <p><strong>Pension Type:</strong> {{ selectedResident.details.pension_type }}</p>
+            <p><strong>Health Condition:</strong> {{ selectedResident.details.health_condition }}</p>
+          </div>
+          <div v-else-if="selectedResident.category === 'Solo Parent'">
+            <p><strong>Reason for Being Solo Parent:</strong> {{ selectedResident.details.reason_for_being_solo }}</p>
+            <p><strong>Number of Children:</strong> {{ selectedResident.details.number_of_children }}</p>
+          </div>
+        </div>
+        <button @click="closeDetailsModal" class="cancel-btn">Close</button>
       </div>
     </div>
   </div>
@@ -211,12 +253,14 @@ export default {
     const isCollapsed = ref(false)
     const currentCategory = ref('')
     const isModalOpen = ref(false)
+    const isDetailsModalOpen = ref(false)
     const isEditing = ref(false)
     const currentPage = ref(1)
     const totalPages = ref(1)
     const itemsPerPage = 10
     const residents = ref([])
     const searchQuery = ref('')
+    const selectedResident = ref(null)
 
     const form = ref({
       category: '',
@@ -245,6 +289,15 @@ export default {
       isCollapsed.value = !isCollapsed.value
     }
 
+    const parseDetails = (detailsString) => {
+      try {
+        return JSON.parse(detailsString)
+      } catch (error) {
+        console.error('Error parsing details:', error)
+        return {}
+      }
+    }
+
     const fetchResidents = async () => {
       try {
         const response = await axios.get('/api/residents', {
@@ -255,7 +308,10 @@ export default {
             limit: itemsPerPage
           }
         })
-        residents.value = response.data.residents
+        residents.value = response.data.residents.map(resident => ({
+          ...resident,
+          details: parseDetails(resident.details)
+        }))
         totalPages.value = response.data.pager.pages
       } catch (error) {
         console.error('Error fetching residents:', error)
@@ -270,7 +326,10 @@ export default {
 
     const openModal = (resident = null) => {
       if (resident) {
-        form.value = { ...resident, details: resident.details || {} }
+        form.value = { 
+          ...resident,
+          details: parseDetails(resident.details)
+        }
         isEditing.value = true
       } else {
         form.value = {
@@ -297,11 +356,16 @@ export default {
 
     const saveResident = async () => {
       try {
+        const residentData = { 
+          ...form.value,
+          details: JSON.stringify(form.value.details)
+        }
+        
         if (isEditing.value) {
-          await axios.put(`/api/updateresidents/${form.value.id}`, form.value)
+          await axios.put(`/api/updateresidents/${residentData.id}`, residentData)
           alert('Resident updated successfully!')
         } else {
-          await axios.post('/api/addresidents', form.value)
+          await axios.post('/api/addresidents', residentData)
           alert('Resident added successfully!')
         }
         await fetchResidents()
@@ -352,6 +416,16 @@ export default {
       }
     }
 
+    const showDetails = (resident) => {
+      selectedResident.value = resident
+      isDetailsModalOpen.value = true
+    }
+
+    const closeDetailsModal = () => {
+      isDetailsModalOpen.value = false
+      selectedResident.value = null
+    }
+
     watch([currentCategory, searchQuery], () => {
       currentPage.value = 1
       fetchResidents()
@@ -365,6 +439,7 @@ export default {
       isCollapsed,
       currentCategory,
       isModalOpen,
+      isDetailsModalOpen,
       isEditing,
       currentPage,
       totalPages,
@@ -372,6 +447,7 @@ export default {
       searchQuery,
       form,
       navItems,
+      selectedResident,
       toggleSidebar,
       searchResidents,
       openModal,
@@ -380,7 +456,9 @@ export default {
       deleteResident,
       formatDate,
       changePage,
-      exportToExcel
+      exportToExcel,
+      showDetails,
+      closeDetailsModal
     }
   }
 }
@@ -402,7 +480,7 @@ export default {
   display: flex;
   flex-direction: column;
   position: fixed;
-  height:  100vh;
+  height: 100vh;
   overflow-y: auto;
   transition: width 0.3s ease;
 }
@@ -628,6 +706,20 @@ export default {
 
 .delete-btn:hover {
   background-color: #ffebee;
+}
+
+.details-btn {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.details-btn:hover {
+  background-color: #45a049;
 }
 
 .pagination {
