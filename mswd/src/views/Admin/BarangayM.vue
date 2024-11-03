@@ -46,7 +46,11 @@
           </div>
         </header>
 
-        <div class="table-container">
+        <div v-if="loading" class="loading">Loading...</div>
+
+        <div v-else-if="error" class="error">{{ error }}</div>
+
+        <div v-else class="table-container">
           <table class="resident-table">
             <thead>
               <tr>
@@ -84,7 +88,7 @@
           </table>
         </div>
 
-        <div class="pagination">
+        <div v-if="!loading && !error" class="pagination">
           <button @click="changePage(currentPage - 1)" :disabled="currentPage === 1">&laquo; Previous</button>
           <span>Page {{ currentPage }} of {{ totalPages }}</span>
           <button @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages">Next &raquo;</button>
@@ -211,17 +215,17 @@
           <p><strong>Email:</strong> {{ selectedResident.email }}</p>
           <h3>Additional Details:</h3>
           <div v-if="selectedResident.category === 'PWD'">
-            <p><strong>Disability Type:</strong> {{ selectedResident.details.disability_type }}</p>
-            <p><strong>Disability Cause:</strong> {{ selectedResident.details.disability_cause }}</p>
-            <p><strong>Disability Duration:</strong> {{ selectedResident.details.disability_duration }}</p>
+            <p><strong>Disability Type:</strong> {{ selectedResident.details?.disability_type || 'N/A' }}</p>
+            <p><strong>Disability Cause:</strong> {{ selectedResident.details?.disability_cause || 'N/A' }}</p>
+            <p><strong>Disability Duration:</strong> {{ selectedResident.details?.disability_duration || 'N/A' }}</p>
           </div>
           <div v-else-if="selectedResident.category === 'Senior Citizen'">
-            <p><strong>Pension Type:</strong> {{ selectedResident.details.pension_type }}</p>
-            <p><strong>Health Condition:</strong> {{ selectedResident.details.health_condition }}</p>
+            <p><strong>Pension Type:</strong> {{ selectedResident.details?.pension_type || 'N/A' }}</p>
+            <p><strong>Health Condition:</strong> {{ selectedResident.details?.health_condition || 'N/A' }}</p>
           </div>
           <div v-else-if="selectedResident.category === 'Solo Parent'">
-            <p><strong>Reason for Being Solo Parent:</strong> {{ selectedResident.details.reason_for_being_solo }}</p>
-            <p><strong>Number of Children:</strong> {{ selectedResident.details.number_of_children }}</p>
+            <p><strong>Reason for Being Solo Parent:</strong> {{ selectedResident.details?.reason_for_being_solo || 'N/A' }}</p>
+            <p><strong>Number of Children:</strong> {{ selectedResident.details?.number_of_children || 'N/A' }}</p>
           </div>
         </div>
         <button @click="closeDetailsModal" class="cancel-btn">Close</button>
@@ -238,16 +242,7 @@ import { Home, Calendar, HandsHelping, CreditCard, Users, LogOut, ChevronLeft, C
 export default {
   name: 'ResidentManagement',
   components: {
-    Home,
-    Calendar,
-    HandsHelping,
-    CreditCard,
-    Users,
-    LogOut,
-    ChevronLeft,
-    ChevronRight,
-    Edit,
-    Trash2
+    Home, Calendar, HandsHelping, CreditCard, Users, LogOut, ChevronLeft, ChevronRight, Edit, Trash2
   },
   setup() {
     const isCollapsed = ref(false)
@@ -261,20 +256,22 @@ export default {
     const residents = ref([])
     const searchQuery = ref('')
     const selectedResident = ref(null)
-
+    const loading = ref(false)
+    const error = ref(null)
     const form = ref({
-      category: '',
-      id_number: '',
-      first_name: '',
-      last_name: '',
-      middle_name: '',
-      date_of_birth: '',
-      gender: '',
-      address: '',
-      contact_number: '',
-      email: '',
-      details: {}
-    })
+    id: null,
+    category: '',
+    id_number: '',
+    first_name: '',
+    last_name: '',
+    middle_name: '',
+    date_of_birth: '',
+    gender: '',
+    address: '',
+    contact_number: '',
+    email: '',
+    details: {}
+  })
 
     const navItems = [
       { name: 'Dashboard', route: '/Dashboard', icon: Home },
@@ -289,16 +286,9 @@ export default {
       isCollapsed.value = !isCollapsed.value
     }
 
-    const parseDetails = (detailsString) => {
-      try {
-        return JSON.parse(detailsString)
-      } catch (error) {
-        console.error('Error parsing details:', error)
-        return {}
-      }
-    }
-
     const fetchResidents = async () => {
+      loading.value = true
+      error.value = null
       try {
         const response = await axios.get('/api/residents', {
           params: { 
@@ -310,12 +300,14 @@ export default {
         })
         residents.value = response.data.residents.map(resident => ({
           ...resident,
-          details: parseDetails(resident.details)
+          details: typeof resident.details === 'string' ? JSON.parse(resident.details) : resident.details
         }))
         totalPages.value = response.data.pager.pages
-      } catch (error) {
-        console.error('Error fetching residents:', error)
-        alert('Failed to fetch residents. Please try again.')
+      } catch (err) {
+        console.error('Error fetching residents:', err)
+        error.value = 'Failed to fetch residents. Please try again.'
+      } finally {
+        loading.value = false
       }
     }
 
@@ -328,11 +320,12 @@ export default {
       if (resident) {
         form.value = { 
           ...resident,
-          details: parseDetails(resident.details)
+          details: typeof resident.details === 'string' ? JSON.parse(resident.details) : resident.details
         }
         isEditing.value = true
       } else {
         form.value = {
+          id: null,
           category: '',
           id_number: '',
           first_name: '',
@@ -352,30 +345,78 @@ export default {
 
     const closeModal = () => {
       isModalOpen.value = false
-    }
-
-    const saveResident = async () => {
-      try {
-        const residentData = { 
-          ...form.value,
-          details: JSON.stringify(form.value.details)
-        }
-        
-        if (isEditing.value) {
-          await axios.put(`/api/updateresidents/${residentData.id}`, residentData)
-          alert('Resident updated successfully!')
-        } else {
-          await axios.post('/api/addresidents', residentData)
-          alert('Resident added successfully!')
-        }
-        await fetchResidents()
-        closeModal()
-      } catch (error) {
-        console.error('Error saving resident:', error)
-        alert('Failed to save resident. Please check your input and try again.')
+      form.value = {
+        id: null,
+        category: '',
+        id_number: '',
+        first_name: '',
+        last_name: '',
+        middle_name: '',
+        date_of_birth: '',
+        gender: '',
+        address: '',
+        contact_number: '',
+        email: '',
+        details: {}
       }
     }
 
+    const addResident = async () => {
+  const residentData = { 
+    ...form.value,
+    details: JSON.stringify(form.value.details)
+  };
+
+  console.log('Adding new resident:', residentData);
+
+  try {
+    const response = await axios.post('/api/addresidents', residentData);
+    console.log('Server response:', response.data);
+
+    // Assuming a successful addition always returns a status of 200
+    alert('Resident added successfully!');
+    await fetchResidents();
+    closeModal();
+  } catch (error) {
+    console.error('Error adding resident:', error);
+  }
+};
+
+
+    const updateResident = async () => {
+    try {
+      const residentData = { 
+        ...form.value,
+        details: JSON.stringify(form.value.details)
+      }
+      
+      console.log('Updating resident:', residentData)
+
+      const response = await axios.post(`/api/update/${residentData.id}`, residentData)
+
+      console.log('Server response:', response.data)
+
+      if (response.data.status === 200) {
+        alert('Resident updated successfully!')
+        // Assuming fetchResidents and closeModal are defined elsewhere in the component
+        await fetchResidents()
+        closeModal()
+      } else {
+        throw new Error(response.data.message || 'Failed to update resident')
+      }
+    } catch (error) {
+      console.error('Error updating resident:', error)
+      alert(`Failed to update resident: ${error.message}. Please check your input and try again.`)
+    }
+  }
+
+    const saveResident = () => {
+      if (isEditing.value) {
+        updateResident()
+      } else {
+        addResident()
+      }
+    }
     const deleteResident = async (id) => {
       if (confirm('Are you sure you want to delete this resident?')) {
         try {
@@ -388,8 +429,8 @@ export default {
         }
       }
     }
-
     const formatDate = (dateString) => {
+      if (!dateString) return 'N/A'
       const options = { year: 'numeric', month: 'long', day: 'numeric' }
       return new Date(dateString).toLocaleDateString(undefined, options)
     }
@@ -410,6 +451,7 @@ export default {
         link.setAttribute('download', 'residents.xlsx')
         document.body.appendChild(link)
         link.click()
+        link.remove()
       } catch (error) {
         console.error('Error exporting to Excel:', error)
         alert('Failed to export data. Please try again.')
@@ -417,7 +459,10 @@ export default {
     }
 
     const showDetails = (resident) => {
-      selectedResident.value = resident
+      selectedResident.value = {
+        ...resident,
+        details: typeof resident.details === 'string' ? JSON.parse(resident.details) : resident.details
+      }
       isDetailsModalOpen.value = true
     }
 
@@ -448,11 +493,15 @@ export default {
       form,
       navItems,
       selectedResident,
+      loading,
+      error,
       toggleSidebar,
       searchResidents,
       openModal,
       closeModal,
       saveResident,
+      addResident,
+      updateResident,
       deleteResident,
       formatDate,
       changePage,
@@ -831,5 +880,20 @@ export default {
 .save-btn:hover,
 .cancel-btn:hover {
   opacity: 0.9;
+}
+
+.loading,
+.error {
+  text-align: center;
+  padding: 20px;
+  font-size: 18px;
+}
+
+.loading {
+  color: #4CAF50;
+}
+
+.error {
+  color: #f44336;
 }
 </style>
