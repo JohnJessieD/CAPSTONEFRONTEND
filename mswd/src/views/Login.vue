@@ -1,89 +1,92 @@
 <template>
   <v-app>
-    <v-row no-gutters class="fill-height">
-      <v-col cols="12" md="6" class="d-none d-md-flex login-image-col">
-        <v-img
-          src="/placeholder.svg?height=1080&width=1080"
-          aspect-ratio="1"
-          class="login-image"
-          alt="MSWD Community Support"
-        >
-          <div class="image-overlay d-flex flex-column justify-center align-center text-center pa-6">
-            <v-avatar size="120" class="mb-6">
-              <v-img src="/placeholder.svg?height=120&width=120" alt="MSWD Logo"></v-img>
-            </v-avatar>
-            <h1 class="text-h2 font-weight-bold white--text mb-4">Welcome to MSWD</h1>
-            <p class="text-h6 white--text">Empowering communities, one login at a time.</p>
-          </div>
-        </v-img>
-      </v-col>
+    <v-container fluid class="pa-0 fill-height">
+      <v-row no-gutters class="fill-height">
+        <v-col cols="12" md="6" class="d-none d-md-flex login-image-col">
+          <v-img
+            src="/placeholder.svg?height=1080&width=1080"
+            aspect-ratio="1"
+            class="login-image"
+            alt="MSWD Community Support"
+          >
+            <div class="image-overlay d-flex flex-column justify-center align-center text-center pa-6">
+              <v-avatar size="120" class="mb-6 elevation-10">
+                <v-img src="/placeholder.svg?height=120&width=120" alt="MSWD Logo"></v-img>
+              </v-avatar>
+              <h1 class="text-h2 font-weight-bold white--text mb-4 text-shadow">Welcome to MSWD</h1>
+              <p class="text-h6 white--text text-shadow">Empowering communities, one login at a time.</p>
+            </div>
+          </v-img>
+        </v-col>
 
-      <v-col cols="12" md="6" class="d-flex align-center justify-center login-form-col">
-        <v-sheet class="login-form pa-8" rounded elevation="0" max-width="500" width="100%">
-          <h2 class="text-h4 font-weight-bold text-center mb-6 primary--text">Welcome Back</h2>
-          <p class="text-subtitle-1 text-center mb-8 secondary--text">
-            Please login to your account
-          </p>
-          <v-form @submit.prevent="login" ref="form" v-model="valid" lazy-validation>
-            <v-text-field
-              v-model="username"
-              :rules="usernameRules"
-              label="Username"
-              prepend-inner-icon="mdi-account"
-              required
-              filled
-              rounded
-              dense
-              color="primary"
-              class="mb-4"
-            ></v-text-field>
-            
-            <v-text-field
-              v-model="password"
-              :rules="passwordRules"
-              label="Password"
-              prepend-inner-icon="mdi-lock"
-              :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-              :type="showPassword ? 'text' : 'password'"
-              @click:append="showPassword = !showPassword"
-              required
-              filled
-              rounded
-              dense
-              color="primary"
-              class="mb-6"
-            ></v-text-field>
-            
-            <v-btn
-              type="submit"
-              block
-              x-large
-              rounded
-              class="mt-6 custom-btn"
-              color="primary"
-              :loading="loading"
-              :disabled="!valid || loading"
-            >
-              <v-icon left>mdi-login</v-icon>
-              Login
-            </v-btn>
-          </v-form>
-          <div class="text-center mt-6">
-            <v-btn text color="primary" @click="showForgotPasswordDialog = true" class="text-body-2 mb-2">
-              Forgot Password?
-            </v-btn>
-            <br>
-            <v-btn text color="primary" to="/RegisterComponent" class="text-body-2">
-              Don't have an account? Register here
-            </v-btn>
-          </div>
-        </v-sheet>
-      </v-col>
-    </v-row>
+        <v-col cols="12" md="6" class="d-flex align-center justify-center login-form-col">
+          <v-sheet class="login-form pa-8" rounded="lg" elevation="10" max-width="500" width="100%">
+            <h2 class="text-h4 font-weight-bold text-center mb-6 primary--text">Welcome Back</h2>
+            <p class="text-subtitle-1 text-center mb-8 secondary--text">
+              Please login to your account
+            </p>
+            <v-form @submit.prevent="login" ref="form" v-model="valid" lazy-validation>
+              <v-text-field
+                v-model="username"
+                :rules="usernameRules"
+                label="Username"
+                prepend-inner-icon="mdi-account"
+                required
+                filled
+                rounded
+                dense
+                color="primary"
+                class="mb-4 input-field"
+              ></v-text-field>
+              
+              <v-text-field
+                v-model="password"
+                :rules="passwordRules"
+                label="Password"
+                prepend-inner-icon="mdi-lock"
+                :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                :type="showPassword ? 'text' : 'password'"
+                @click:append="showPassword = !showPassword"
+                required
+                filled
+                rounded
+                dense
+                color="primary"
+                class="mb-6 input-field"
+              ></v-text-field>
+              
+              <v-btn
+                type="submit"
+                block
+                x-large
+                rounded="pill"
+                class="mt-6 custom-btn"
+                color="primary"
+                :loading="loading"
+                :disabled="!valid || loading"
+                elevation="2"
+              >
+                <v-icon left>mdi-login</v-icon>
+                Login
+              </v-btn>
+            </v-form>
+            <div class="text-center mt-6">
+              <v-btn text color="primary" @click="showForgotPasswordDialog = true" class="text-body-2 mb-2 font-weight-medium">
+                Forgot Password?
+              </v-btn>
+              <br>
+              <v-btn text color="primary" to="/RegisterComponent" class="text-body-2 font-weight-medium">
+                Don't have an account? Register here
+              </v-btn>
+            </div>
+          </v-sheet>
+        </v-col>
+      </v-row>
+    </v-container>
 
     <v-dialog v-model="showForgotPasswordDialog" max-width="500px">
-      <v-card>
-        <v-card-title class="text-h5">Forgot Password</v-card-title>
+      <v-card rounded="lg" class="pa-4">
+        <v-card-title class="text-h5 justify-center">Forgot Password</v-card-title>
         <v-card-text>
           <v-form @submit.prevent="forgotPassword" ref="forgotPasswordForm" v-model="forgotPasswordValid" lazy-validation>
             <v-text-field
@@ -96,16 +99,17 @@
               rounded
               dense
               color="primary"
-              class="mb-4"
+              class="mb-4 input-field"
             ></v-text-field>
             <v-btn
               type="submit"
               block
-              rounded
+              rounded="pill"
               class="mt-6 custom-btn"
               color="primary"
               :loading="forgotPasswordLoading"
               :disabled="!forgotPasswordValid || forgotPasswordLoading"
+              elevation="2"
             >
               Reset Password
             </v-btn>
@@ -114,7 +118,7 @@
       </v-card>
     </v-dialog>
 
-    <v-snackbar v-model="snackbar" :color="snackbarColor" :timeout="4000" top>
+    <v-snackbar v-model="snackbar" :color="snackbarColor" :timeout="4000" top rounded="pill">
       {{ message }}
       <template v-slot:action="{ attrs }">
         <v-btn text v-bind="attrs" @click="snackbar = false">Close</v-btn>
@@ -232,14 +236,13 @@ export default {
 };
 </script>
 
-
 <style scoped>
 .fill-height {
   height: 100vh;
 }
 
 .login-image-col {
-  background-color: #4caf50;
+  background-color: #2e7d32;
 }
 
 .login-image {
@@ -247,18 +250,23 @@ export default {
 }
 
 .image-overlay {
-  background-color: rgba(76, 175, 80, 0.8);
+  background-color: rgba(46, 125, 50, 0.8);
   height: 100%;
 }
 
+.text-shadow {
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
 .login-form-col {
-  background: linear-gradient(135deg, #f1f8e9 0%, #c8e6c9 100%);
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
 }
 
 .login-form {
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
-  border-radius: 16px;
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 .custom-btn {
@@ -271,16 +279,19 @@ export default {
 
 .custom-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.v-text-field >>> .v-input__slot,
-.v-select >>> .v-input__slot {
+.input-field :deep(.v-input__slot) {
   border-radius: 28px;
+  transition: all 0.3s ease;
 }
 
-.v-text-field >>> .v-label,
-.v-select >>> .v-label {
+.input-field:hover :deep(.v-input__slot) {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.input-field :deep(.v-label) {
   font-size: 14px;
 }
 

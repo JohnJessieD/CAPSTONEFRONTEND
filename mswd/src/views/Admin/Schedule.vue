@@ -7,19 +7,25 @@
         <h1 v-if="!isCollapsed" class="sidebar-title">MSWD Admin</h1>
       </div>
       <nav class="sidebar-nav">
-        <router-link v-for="(item, index) in navItems" :key="index" :to="item.route" class="nav-link">
+        <router-link 
+          v-for="(item, index) in navItems" 
+          :key="index" 
+          :to="item.route" 
+          class="nav-link"
+          :class="{ 'active': currentRoute === item.route }"
+        >
           <component :is="item.icon" :size="24" />
           <span v-if="!isCollapsed">{{ item.name }}</span>
         </router-link>
       </nav>
       <div class="user-info">
-        <span v-if="!isCollapsed" class="user-name">Admin User</span>
-        <button class="logout-button">
+        <span v-if="!isCollapsed" class="user-name">{{ currentUser.name }}</span>
+        <button class="logout-button" @click="logout">
           <LogOut :size="20" />
           <span v-if="!isCollapsed">Logout</span>
         </button>
       </div>
-      <button class="toggle-button" @click="toggleSidebar">
+      <button class="toggle-button" @click="toggleSidebar" :aria-label="isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'">
         <ChevronLeft v-if="!isCollapsed" :size="20" />
         <ChevronRight v-else :size="20" />
       </button>
@@ -30,44 +36,88 @@
       <div class="schedule-container">
         <header class="content-header">
           <h1 class="page-title">Schedule Management</h1>
-          <button @click="openModal()" class="add-schedule-btn">
-            <PlusIcon :size="20" />
-            Add New Schedule
-          </button>
+          <div class="header-actions">
+            <button @click="toggleView" class="toggle-view-btn">
+              <component :is="currentView === 'list' ? GridIcon : ListIcon" :size="20" />
+              {{ currentView === 'list' ? 'Grid View' : 'List View' }}
+            </button>
+            <button @click="openModal()" class="add-schedule-btn">
+              <PlusIcon :size="20" />
+              Add New Schedule
+            </button>
+          </div>
         </header>
+
+        <div class="filters">
+          <div class="search-wrapper">
+            <SearchIcon :size="20" class="search-icon" />
+            <input v-model="searchQuery" placeholder="Search schedules..." class="search-input" />
+          </div>
+          <select v-model="filterDate" class="date-filter">
+            <option value="">All Dates</option>
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+          </select>
+          <select v-model="filterStatus" class="status-filter">
+            <option value="">All Statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="Confirmed">Confirmed</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </div>
 
         <div v-if="isLoading" class="loading-overlay">
           <div class="spinner"></div>
           <p>Loading schedules...</p>
         </div>
 
-        <div v-else-if="schedules.length === 0" class="empty-state">
+        <div v-else-if="filteredSchedules.length === 0" class="empty-state">
           <CalendarX :size="48" />
           <p>No schedules found. Click 'Add New Schedule' to create one.</p>
         </div>
 
-        <div v-else class="schedule-list">
-          <div v-for="schedule in schedules" :key="schedule.id" class="schedule-card">
-            <div class="schedule-info">
-              <div class="schedule-date">{{ formatDate(schedule.date) }}</div>
-              <h3 class="schedule-user">{{ schedule.user }}</h3>
-              <p class="schedule-description">{{ schedule.description }}</p>
+        <div v-else :class="['schedule-list', { 'grid-view': currentView === 'grid' }]">
+          <TransitionGroup name="list" tag="div">
+            <div v-for="schedule in paginatedSchedules" :key="schedule.id" class="schedule-card">
+              <div class="schedule-info">
+                <div class="schedule-header">
+                  <div class="schedule-date">{{ formatDate(schedule.date) }}</div>
+                  <div v-if="schedule.status" class="schedule-status" :class="getStatusClass(schedule.status)">
+                    {{ schedule.status }}
+                  </div>
+                </div>
+                <h3 class="schedule-user">{{ schedule.user || 'Unknown User' }}</h3>
+                <p class="schedule-description">{{ schedule.description || 'No description available' }}</p>
+              </div>
+              <div class="schedule-actions">
+                <button @click="notifyUser(schedule)" class="action-btn notify-btn" :title="`Notify ${schedule.user || 'user'}`">
+                  <BellIcon :size="16" />
+                  Notify
+                </button>
+                <button @click="openModal(schedule)" class="action-btn edit-btn" :title="`Edit ${schedule.user || 'user'}'s schedule`">
+                  <EditIcon :size="16" />
+                  Edit
+                </button>
+                <button @click="deleteSchedule(schedule.id)" class="action-btn delete-btn" :title="`Delete ${schedule.user || 'user'}'s schedule`">
+                  <TrashIcon :size="16" />
+                  Delete
+                </button>
+              </div>
             </div>
-            <div class="schedule-actions">
-              <button @click="notifyUser(schedule)" class="action-btn notify-btn" :title="`Notify ${schedule.user}`">
-                <BellIcon :size="16" />
-                Notify
-              </button>
-              <button @click="openModal(schedule)" class="action-btn edit-btn" :title="`Edit ${schedule.user}'s schedule`">
-                <EditIcon :size="16" />
-                Edit
-              </button>
-              <button @click="deleteSchedule(schedule.id)" class="action-btn delete-btn" :title="`Delete ${schedule.user}'s schedule`">
-                <TrashIcon :size="16" />
-                Delete
-              </button>
-            </div>
-          </div>
+          </TransitionGroup>
+        </div>
+
+        <div class="pagination">
+          <button @click="prevPage" :disabled="currentPage === 1" class="pagination-btn">
+            <ChevronLeft :size="20" />
+            Previous
+          </button>
+          <span class="pagination-info">Page {{ currentPage }} of {{ totalPages }}</span>
+          <button @click="nextPage" :disabled="currentPage === totalPages" class="pagination-btn">
+            Next
+            <ChevronRight :size="20" />
+          </button>
         </div>
 
         <div v-if="showModal" class="modal-overlay">
@@ -89,6 +139,14 @@
                 <label for="description">Description:</label>
                 <textarea id="description" v-model="newSchedule.description" required></textarea>
               </div>
+              <div class="form-group">
+                <label for="status">Status:</label>
+                <select id="status" v-model="newSchedule.status" required>
+                  <option value="Pending">Pending</option>
+                  <option value="Confirmed">Confirmed</option>
+                  <option value="Cancelled">Cancelled</option>
+                </select>
+              </div>
               <div class="modal-buttons">
                 <button type="submit" class="modal-btn submit-btn">
                   {{ editingSchedule ? 'Update' : 'Submit' }}
@@ -100,149 +158,313 @@
         </div>
       </div>
     </main>
+
+    <!-- Quick Actions Drawer -->
+    <div class="quick-actions-drawer" :class="{ 'open': showQuickActions }">
+      <button @click="toggleQuickActions" class="quick-actions-toggle">
+        <component :is="showQuickActions ? XIcon : SettingsIcon" :size="24" />
+      </button>
+      <h3>Quick Actions</h3>
+      <button @click="exportSchedules" class="quick-action-btn">
+        <DownloadIcon :size="20" />
+        Export Schedules
+      </button>
+      <button @click="importSchedules" class="quick-action-btn">
+        <UploadIcon :size="20" />
+        Import Schedules
+      </button>
+      <button @click="generateReport" class="quick-action-btn">
+        <FileTextIcon :size="20" />
+        Generate Report
+      </button>
+    </div>
+
+    <!-- Notification Center -->
+    <div class="notification-center" :class="{ 'open': showNotifications }">
+      <button @click="toggleNotifications" class="notification-toggle">
+        <BellIcon :size="24" />
+        <span v-if="unreadNotifications > 0" class="notification-badge">{{ unreadNotifications }}</span>
+      </button>
+      <div v-if="showNotifications" class="notification-list">
+        <h3>Notifications</h3>
+        <div v-if="notifications.length === 0" class="empty-notifications">
+          No new notifications
+        </div>
+        <div v-else v-for="notification in notifications" :key="notification.id" class="notification-item">
+          <p>{{ notification.message }}</p>
+          <small>{{ formatDate(notification.date) }}</small>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
-<script>
-import { ref, onMounted } from 'vue';
-import { Home, Calendar, HandsHelping, CreditCard, Users, ChevronLeft, ChevronRight, LogOut, PlusIcon, BellIcon, EditIcon, XIcon, CalendarX, TrashIcon } from 'lucide-vue-next';
+<script setup>
+import { ref, computed, onMounted, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import { Home, Calendar, HandsHelping, CreditCard, Users, ChevronLeft, ChevronRight, LogOut, PlusIcon, BellIcon, EditIcon, XIcon, CalendarX, TrashIcon, GridIcon, ListIcon, SettingsIcon, DownloadIcon, UploadIcon, FileTextIcon, SearchIcon } from 'lucide-vue-next';
 import axios from 'axios';
 
-export default {
-  name: 'Dashboard',
-  components: {
-    Home, Calendar, HandsHelping, CreditCard, Users, ChevronLeft, ChevronRight, LogOut, PlusIcon, BellIcon, EditIcon, XIcon, CalendarX, TrashIcon
-  },
-  setup() {
-    const isCollapsed = ref(false);
-    const showModal = ref(false);
-    const isLoading = ref(true);
-    const newSchedule = ref({ user: '', date: '', description: '' });
-    const schedules = ref([]);
-    const editingSchedule = ref(null);
+const router = useRouter();
+const route = useRoute();
+const isCollapsed = ref(false);
+const showModal = ref(false);
+const isLoading = ref(true);
+const newSchedule = ref({ user: '', date: '', description: '', status: 'Pending' });
+const schedules = ref([]);
+const editingSchedule = ref(null);
+const currentUser = ref({ name: 'Admin User' });
+const searchQuery = ref('');
+const filterDate = ref('');
+const filterStatus = ref('');
+const currentPage = ref(1);
+const itemsPerPage = 10;
+const currentView = ref('list');
+const showQuickActions = ref(false);
+const showNotifications = ref(false);
+const notifications = ref([]);
+const unreadNotifications = ref(0);
 
-    const navItems = [
-      { name: 'Dashboard', route: '/Dashboard', icon: Home },
-      { name: 'Schedule', route: '/Schedule', icon: Calendar },
-      { name: 'Barangay Management', route: '/Barangaym', icon: HandsHelping },
-      { name: 'Assistance Management', route: '/AssistanceManagement', icon: CreditCard },
-      { name: 'User Management', route: '/user-management', icon: Users },
-    ];
+const navItems = [
+  { name: 'Dashboard', route: '/Dashboard', icon: Home },
+  { name: 'Schedule', route: '/Schedule', icon: Calendar },
+  { name: 'Barangay Management', route: '/Barangaym', icon: HandsHelping },
+  { name: 'Assistance Management', route: '/AssistanceManagement', icon: CreditCard },
+  { name: 'User Management', route: '/user-management', icon: Users },
+];
 
-    const toggleSidebar = () => {
-      isCollapsed.value = !isCollapsed.value;
-    };
+const currentRoute = computed(() => route.path);
 
-    const fetchSchedules = async () => {
-      try {
-        isLoading.value = true;
-        const response = await axios.get('/api/schedules');
-        schedules.value = response.data;
-      } catch (error) {
-        console.error('Error fetching schedules:', error);
-        // TODO: Add error handling, e.g., show an error message to the user
-      } finally {
-        isLoading.value = false;
-      }
-    };
+const toggleSidebar = () => {
+  isCollapsed.value = !isCollapsed.value;
+  localStorage.setItem('sidebarCollapsed', isCollapsed.value);
+};
 
-    const openModal = (schedule = null) => {
-      if (schedule) {
-        editingSchedule.value = schedule;
-        newSchedule.value = { ...schedule };
-      } else {
-        editingSchedule.value = null;
-        newSchedule.value = { user: '', date: '', description: '' };
-      }
-      showModal.value = true;
-    };
-
-    const closeModal = () => {
-      showModal.value = false;
-      editingSchedule.value = null;
-      newSchedule.value = { user: '', date: '', description: '' };
-    };
-
-    const addOrUpdateSchedule = async () => {
-      try {
-        if (editingSchedule.value) {
-          await axios.put(`/api/editschedules/${editingSchedule.value.id}`, newSchedule.value);
-        } else {
-          await axios.post('/api/Createschedules', newSchedule.value);
-        }
-        await fetchSchedules();
-        closeModal();
-      } catch (error) {
-        console.error('Error saving schedule:', error);
-        // TODO: Add error handling, e.g., show an error message to the user
-      }
-    };
-
-    const deleteSchedule = async (id) => {
-      if (confirm('Are you sure you want to delete this schedule?')) {
-        try {
-          await axios.delete(`/api/deleteschedules/${id}`);
-          await fetchSchedules();
-        } catch (error) {
-          console.error('Error deleting schedule:', error);
-          // TODO: Add error handling, e.g., show an error message to the user
-        }
-      }
-    };
-
-    const notifyUser = async (schedule) => {
-      try {
-        await axios.post(`/api/schedules/${schedule.id}/notify`);
-        console.log('User notified about schedule:', schedule);
-        // TODO: Add success message to the user
-      } catch (error) {
-        console.error('Error notifying user:', error);
-        // TODO: Add error handling, e.g., show an error message to the user
-      }
-    };
-
-    const formatDate = (date) => {
-      return new Date(date).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-    };
-
-    // Function to push PWD to schedule after accepting request or assistance
-    const pushPWDToSchedule = async (pwdId, assistanceId) => {
-      try {
-        const response = await axios.post('/api/push-pwd-to-schedule', { pwdId, assistanceId });
-        console.log('PWD pushed to schedule:', response.data);
-        await fetchSchedules(); // Refresh schedules after pushing
-        // TODO: Add success message to the user
-      } catch (error) {
-        console.error('Error pushing PWD to schedule:', error);
-        // TODO: Add error handling, e.g., show an error message to the user
-      }
-    };
-
-    onMounted(fetchSchedules);
-
-    return {
-      isCollapsed,
-      navItems,
-      toggleSidebar,
-      schedules,
-      newSchedule,
-      addOrUpdateSchedule,
-      deleteSchedule,
-      notifyUser,
-      formatDate,
-      showModal,
-      openModal,
-      closeModal,
-      isLoading,
-      editingSchedule,
-      pushPWDToSchedule
-    };
+const fetchSchedules = async () => {
+  try {
+    isLoading.value = true;
+    const response = await axios.get('/api/schedules');
+    schedules.value = response.data.map(schedule => ({
+      ...schedule,
+      user: schedule.user || 'Unknown User',
+      description: schedule.description || 'No description available',
+      status: schedule.status || 'Unknown'
+    }));
+  } catch (error) {
+    console.error('Error fetching schedules:', error);
+    // TODO: Add error handling, e.g., show an error message to the user
+  } finally {
+    isLoading.value = false;
   }
 };
+
+const openModal = (schedule = null) => {
+  if (schedule) {
+    editingSchedule.value = schedule;
+    newSchedule.value = { ...schedule };
+  } else {
+    editingSchedule.value = null;
+    newSchedule.value = { user: '', date: '', description: '', status: 'Pending' };
+  }
+  showModal.value = true;
+};
+
+const closeModal = () => {
+  showModal.value = false;
+  editingSchedule.value = null;
+  newSchedule.value = { user: '', date: '', description: '', status: 'Pending' };
+};
+
+const addOrUpdateSchedule = async () => {
+  try {
+    if (editingSchedule.value) {
+      await axios.put(`/api/editschedules/${editingSchedule.value.id}`, newSchedule.value);
+    } else {
+      await axios.post('/api/Createschedules', newSchedule.value);
+    }
+    await fetchSchedules();
+    closeModal();
+  } catch (error) {
+    console.error('Error saving schedule:', error);
+    // TODO: Add error handling, e.g., show an error message to the user
+  }
+};
+
+const deleteSchedule = async (id) => {
+  if (confirm('Are you sure you want to delete this schedule?')) {
+    try {
+      await axios.delete(`/api/deleteschedules/${id}`);
+      await fetchSchedules();
+    } catch (error) {
+      console.error('Error deleting schedule:', error);
+      // TODO: Add error handling, e.g., show an error message to the user
+    }
+  }
+};
+
+const notifyUser = async (schedule) => {
+  try {
+    await axios.post(`/api/schedules/${schedule.id}/notify`);
+    console.log('User notified about schedule:', schedule);
+    // TODO: Add success message to the user
+  } catch (error) {
+    console.error('Error notifying user:', error);
+    // TODO: Add error handling, e.g., show an error message to the user
+  }
+};
+
+const formatDate = (date) => {
+  if (!date) return 'No date specified';
+  return new Date(date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
+const getStatusClass = (status) => {
+  if (!status) return 'unknown';
+  return status.toLowerCase();
+};
+
+const logout = () => {
+  // TODO: Implement logout logic
+  router.push('/login');
+};
+
+const toggleView = () => {
+  currentView.value = currentView.value === 'list' ? 'grid' : 'list';
+};
+
+const filteredSchedules = computed(() => {
+  let filtered = schedules.value;
+
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase();
+    filtered = filtered.filter(schedule => 
+      schedule.user.toLowerCase().includes(query) ||
+      schedule.description.toLowerCase().includes(query)
+    );
+  }
+
+  if (filterDate.value) {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    filtered = filtered.filter(schedule => {
+      const scheduleDate = new Date(schedule.date);
+      switch (filterDate.value) {
+        case 'today':
+          return scheduleDate.toDateString() === today.toDateString();
+        case 'week':
+          const weekStart = new Date(today);
+          weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+          const weekEnd = new Date(weekStart);
+          weekEnd.setDate(weekEnd.getDate() + 6);
+          return scheduleDate >= weekStart && scheduleDate <= weekEnd;
+        case 'month':
+          return scheduleDate.getMonth() === today.getMonth() && scheduleDate.getFullYear() === today.getFullYear();
+        default:
+          return true;
+      }
+    });
+  }
+
+  if (filterStatus.value) {
+    filtered = filtered.filter(schedule => schedule.status === filterStatus.value);
+  }
+
+  return filtered;
+});
+
+const totalPages = computed(() => Math.ceil(filteredSchedules.value.length / itemsPerPage));
+
+const paginatedSchedules = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  return filteredSchedules.value.slice(start, end);
+});
+
+const prevPage = () => {
+  if (currentPage.value > 1) currentPage.value--;
+};
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) currentPage.value++;
+};
+
+const toggleQuickActions = () => {
+  showQuickActions.value = !showQuickActions.value;
+};
+
+const exportSchedules = async () => {
+  try {
+    const response = await axios.get('/api/export-schedules', { responseType: 'blob' });
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'schedules.csv');
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } catch (error) {
+    console.error('Error exporting schedules:', error);
+    // TODO: Add error handling, e.g., show an error message to the user
+  }
+};
+
+const importSchedules = () => {
+  // TODO: Implement import functionality
+  console.log('Import schedules functionality to be implemented');
+};
+
+const generateReport = async () => {
+  try {
+    const response = await axios.get('/api/generate-report', { responseType: 'blob' });
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'schedule_report.pdf');
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } catch (error) {
+    console.error('Error generating report:', error);
+    // TODO: Add error handling, e.g., show an error message to the user
+  }
+};
+
+const toggleNotifications = () => {
+  showNotifications.value = !showNotifications.value;
+  if (showNotifications.value) {
+    unreadNotifications.value = 0;
+  }
+};
+
+const fetchNotifications = async () => {
+  try {
+    const response = await axios.get('/api/notifications');
+    notifications.value = response.data;
+    unreadNotifications.value = notifications.value.filter(n => !n.read).length;
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    // TODO: Add error handling, e.g., show an error message to the user
+  }
+};
+
+watch(filteredSchedules, () => {
+  currentPage.value = 1;
+});
+
+onMounted(() => {
+  fetchSchedules();
+  fetchNotifications();
+  
+  // Restore sidebar state from localStorage
+  const savedState = localStorage.getItem('sidebarCollapsed');
+  if (savedState !== null) {
+    isCollapsed.value = JSON.parse(savedState);
+  }
+});
 </script>
 
 <style scoped>
@@ -264,6 +486,7 @@ export default {
   height: 100vh;
   overflow-y: auto;
   transition: width 0.3s ease;
+  z-index: 1000;
 }
 
 .sidebar.collapsed {
@@ -305,7 +528,7 @@ export default {
   margin-bottom: 5px;
 }
 
-.nav-link:hover, .nav-link.router-link-active {
+.nav-link:hover, .nav-link.active {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
@@ -389,6 +612,10 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 30px;
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .page-title {
@@ -433,7 +660,7 @@ export default {
   border-left-color: #4CAF50;
   border-radius: 50%;
   width: 50px;
-  height:  50px;
+  height: 50px;
   animation: spin 1s linear infinite;
 }
 
@@ -483,10 +710,16 @@ export default {
   padding: 24px;
 }
 
+.schedule-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
 .schedule-date {
   font-size: 0.9rem;
   color: #666;
-  margin-bottom: 8px;
 }
 
 .schedule-user {
@@ -594,7 +827,8 @@ export default {
 }
 
 .form-group input,
-.form-group textarea {
+.form-group textarea,
+.form-group select {
   width: 100%;
   padding: 12px;
   border: 1px solid #ddd;
@@ -604,7 +838,8 @@ export default {
 }
 
 .form-group input:focus,
-.form-group textarea:focus {
+.form-group textarea:focus,
+.form-group select:focus {
   outline: none;
   border-color: #4CAF50;
 }
@@ -648,29 +883,309 @@ export default {
   background-color: #d32f2f;
 }
 
+.filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.search-wrapper {
+  position: relative;
+  flex-grow: 1;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 10px 10px 40px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.date-filter, .status-filter {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  min-width: 120px;
+}
+
+.schedule-list.grid-view {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.schedule-status {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.schedule-status.pending {
+  background-color: #ffd700;
+  color: #000;
+}
+
+.schedule-status.confirmed {
+  background-color: #4caf50;
+  color: #fff;
+}
+
+.schedule-status.cancelled {
+  background-color: #f44336;
+  color: #fff;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.pagination-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 16px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background-color: #45a049;
+}
+
+.pagination-btn:disabled {
+  background-color: #ddd;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  margin: 0 20px;
+  font-weight: bold;
+}
+
+.toggle-view-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #f0f0f0;
+  color: #333;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.toggle-view-btn:hover {
+  background-color: #e0e0e0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.quick-actions-drawer {
+  position: fixed;
+  top: 50%;
+  right: -200px;
+  transform: translateY(-50%);
+  width: 200px;
+  background-color: #fff;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  transition: right 0.3s ease;
+  border-radius: 10px 0 0 10px;
+}
+
+.quick-actions-drawer.open {
+  right: 0;
+}
+
+.quick-actions-toggle {
+  position: absolute;
+  left: -40px;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 4px 0 0 4px;
+}
+
+.quick-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  background-color: #f0f0f0;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.quick-action-btn:hover {
+  background-color: #e0e0e0;
+}
+
+.notification-center {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+}
+
+.notification-toggle {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: #f44336;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.notification-list {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  width: 300px;
+  background-color: #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  padding: 20px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.empty-notifications {
+  text-align: center;
+  color: #666;
+}
+
+.list-enter-active,
+.list-leave-active {
+  transition: all 0.5s ease;
+}
+.list-enter-from,
+.list-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
 @media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    transform: translateX(-100%);
+  }
+
+  .sidebar.collapsed {
+    transform: translateX(0);
+    width: 80px;
+  }
+
   .main-content {
     margin-left: 0;
     padding: 20px;
   }
 
-  .content-header {
+  .toggle-button {
+    right: 10px;
+    top: 10px;
+  }
+
+  .header-actions {
     flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .add-schedule-btn {
-    margin-top: 20px;
     width: 100%;
-    justify-content: center;
   }
 
-  .schedule-list {
-    grid-template-columns: 1fr;
+  .toggle-view-btn, .add-schedule-btn {
+    width: 100%;
   }
 
-  .modal {
-    padding: 30px;
+  .filters {
+    flex-direction: column;
+  }
+
+  .search-input, .date-filter, .status-filter {
+    width: 100%;
+  }
+
+  .quick-actions-drawer {
+    width: 100%;
+    right: -100%;
+  }
+
+  .quick-actions-drawer.open {
+    right: 0;
+  }
+
+  .notification-list {
+    width: 100%;
+    right: -20px;
   }
 }
 </style>
