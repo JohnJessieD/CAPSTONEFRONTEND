@@ -24,6 +24,30 @@
       <div class="content-wrapper">
         <h1 class="page-title">Membership Management</h1>
 
+        <div class="dashboard-stats">
+          <div class="stat-card">
+            <UsersIcon class="stat-icon" />
+            <div class="stat-content">
+              <h3>Total Members</h3>
+              <p>{{ members.length }}</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <UserPlusIcon class="stat-icon" />
+            <div class="stat-content">
+              <h3>New This Month</h3>
+              <p>{{ newMembersThisMonth }}</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <ActivityIcon class="stat-icon" />
+            <div class="stat-content">
+              <h3>Active Members</h3>
+              <p>{{ activeMembers }}</p>
+            </div>
+          </div>
+        </div>
+
         <div class="search-filter">
           <div class="search-box">
             <input v-model="searchQuery" type="text" placeholder="Search members...">
@@ -38,7 +62,7 @@
         </div>
 
         <div v-if="isLoading" class="loading-state">
-          <Loader2Icon class="loading-icon" />
+          <div class="loader"></div>
           <p>Loading membership data...</p>
         </div>
 
@@ -52,7 +76,7 @@
               <p><strong>Category:</strong> {{ member.category }}</p>
               <p><strong>Date of Birth:</strong> {{ member.dob }}</p>
               <p><strong>Sickness:</strong> {{ member.sickness }}</p>
-              <p v-if="member.certificate"><strong>Certificate:</strong> {{ member.certificate }}</p>
+              <p><strong>Address:</strong> {{ member.address }}</p>
             </div>
             <div class="membership-card-footer">
               <button @click="viewCertificate(member)" class="view-button">
@@ -77,11 +101,32 @@
     <div v-if="showCertificateModal" class="modal-overlay">
       <div class="modal-content">
         <h2 class="modal-title">Member Certificate</h2>
-        <img :src="certificateUrl" alt="Member Certificate" style="max-width: 100%; height: auto;" />
+        <div class="certificate-preview">
+          <div class="id-card">
+            <div class="id-card-header">
+              <img src="/img/Download.jpg" alt="Logo" class="id-logo">
+              <h3>MSWD Membership Card</h3>
+            </div>
+            <div class="id-card-body">
+              <div class="id-photo-placeholder">Photo</div>
+              <div class="id-details">
+                <p><strong>Name:</strong> {{ selectedMember.name }}</p>
+                <p><strong>Category:</strong> {{ selectedMember.category }}</p>
+                <p><strong>DOB:</strong> {{ selectedMember.dob }}</p>
+                <p><strong>ID:</strong> {{ selectedMember.id || 'N/A' }}</p>
+                <p><strong>Address:</strong> {{ selectedMember.address || 'N/A' }}</p>
+              </div>
+            </div>
+            <div class="id-card-footer">
+              <div class="qr-placeholder">QR</div>
+              <p class="id-footer-text">This card is the property of the Municipal Social Welfare and Development Office.</p>
+            </div>
+          </div>
+        </div>
         <div class="modal-actions">
           <button @click="printCertificate(selectedMember)" class="print-button">
             <PrinterIcon class="button-icon" />
-            Print Certificate
+            Print Card
           </button>
           <button @click="closeCertificateModal" class="close-button">Close</button>
         </div>
@@ -113,6 +158,10 @@
             <input v-model="editingMember.sickness" id="sickness" required>
           </div>
           <div class="form-group">
+            <label for="address">Address:</label>
+            <input v-model="editingMember.address" id="address" required>
+          </div>
+          <div class="form-group">
             <label for="certificate">Certificate:</label>
             <input type="file" id="certificate" @change="handleFileUpload" accept="image/*">
           </div>
@@ -127,26 +176,25 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
 import { 
   Home, 
   Calendar, 
   HandsHelping, 
   CreditCard, 
-  Users, 
+  Users as UsersIcon, 
   LogOut,
-  SearchIcon,
-  UserIcon,
-  FileIcon,
-  EditIcon,
-  Loader2Icon,
-  FileQuestionIcon,
-  PrinterIcon
+  Search as SearchIcon,
+  User as UserIcon,
+  File as FileIcon,
+  Edit as EditIcon,
+  FileQuestion as FileQuestionIcon,
+  Printer as PrinterIcon,
+  UserPlus as UserPlusIcon,
+  Activity as ActivityIcon
 } from 'lucide-vue-next'
 import axios from 'axios'
 
-const router = useRouter()
 const isCollapsed = ref(false)
 const isLoading = ref(true)
 const members = ref([])
@@ -154,7 +202,6 @@ const searchQuery = ref('')
 const filterCategory = ref('')
 const editingMember = ref(null)
 const newCertificate = ref(null)
-const certificateUrl = ref('')
 const showCertificateModal = ref(false)
 const selectedMember = ref(null)
 
@@ -164,7 +211,7 @@ const navItems = [
   { name: 'Barangay Management', route: '/Barangaym', icon: HandsHelping },
   { name: 'Assistance Management', route: '/AssistanceManagement', icon: HandsHelping },
   { name: 'Card Management', route: '/CardManagement', icon: CreditCard },
-  { name: 'User Management', route: '/user-management', icon: Users },
+  { name: 'User Management', route: '/user-management', icon: UsersIcon },
 ]
 
 const toggleSidebar = () => {
@@ -174,13 +221,10 @@ const toggleSidebar = () => {
 const fetchMembers = async () => {
   try {
     const response = await axios.get('/api/showmembers')
-    members.value = response.data.map(member => ({
-      ...member,
-      category: member.category || 'Uncategorized',
-      categoryAttachment: member.categoryAttachment || null
-    }))
+    members.value = response.data
   } catch (error) {
     console.error('Error fetching members:', error)
+    alert('Failed to fetch members. Please try again.')
   } finally {
     isLoading.value = false
   }
@@ -194,18 +238,12 @@ const filteredMembers = computed(() => {
 })
 
 const viewCertificate = (member) => {
-  if (member.certificate) {
-    certificateUrl.value = member.certificate
-    selectedMember.value = member
-    showCertificateModal.value = true
-  } else {
-    alert('No certificate available for this member.')
-  }
+  selectedMember.value = member
+  showCertificateModal.value = true
 }
 
 const closeCertificateModal = () => {
   showCertificateModal.value = false
-  certificateUrl.value = ''
   selectedMember.value = null
 }
 
@@ -214,129 +252,136 @@ const printCertificate = (user) => {
   printWindow.document.write(`
     <html>
       <head>
-        <title>User Card - ${user.name}</title>
+        <title>MSWD Membership Card - ${user.name}</title>
         <style>
-          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+          @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
           body {
-            font-family: 'Inter', sans-serif;
-            line-height: 1.6;
-            color: #1a202c;
-            background-color: #f7fafc;
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            margin: 0;
           }
-          .print-card {
-            background-color: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            padding: 40px;
-            max-width: 400px;
-            width: 100%;
-            position: relative;
+          .id-card {
+            width: 3.375in;
+            height: 2.125in;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             overflow: hidden;
-            border: 2px solid #4CAF50;
-          }
-          .print-header {
-            margin-bottom: 30px;
             position: relative;
-            z-index: 1;
           }
-          .print-header::before {
-            content: '';
-            position: absolute;
-            top: -20px;
-            left: -20px;
-            right: -20px;
-            bottom: 0;
-            background: linear-gradient(135deg, #4CAF50, #45a049);
-            transform: skewY(-5deg);
-            z-index: -1;
+          .id-card-header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
           }
-          .logo {
+          .id-logo {
+            width: 30px;
+            height: 30px;
+            margin-right: 10px;
+          }
+          .id-card-body {
+            display: flex;
+            padding: 10px;
+          }
+          .id-photo-placeholder {
             width: 80px;
             height: 80px;
-            object-fit: cover;
-            border-radius: 50%;
-            border: 4px solid white;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            margin-bottom: 15px;
-          }
-          .print-header h2 {
-            margin: 0;
-            font-size: 28px;
-            font-weight: 700;
-            color: white;
-          }
-          .print-body {
-            padding: 0 20px;
-          }
-          .print-body p {
-            margin: 15px 0;
-            font-size: 16px;
-            display: flex;
-            justify-content: space-between;
-            border-bottom: 1px solid #e2e8f0;
-            padding-bottom: 10px;
-          }
-          .print-body strong {
-            font-weight: 600;
-            color: #4a5568;
-          }
-          .print-footer {
-            margin-top: 30px;
-            font-size: 0.8em;
-            text-align: center;
-            color: #718096;
-          }
-          .qr-code {
-            width: 100px;
-            height: 100px;
-            margin: 20px auto;
-            background-color: #e2e8f0;
+            background-color: #ddd;
+            border: 2px solid #4CAF50;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 12px;
-            color: #4a5568;
+            font-size: 10px;
+            color: #666;
+            margin-right: 10px;
+          }
+          .id-details {
+            flex: 1;
+            font-size: 10px;
+          }
+          .id-details p {
+            margin: 3px 0;
+          }
+          .id-card-footer {
+            position: absolute;
+            bottom: 5px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+          }
+          .qr-placeholder {
+            width: 50px;
+            height: 50px;
+            background-color: #fff;
+            border: 1px solid #4CAF50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 8px;
+            color: #666;
+          }
+          .id-footer-text {
+            font-size: 6px;
+            color: #666;
+            text-align: right;
+            max-width: 150px;
           }
           @media print {
             body {
               background-color: white;
             }
-            .print-card {
+            .id-card {
               box-shadow: none;
             }
           }
         </style>
       </head>
       <body>
-        <div class="print-card">
-          <div class="print-header">
-            <img src="/img/Download.jpg" alt="Logo" class="logo">
-            <h2>${user.name}</h2>
+        <div class="id-card">
+          <div class="id-card-header">
+            <img src="/img/Download.jpg" alt="Logo" class="id-logo">
+            <h3>MSWD Membership Card</h3>
           </div>
-          <div class="print-body">
-            <p><strong>Category:</strong> <span>${user.category}</span></p>
-            ${user.requirements ? `<p><strong>Requirements:</strong> <span>${user.requirements}</span></p>` : ''}
-            ${user.dob ? `<p><strong>Date of Birth:</strong> <span>${user.dob}</span></p>` : ''}
-            ${user.sickness ? `<p><strong>Sickness:</strong> <span>${user.sickness}</span></p>` : ''}
-            ${user.certificate ? `<p><strong>Certificate:</strong> <span>${user.certificate}</span></p>` : ''}
-            ${user.categoryAttachment ? `<p><strong>Category Attachment:</strong> <span>${user.categoryAttachment}</span></p>` : ''}
+          <div class="id-card-body">
+            <div class="id-photo-placeholder">Photo</div>
+            <div class="id-details">
+              <p><strong>Name:</strong> ${user.name}</p>
+              <p><strong>Category:</strong> ${user.category}</p>
+              <p><strong>DOB:</strong> ${user.dob}</p>
+              <p><strong>ID:</strong> ${user.id || 'N/A'}</p>
+              <p><strong>Address:</strong> ${user.address || 'N/A'}</p>
+            </div>
           </div>
-          <div class="qr-code">QR Code Placeholder</div>
-          <div class="print-footer">
-            <p>Issued on: ${new Date().toLocaleDateString()}</p>
-            <p>MSWD Admin | User ID: <span style="font-size: 1.2em; font-weight: bold;">${user.id || 'N/A'}</span></p>
+          <div class="id-card-footer">
+            <div class="qr-placeholder">QR</div>
+            <p class="id-footer-text">This card is the property of the Municipal Social Welfare and Development Office.</p>
           </div>
         </div>
+        <script>
+          window.onload = function() {
+            window.print();
+            window.onafterprint = function() {
+              window.close();
+            }
+          }
+        <\/script>
       </body>
-    </html>
+    <\/html>
   `)
   printWindow.document.close()
-  printWindow.print()
 }
 
 const editMember = (member) => {
@@ -354,14 +399,12 @@ const updateMember = async () => {
     formData.append('category', editingMember.value.category)
     formData.append('dob', editingMember.value.dob)
     formData.append('sickness', editingMember.value.sickness)
+    formData.append('address', editingMember.value.address)
     if (newCertificate.value) {
       formData.append('certificate', newCertificate.value)
     }
-    if (editingMember.value.categoryAttachment) {
-      formData.append('categoryAttachment', editingMember.value.categoryAttachment)
-    }
 
-    const response = await axios.post(`/api/membership/edit/${editingMember.value.id}`, formData, {
+    const response = await axios.post(`/api/editMembership/${editingMember.value.id}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
@@ -369,15 +412,18 @@ const updateMember = async () => {
 
     if (response.data.status === 'success') {
       const updatedMember = response.data.data
-      const index =   members.value.findIndex(m => m.id === updatedMember.id)
+      const index = members.value.findIndex(m => m.id === updatedMember.id)
       if (index !== -1) {
         members.value[index] = updatedMember
       }
       cancelEdit()
+      alert('Member updated successfully!')
+    } else {
+      throw new Error(response.data.message || 'Failed to update member')
     }
   } catch (error) {
     console.error('Error updating member:', error)
-    alert('Failed to update member. Please try again.')
+    alert(`Failed to update member: ${error.message}`)
   }
 }
 
@@ -386,7 +432,19 @@ const cancelEdit = () => {
   newCertificate.value = null
 }
 
-fetchMembers()
+const newMembersThisMonth = computed(() => {
+  const now = new Date()
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+  return members.value.filter(member => new Date(member.created_at) >= monthStart).length
+})
+
+const activeMembers = computed(() => {
+  return members.value.filter(member => member.certificate).length
+})
+
+onMounted(() => {
+  fetchMembers()
+})
 </script>
 
 <style scoped>
@@ -394,6 +452,7 @@ fetchMembers()
   display: flex;
   min-height: 100vh;
   background-color: #f0f2f5;
+  font-family: 'Inter', sans-serif;
 }
 
 .sidebar {
@@ -407,6 +466,7 @@ fetchMembers()
   height: 100vh;
   overflow-y: auto;
   transition: width 0.3s ease;
+  box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
 }
 
 .sidebar.collapsed {
@@ -423,6 +483,8 @@ fetchMembers()
   width: 50px;
   height: 50px;
   margin-right: 10px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .sidebar-title {
@@ -440,18 +502,20 @@ fetchMembers()
 .nav-link {
   display: flex;
   align-items: center;
-  padding: 10px;
+  padding: 12px;
   color: white;
   text-decoration: none;
   transition: background-color 0.2s ease;
+  border-radius: 8px;
+  margin-bottom: 8px;
 }
 
 .nav-link:hover {
-  background-color: #45a049;
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .nav-link svg {
-  margin-right: 10px;
+  margin-right: 12px;
 }
 
 .user-info {
@@ -504,9 +568,53 @@ fetchMembers()
 }
 
 .page-title {
-  font-size: 2rem;
+  font-size: 2.5rem;
   color: #1a202c;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  font-weight: 700;
+}
+
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.stat-card {
+  background-color: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.stat-icon {
+  font-size: 2.5rem;
+  margin-right: 1rem;
+  color: #4CAF50;
+}
+
+.stat-content h3 {
+  font-size: 0.875rem;
+  color: #4a5568;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stat-content p {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #2d3748;
+  margin: 0.25rem 0 0;
 }
 
 .search-filter {
@@ -524,8 +632,15 @@ fetchMembers()
   width: 100%;
   padding: 0.75rem 1rem 0.75rem 2.5rem;
   border: 1px solid #e2e8f0;
-  border-radius: 0.375rem;
+  border-radius: 8px;
   font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
 }
 
 .search-icon {
@@ -539,9 +654,16 @@ fetchMembers()
 .filter-dropdown {
   padding: 0.75rem 1rem;
   border: 1px solid #e2e8f0;
-  border-radius: 0.375rem;
+  border-radius: 8px;
   font-size: 1rem;
   background-color: white;
+  transition: border-color 0.3s ease;
+}
+
+.filter-dropdown:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
 }
 
 .membership-cards-grid {
@@ -552,21 +674,21 @@ fetchMembers()
 
 .membership-card {
   background-color: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
   overflow: hidden;
   transition: all 0.3s ease;
 }
 
 .membership-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
 }
 
 .membership-card-header {
   background-color: #4CAF50;
   color: white;
-  padding: 1rem;
+  padding: 1.25rem;
   display: flex;
   align-items: center;
 }
@@ -576,11 +698,15 @@ fetchMembers()
 }
 
 .membership-card-body {
-  padding: 1rem;
+  padding: 1.25rem;
+}
+
+.membership-card-body p {
+  margin-bottom: 0.5rem;
 }
 
 .membership-card-footer {
-  padding: 1rem;
+  padding: 1.25rem;
   background-color: #f7fafc;
   display: flex;
   justify-content: space-between;
@@ -589,12 +715,13 @@ fetchMembers()
 .view-button, .edit-button {
   padding: 0.5rem 1rem;
   border: none;
-  border-radius: 0.25rem;
+  border-radius: 6px;
   font-size: 0.875rem;
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .view-button {
@@ -627,7 +754,12 @@ fetchMembers()
   height: 200px;
 }
 
-.loading-icon {
+.loader {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #4CAF50;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
   animation: spin 1s linear infinite;
 }
 
@@ -638,13 +770,17 @@ fetchMembers()
 
 .no-results {
   text-align: center;
-  padding: 2rem;
+  padding: 3rem;
   color: #718096;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
 .no-results-icon {
-  font-size: 3rem;
+  font-size: 4rem;
   margin-bottom: 1rem;
+  color: #4CAF50;
 }
 
 .card-list-enter-active,
@@ -673,53 +809,65 @@ fetchMembers()
 .modal-content {
   background-color: white;
   padding: 2rem;
-  border-radius: 0.5rem;
+  border-radius: 12px;
   width: 100%;
   max-width: 500px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
 .modal-title {
   font-size: 1.5rem;
   font-weight: bold;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  color: #2d3748;
 }
 
 .form-group {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  font-weight: bold;
+  font-weight: 600;
+  color: #4a5568;
 }
 
 .form-group input,
 .form-group select {
   width: 100%;
-  padding: 0.5rem;
+  padding: 0.75rem;
   border: 1px solid #e2e8f0;
-  border-radius: 0.25rem;
+  border-radius: 6px;
   font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
 }
 
 .form-actions {
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
-  margin-top: 1rem;
+  margin-top: 2rem;
 }
 
 .save-button,
 .cancel-button,
 .print-button,
 .close-button {
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 1.5rem;
   border: none;
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .save-button,
@@ -747,6 +895,98 @@ fetchMembers()
 .modal-actions {
   display: flex;
   justify-content: space-between;
-  margin-top: 1rem;
+  margin-top: 1.5rem;
+}
+
+.certificate-preview {
+  background-color: #f0f2f5;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.id-card {
+  width: 3.375in;
+  height: 2.125in;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  position: relative;
+  margin: 0 auto;
+}
+
+.id-card-header {
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.id-logo {
+  width: 30px;
+  height: 30px;
+  margin-right: 10px;
+}
+
+.id-card-body {
+  display: flex;
+  padding: 10px;
+}
+
+.id-photo-placeholder {
+  width: 80px;
+  height: 80px;
+  background-color: #ddd;
+  border: 2px solid #4CAF50;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 10px;
+  color: #666;
+  margin-right: 10px;
+}
+
+.id-details {
+  flex: 1;
+  font-size: 10px;
+}
+
+.id-details p {
+  margin: 3px 0;
+}
+
+.id-card-footer {
+  position: absolute;
+  bottom: 5px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.qr-placeholder {
+  width: 50px;
+  height: 50px;
+  background-color: #fff;
+  border: 1px solid #4CAF50;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 8px;
+  color: #666;
+}
+
+.id-footer-text {
+  font-size: 6px;
+  color: #666;
+  text-align: right;
+  max-width: 150px;
 }
 </style>
