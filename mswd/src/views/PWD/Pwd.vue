@@ -6,11 +6,11 @@
         <span class="brand-text">Welcome to Municipal SWD!</span>
       </div>
       <div class="navbar-links">
-        <router-link to="/temlpatep" class="nav-link">Home</router-link>
-        <router-link to="/Pwd" class="nav-link">Assistance</router-link>
-        <router-link to="/EventsPWD" class="nav-link">Upcoming Events</router-link>
-        <router-link to="/ServicesPWD" class="nav-link">Services</router-link>
-        <router-link to="/publicationsPWD" class="nav-link">Publications</router-link>
+        <a href="#" class="nav-link">Home</a>
+        <a href="#" class="nav-link">Assistance</a>
+        <a href="#" class="nav-link">Upcoming Events</a>
+        <a href="#" class="nav-link">Services</a>
+        <a href="#" class="nav-link">Publications</a>
       </div>
     </nav>
     <div class="spacer"></div>
@@ -174,10 +174,6 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
 
 const formData = ref({
   reason: '',
@@ -209,8 +205,8 @@ const membershipError = ref(null)
 
 const submitForm = async () => {
   try {
-    const response = await axios.post('/api/req', formData.value)
-    console.log(response.data)
+    // Simulating API call
+    await new Promise(resolve => setTimeout(resolve, 1000))
     requestHistory.value.unshift({
       date: new Date(),
       reason: formData.value.reason,
@@ -221,18 +217,20 @@ const submitForm = async () => {
     error.value = null
     closeRequestModal()
   } catch (err) {
-    error.value = err.response?.data?.message || 'An error occurred while submitting the request.'
+    error.value = 'An error occurred while submitting the request.'
     console.error(err)
   }
 }
 
 const fetchRequestHistory = async () => {
   try {
-    const response = await axios.get('/api/PWD')
-    requestHistory.value = response.data.map(request => ({
-      ...request,
-      status: request.status || 'Pending',
-    }))
+    // Simulating API call
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    requestHistory.value = [
+      { id: 1, date: new Date('2023-05-01'), reason: 'Medical expenses', amount: 5000, status: 'Approved' },
+      { id: 2, date: new Date('2023-05-15'), reason: 'Assistive device', amount: 10000, status: 'Pending' },
+      { id: 3, date: new Date('2023-06-01'), reason: 'Rehabilitation', amount: 7500, status: 'Rejected' },
+    ]
     isLoading.value = false
   } catch (err) {
     console.error(err)
@@ -243,15 +241,9 @@ const fetchRequestHistory = async () => {
 
 const updateRequest = async () => {
   try {
+    // Simulating API call
+    await new Promise(resolve => setTimeout(resolve, 1000))
     const index = editFormData.value.index
-    const response = await axios.post('/api/updateRequest', { 
-      requestId: requestHistory.value[index].id, 
-      updatedData: {
-        reason: editFormData.value.reason,
-        amount: editFormData.value.amount
-      }
-    })
-    console.log(response.data)
     requestHistory.value[index] = {
       ...requestHistory.value[index],
       reason: editFormData.value.reason,
@@ -260,7 +252,7 @@ const updateRequest = async () => {
     editFormData.value = { reason: '', amount: 0, index: null }
     closeEditModal()
   } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to update the request.'
+    error.value = 'Failed to update the request.'
     console.error(err)
   }
 }
@@ -269,8 +261,8 @@ const deleteRequest = async (index) => {
   const confirmDelete = confirm('Are you sure you want to delete this request?')
   if (confirmDelete) {
     try {
-      const requestId = requestHistory.value[index].id
-      await axios.delete(`/api/deleteRequest/${requestId}`)
+      // Simulating API call
+      await new Promise(resolve => setTimeout(resolve, 1000))
       requestHistory.value.splice(index, 1)
     } catch (err) {
       console.error(err)
@@ -322,22 +314,9 @@ const closeMembershipFormModal = () => {
 
 const submitMembershipForm = async () => {
   try {
-    const formData = new FormData()
-    for (const key in membershipFormData.value) {
-      if (key !== 'certificate') {
-        formData.append(key, membershipFormData.value[key])
-      }
-    }
-    if (membershipFormData.value.certificate) {
-      formData.append('certificate', membershipFormData.value.certificate)
-    }
-
-    const response = await axios.post('/api/membership', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    })
-    console.log(response.data)
+    // Simulating API call
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    console.log('Membership form submitted:', membershipFormData.value)
     membershipFormData.value = { 
       name: '', 
       dob: '', 
@@ -348,11 +327,7 @@ const submitMembershipForm = async () => {
     }
     closeMembershipFormModal()
   } catch (err) {
-    if (err.response && err.response.data) {
-      membershipError.value = err.response.data.message || 'An error occurred.'
-    } else {
-      membershipError.value = 'An unexpected error occurred. Please try again.'
-    }
+    membershipError.value = 'An unexpected error occurred. Please try again.'
     console.error(err)
   }
 }
@@ -377,7 +352,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* The  CSS styles remain unchanged */
+/* The CSS styles remain unchanged */
 .app-container {
   font-family: Arial, sans-serif;
   background-color: #f0f4f8;

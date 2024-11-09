@@ -32,11 +32,12 @@ import CPWD from '../views/PWD/CPWD.vue';
 import temlpatep from '../views/PWD/temlpatep.vue';
 import EventsPWD from '../views/PWD/EventsPWD.vue';
 
+import Schedule from '../views/Admin/Schedule.vue';
 import ServicesPWD from '../views/PWD/ServicesPWD.vue';
 
 import Status from '../views/PWD/Status.vue';
 import AssistanceManagement from '../views/Admin/AssistanceManagement.vue';
-import Schedule from '../views/Admin/Schedule.vue';
+import SchedulePwd from '../views/PWD/SchedulePwd.vue';
 import CardManagement from '../views/Admin/CardManagement.vue';
 
 import SoloTemplate from '../views/SoloParent/SoloTemplate.vue';
@@ -57,6 +58,10 @@ const routes = [
   {
     path: '/SoloTemplate',
     component: SoloTemplate,
+  },
+  {
+    path: '/SchedulePwd',
+    component: SchedulePwd,
   },
   {
     path: '/Solopublications',

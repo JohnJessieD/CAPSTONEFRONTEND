@@ -126,7 +126,6 @@
     </v-snackbar>
   </v-app>
 </template>
-
 <script>
 import axios from 'axios';
 
@@ -149,6 +148,13 @@ export default {
       v => v.length >= 6 || 'Password must be at least 6 characters',
     ],
   }),
+  mounted() {
+    // Check if a username is stored in local storage and set it if available
+    const storedUsername = localStorage.getItem('username');
+    if (storedUsername) {
+      this.username = storedUsername;
+    }
+  },
   methods: {
     async login() {
       if (this.$refs.form.validate()) {
@@ -165,13 +171,15 @@ export default {
               this.message = 'Login successful!';
               this.snackbar = true;
 
+              // Store username in local storage
+              localStorage.setItem('username', this.username);
+
               // Check the user role and redirect accordingly
               switch (response.data.role) {
                 case 'admin':
                   this.$router.push('/Dashboard');
                   break;
                 case 'user':
-                  // Assuming you also want to fetch the category here
                   switch (response.data.category) {
                     case 'PWD':
                       this.$router.push('/temlpatep');
@@ -235,6 +243,7 @@ export default {
   },
 };
 </script>
+
 
 <style scoped>
 .fill-height {
