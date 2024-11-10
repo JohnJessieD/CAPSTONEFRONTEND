@@ -1,35 +1,28 @@
 <template>
   <div class="dashboard" :class="{ 'sidebar-collapsed': isCollapsed }">
     <aside class="sidebar" :class="{ 'collapsed': isCollapsed }">
-      <div class="sidebar-header">
-        <img src="/img/Download.jpg" class="logo-img" alt="Government Logo" />
-        <h1 v-if="!isCollapsed" class="sidebar-title">MSWD Admin</h1>
-      </div>
-      <nav class="sidebar-nav">
-        <router-link 
-          v-for="item in navItems" 
-          :key="item.name" 
-          :to="item.route" 
-          class="nav-link"
-          :title="item.name"
-        >
-          <component :is="getIcon(item.name)" :size="24" />
-          <span v-if="!isCollapsed">{{ item.name }}</span>
-        </router-link>
-      </nav>
-      <div class="user-info">
-        <img v-if="!isCollapsed" src="/img/avatar-placeholder.jpg" alt="User Avatar" class="user-avatar" />
-        <span v-if="!isCollapsed" class="user-name">Admin User</span>
-        <button class="logout-button" @click="logout" :title="isCollapsed ? 'Logout' : ''">
-          <LogOut :size="20" />
-          <span v-if="!isCollapsed">Logout</span>
-        </button>
-      </div>
-      <button class="toggle-button" @click="toggleSidebar" :title="isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'">
-        <ChevronLeft v-if="!isCollapsed" :size="20" />
-        <ChevronRight v-else :size="20" />
-      </button>
-    </aside>
+  <div class="sidebar-header">
+    <img src="/img/Download.jpg" class="logo-img" alt="Government Logo" />
+    <h1 v-if="!isCollapsed" class="sidebar-title">MSWD Admin</h1>
+  </div>
+  <nav class="sidebar-nav">
+    <router-link v-for="(item, index) in navItems" :key="index" :to="item.route" class="nav-link">
+      <component :is="item.icon" :size="24" />
+      <span v-if="!isCollapsed">{{ item.name }}</span>
+    </router-link>
+  </nav>
+  <div class="user-info">
+    <span v-if="!isCollapsed" class="user-name">Admin User</span>
+    <button class="logout-button">
+      <LogOut :size="20" />
+      <span v-if="!isCollapsed">Logout</span>
+    </button>
+  </div>
+  <button class="toggle-button" @click="toggleSidebar">
+    <ChevronLeft v-if="!isCollapsed" :size="20" />
+    <ChevronRight v-else :size="20" />
+  </button>
+</aside>
 
     <main class="main-content">
       <header class="main-header">
@@ -383,9 +376,10 @@ onMounted(() => {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* Sidebar styles */
 .sidebar {
   width: 250px;
-  background-color: #1a3b5d;
+  background-color: #4CAF50;
   color: white;
   padding: 20px;
   display: flex;
@@ -393,7 +387,7 @@ onMounted(() => {
   position: fixed;
   height: 100vh;
   overflow-y: auto;
-  transition: all 0.3s ease;
+  transition: width 0.3s ease;
   z-index: 1000;
 }
 
@@ -408,38 +402,40 @@ onMounted(() => {
 }
 
 .logo-img {
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   margin-right: 10px;
-  border-radius: 50%;
 }
 
 .sidebar-title {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: bold;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.sidebar-nav {
+  flex-grow: 1;
+}
+
 .nav-link {
   display: flex;
   align-items: center;
-  padding: 12px;
-  color: #a0aec0;
+  padding: 10px;
+  color: white;
   text-decoration: none;
-  transition: all 0.3s ease;
-  border-radius: 8px;
+  transition: background-color 0.3s;
+  border-radius: 5px;
   margin-bottom: 5px;
 }
 
 .nav-link:hover, .nav-link.router-link-active {
-  background-color: #2c5282;
-  color: white;
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .nav-link svg {
-  margin-right: 15px;
+  margin-right: 10px;
 }
 
 .user-info {
@@ -448,14 +444,7 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   padding-top: 20px;
-  border-top: 1px solid #2c5282;
-}
-
-.user-avatar {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  margin-bottom: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .user-name {
@@ -467,8 +456,8 @@ onMounted(() => {
 }
 
 .logout-button {
-  background-color: #2c5282;
-  border: none;
+  background-color: transparent;
+  border: 1px solid white;
   color: white;
   padding: 8px 15px;
   border-radius: 20px;
@@ -479,7 +468,7 @@ onMounted(() => {
 }
 
 .logout-button:hover {
-  background-color: #3182ce;
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .logout-button svg {
@@ -488,9 +477,9 @@ onMounted(() => {
 
 .toggle-button {
   position: absolute;
-  top: 20px;
+  top: 10px;
   right: -15px;
-  background-color: #1a3b5d;
+  background-color: #4CAF50;
   color: white;
   border: none;
   border-radius: 50%;
@@ -501,12 +490,12 @@ onMounted(() => {
   justify-content: center;
   cursor: pointer;
   transition: background-color 0.3s;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .toggle-button:hover {
-  background-color: #2c5282;
+  background-color: #45a049;
 }
+
 
 .main-content {
   flex-grow: 1;

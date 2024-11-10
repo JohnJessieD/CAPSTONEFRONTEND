@@ -274,12 +274,12 @@ export default {
   })
 
     const navItems = [
-      { name: 'Dashboard', route: '/Dashboard', icon: Home },
-      { name: 'Schedule', route: '/Schedule', icon: Calendar },
-      { name: 'Barangay Management', route: '/Barangaym', icon: HandsHelping },
-      { name: 'Assistance Management', route: '/AssistanceManagement', icon: HandsHelping },
-      { name: 'Card Management', route: '/CardManagement', icon: CreditCard },
-      { name: 'User Management', route: '/user-management', icon: Users },
+    { name: 'Dashboard', route: '/Dashboard' },
+        { name: 'Schedule', route: '/Schedule' },
+        { name: 'Barangay Management', route: '/Barangaym'},
+        { name: 'Assistance Management', route: '/AssistanceManagement'},
+        { name: 'Card Management', route: '/CardManagement' },
+        { name: 'User Management', route: '/user-management'},
     ]
 
     const toggleSidebar = () => {
@@ -532,6 +532,7 @@ export default {
   height: 100vh;
   overflow-y: auto;
   transition: width 0.3s ease;
+  z-index: 1000;
 }
 
 .sidebar.collapsed {
@@ -573,8 +574,7 @@ export default {
   margin-bottom: 5px;
 }
 
-.nav-link:hover,
-.nav-link.router-link-active {
+.nav-link:hover, .nav-link.router-link-active {
   background-color: rgba(255, 255, 255, 0.1);
 }
 

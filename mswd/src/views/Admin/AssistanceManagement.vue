@@ -138,14 +138,13 @@ const showNotifications = ref(false)
 const searchQuery = ref('')
 
 const navItems = [
-  { name: 'Dashboard', route: '/Dashboard', icon: Home },
-  { name: 'Schedule', route: '/Schedule', icon: Calendar },
-  { name: 'Barangay Management', route: '/Barangaym', icon: Users },
-  { name: 'Assistance Management', route: '/AssistanceManagement', icon: HandsHelping },
-  { name: 'Card Management', route: '/CardManagement', icon: CreditCard },
-  { name: 'User Management', route: '/user-management', icon: Users },
-]
-
+{ name: 'Dashboard', route: '/Dashboard' },
+        { name: 'Schedule', route: '/Schedule' },
+        { name: 'Barangay Management', route: '/Barangaym'},
+        { name: 'Assistance Management', route: '/AssistanceManagement'},
+        { name: 'Card Management', route: '/CardManagement' },
+        { name: 'User Management', route: '/user-management'},
+    ]
 const toggleSidebar = () => {
   isCollapsed.value = !isCollapsed.value
 }
@@ -269,7 +268,7 @@ onMounted(() => {
 
 .sidebar {
   width: 250px;
-  background-color: #1a5f7a;
+  background-color: #4CAF50;
   color: white;
   padding: 20px;
   display: flex;
@@ -295,7 +294,6 @@ onMounted(() => {
   width: 50px;
   height: 50px;
   margin-right: 10px;
-  border-radius: 50%;
 }
 
 .sidebar-title {
@@ -313,21 +311,20 @@ onMounted(() => {
 .nav-link {
   display: flex;
   align-items: center;
-  padding: 12px;
-  color: #e0e7ff;
+  padding: 10px;
+  color: white;
   text-decoration: none;
-  transition: all 0.3s ease;
-  border-radius: 8px;
-  margin-bottom: 8px;
+  transition: background-color 0.3s;
+  border-radius: 5px;
+  margin-bottom: 5px;
 }
 
-.nav-link:hover, .nav-link.active {
-  background-color: #2c7da0;
-  color: white;
+.nav-link:hover, .nav-link.router-link-active {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .nav-link svg {
-  margin-right: 12px;
+  margin-right: 10px;
 }
 
 .user-info {
@@ -349,19 +346,18 @@ onMounted(() => {
 
 .logout-button {
   background-color: transparent;
-  border: 1px solid #e0e7ff;
-  color: #e0e7ff;
+  border: 1px solid white;
+  color: white;
   padding: 8px 15px;
   border-radius: 20px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background-color 0.3s;
   display: flex;
   align-items: center;
 }
 
 .logout-button:hover {
-  background-color: #e0e7ff;
-  color: #1a5f7a;
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .logout-button svg {
@@ -372,7 +368,7 @@ onMounted(() => {
   position: absolute;
   top: 10px;
   right: -15px;
-  background-color: #1a5f7a;
+  background-color: #4CAF50;
   color: white;
   border: none;
   border-radius: 50%;
@@ -383,11 +379,10 @@ onMounted(() => {
   justify-content: center;
   cursor: pointer;
   transition: background-color 0.3s;
-  z-index: 10;
 }
 
 .toggle-button:hover {
-  background-color: #2c7da0;
+  background-color: #45a049;
 }
 
 .main-content {

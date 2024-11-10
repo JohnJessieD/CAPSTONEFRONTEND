@@ -105,9 +105,9 @@
     </main>
   </div>
 </template>
-
 <script>
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router' // Import useRouter hook
 import Chart from 'chart.js/auto'
 import { Home, Calendar, HandsHelping, CreditCard, BarChart2, Users, MapPin, User, UserPlus, Baby, Wheelchair, ChevronLeft, ChevronRight, Search, RefreshCw, LogOut, Download } from 'lucide-vue-next'
 
@@ -117,6 +117,7 @@ export default {
     Home, Calendar, HandsHelping, CreditCard, BarChart2, Users, MapPin, User, UserPlus, Baby, Wheelchair, ChevronLeft, ChevronRight, Search, RefreshCw, LogOut, Download
   },
   setup() {
+    const router = useRouter() // Get the router instance
     const isCollapsed = ref(false)
     const searchQuery = ref('')
     const chartCanvas = ref(null)
@@ -125,12 +126,12 @@ export default {
     const selectedCategory = ref('all')
 
     const navItems = [
-    { name: 'Dashboard', route: '/Dashboard' },
-        { name: 'Schedule', route: '/Schedule' },
-        { name: 'Barangay Management', route: '/Barangaym'},
-        { name: 'Assistance Management', route: '/AssistanceManagement'},
-        { name: 'Card Management', route: '/CardManagement' },
-        { name: 'User Management', route: '/user-management'},
+      { name: 'Dashboard', route: '/Dashboard' },
+      { name: 'Schedule', route: '/Schedule' },
+      { name: 'Barangay Management', route: '/Barangaym' },
+      { name: 'Assistance Management', route: '/AssistanceManagement' },
+      { name: 'Card Management', route: '/CardManagement' },
+      { name: 'User Management', route: '/user-management' },
     ]
 
     const summaryCards = [
@@ -261,6 +262,12 @@ export default {
       })
     }
 
+    const logout = () => {
+      // Implement logout logic here
+      console.log('Logging out...')
+      router.push('/')  // Use router.push() to navigate to the login or home page
+    }
+
     const selectBarangay = (barangay) => {
       // Implement barangay selection logic here
       console.log('Selected barangay:', barangay.name)
@@ -286,6 +293,7 @@ export default {
       selectedCategory,
       toggleSidebar,
       selectBarangay,
+      logout,  // Ensure logout function is returned
     }
   }
 }

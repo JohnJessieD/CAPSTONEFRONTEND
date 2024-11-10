@@ -1,24 +1,29 @@
 <template>
   <div class="dashboard">
     <aside class="sidebar" :class="{ 'collapsed': isCollapsed }">
-      <div class="sidebar-header">
-        <img src="/img/Download.jpg" class="logo-img" alt="Government Logo" />
-        <h1 v-if="!isCollapsed" class="sidebar-title">MSWD Admin</h1>
-      </div>
-      <nav class="sidebar-nav">
-        <router-link v-for="(item, index) in navItems" :key="index" :to="item.route" class="nav-link">
-          <component :is="item.icon" :size="24" />
-          <span v-if="!isCollapsed">{{ item.name }}</span>
-        </router-link>
-      </nav>
-      <div class="user-info">
-        <span v-if="!isCollapsed" class="user-name">Admin User</span>
-        <button class="logout-button">
-          <LogOut :size="20" />
-          <span v-if="!isCollapsed">Logout</span>
-        </button>
-      </div>
-    </aside>
+  <div class="sidebar-header">
+    <img src="/img/Download.jpg" class="logo-img" alt="Government Logo" />
+    <h1 v-if="!isCollapsed" class="sidebar-title">MSWD Admin</h1>
+  </div>
+  <nav class="sidebar-nav">
+    <router-link v-for="(item, index) in navItems" :key="index" :to="item.route" class="nav-link">
+      <component :is="item.icon" :size="24" />
+      <span v-if="!isCollapsed">{{ item.name }}</span>
+    </router-link>
+  </nav>
+  <div class="user-info">
+    <span v-if="!isCollapsed" class="user-name">Admin User</span>
+    <button class="logout-button">
+      <LogOut :size="20" />
+      <span v-if="!isCollapsed">Logout</span>
+    </button>
+  </div>
+  <button class="toggle-button" @click="toggleSidebar">
+    <ChevronLeft v-if="!isCollapsed" :size="20" />
+    <ChevronRight v-else :size="20" />
+  </button>
+</aside>
+
 
     <main class="main-content" :class="{ 'sidebar-collapsed': isCollapsed }">
       <div class="content-wrapper">
@@ -206,13 +211,13 @@ const showCertificateModal = ref(false)
 const selectedMember = ref(null)
 
 const navItems = [
-  { name: 'Dashboard', route: '/Dashboard', icon: Home },
-  { name: 'Schedule', route: '/Schedule', icon: Calendar },
-  { name: 'Barangay Management', route: '/Barangaym', icon: HandsHelping },
-  { name: 'Assistance Management', route: '/AssistanceManagement', icon: HandsHelping },
-  { name: 'Card Management', route: '/CardManagement', icon: CreditCard },
-  { name: 'User Management', route: '/user-management', icon: UsersIcon },
-]
+{ name: 'Dashboard', route: '/Dashboard' },
+        { name: 'Schedule', route: '/Schedule' },
+        { name: 'Barangay Management', route: '/Barangaym'},
+        { name: 'Assistance Management', route: '/AssistanceManagement'},
+        { name: 'Card Management', route: '/CardManagement' },
+        { name: 'User Management', route: '/user-management'},
+    ]
 
 const toggleSidebar = () => {
   isCollapsed.value = !isCollapsed.value
@@ -455,6 +460,7 @@ onMounted(() => {
   font-family: 'Inter', sans-serif;
 }
 
+/* Sidebar styles */
 .sidebar {
   width: 250px;
   background-color: #4CAF50;
@@ -466,7 +472,7 @@ onMounted(() => {
   height: 100vh;
   overflow-y: auto;
   transition: width 0.3s ease;
-  box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
 }
 
 .sidebar.collapsed {
@@ -483,8 +489,6 @@ onMounted(() => {
   width: 50px;
   height: 50px;
   margin-right: 10px;
-  border-radius: 50%;
-  object-fit: cover;
 }
 
 .sidebar-title {
@@ -502,20 +506,20 @@ onMounted(() => {
 .nav-link {
   display: flex;
   align-items: center;
-  padding: 12px;
+  padding: 10px;
   color: white;
   text-decoration: none;
-  transition: background-color 0.2s ease;
-  border-radius: 8px;
-  margin-bottom: 8px;
+  transition: background-color 0.3s;
+  border-radius: 5px;
+  margin-bottom: 5px;
 }
 
-.nav-link:hover {
+.nav-link:hover, .nav-link.router-link-active {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
 .nav-link svg {
-  margin-right: 12px;
+  margin-right: 10px;
 }
 
 .user-info {
@@ -549,6 +553,31 @@ onMounted(() => {
 
 .logout-button:hover {
   background-color: rgba(255, 255, 255, 0.1);
+}
+
+.logout-button svg {
+  margin-right: 5px;
+}
+
+.toggle-button {
+  position: absolute;
+  top: 10px;
+  right: -15px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.toggle-button:hover {
+  background-color: #45a049;
 }
 
 .main-content {
