@@ -1,5 +1,4 @@
 <template>
-  <div :class="['app-container', { 'dark-mode': isDarkMode }]">
     <nav class="navbar">
       <div class="navbar-brand">
         <img src="/img/Download.jpg" class="logo-img" alt="Government Logo" />
@@ -157,13 +156,10 @@
         </div>
         <div class="footer-bottom">
           <p class="footer-text">&copy; {{ currentYear }} Municipal SWD. All rights reserved.</p>
-          <button @click="toggleDarkMode" class="theme-toggle" :aria-label="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'">
-            {{ isDarkMode ? '☀️' : '🌙' }}
-          </button>
+
         </div>
       </footer>
     </div>
-  </div>
 </template>
 
 <script>

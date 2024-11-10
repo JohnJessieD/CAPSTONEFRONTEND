@@ -6,11 +6,12 @@
         <span class="brand-text">Welcome to Municipal SWD!</span>
       </div>
       <div class="navbar-links">
-        <a href="#" class="nav-link">Home</a>
-        <a href="#" class="nav-link">Assistance</a>
-        <a href="#" class="nav-link">Upcoming Events</a>
-        <a href="#" class="nav-link">Services</a>
-        <a href="#" class="nav-link">Publications</a>
+        <router-link to="/temlpatep" class="nav-link">Home</router-link>
+        <router-link to="/Pwd" class="nav-link">Assistance</router-link>
+        <router-link to="/EventsPWD" class="nav-link">Upcoming Events</router-link>
+        <router-link to="/ServicesPWD" class="nav-link">Services</router-link>
+        
+        <router-link to="/publicationsPWD" class="nav-link">Publications</router-link>
       </div>
     </nav>
     <div class="spacer"></div>
