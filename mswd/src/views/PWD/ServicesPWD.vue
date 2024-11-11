@@ -1,5 +1,6 @@
 <template>
-  <div class="app-container">
+  <div class="app-wrapper">
+    <!-- Navigation Bar -->
     <nav class="navbar">
       <div class="navbar-brand">
         <img src="/img/Download.jpg" class="logo-img" alt="Government Logo" />
@@ -10,10 +11,13 @@
         <router-link to="/Pwd" class="nav-link">Assistance</router-link>
         <router-link to="/EventsPWD" class="nav-link">Upcoming Events</router-link>
         <router-link to="/ServicesPWD" class="nav-link">Services</router-link>
-        
         <router-link to="/publicationsPWD" class="nav-link">Publications</router-link>
+        
+        <router-link to="/SchedulePWD" class="nav-link">Schedule</router-link>
+        <button @click="logout" class="logout-button">Logout</button>
       </div>
     </nav>
+
 
     <div class="spacer"></div>
 

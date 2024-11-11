@@ -1,15 +1,19 @@
 <template>
+    <!-- Navigation Bar -->
     <nav class="navbar">
       <div class="navbar-brand">
         <img src="/img/Download.jpg" class="logo-img" alt="Government Logo" />
         <span class="brand-text">Welcome to Municipal SWD!</span>
       </div>
       <div class="navbar-links">
+        <router-link to="/temlpatep" class="nav-link">Home</router-link>
         <router-link to="/Pwd" class="nav-link">Assistance</router-link>
         <router-link to="/EventsPWD" class="nav-link">Upcoming Events</router-link>
         <router-link to="/ServicesPWD" class="nav-link">Services</router-link>
         <router-link to="/publicationsPWD" class="nav-link">Publications</router-link>
-        <button class="logout-button" @click="logout">Sign Out</button>
+        
+        <router-link to="/SchedulePWD" class="nav-link">Schedule</router-link>
+        <button @click="logout" class="logout-button">Logout</button>
       </div>
     </nav>
 

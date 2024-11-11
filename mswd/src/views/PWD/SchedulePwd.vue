@@ -1,116 +1,137 @@
 <template>
-  <div class="mswd-schedule-manager">
-    <div class="container">
-      <header>
-        <img src="/placeholder.svg?height=80&width=80" alt="MSWD Logo" class="logo" />
-        <h1>MSWD Schedule Manager</h1>
-        <p>Municipal Social Welfare and Development Office</p>
-      </header>
+  <div class="app-wrapper">
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+      <div class="navbar-brand">
+        <img src="/img/Download.jpg" class="logo-img" alt="Government Logo" />
+        <span class="brand-text">Welcome to Municipal SWD!</span>
+      </div>
+      <div class="navbar-links">
+        <router-link to="/temlpatep" class="nav-link">Home</router-link>
+        <router-link to="/Pwd" class="nav-link">Assistance</router-link>
+        <router-link to="/EventsPWD" class="nav-link">Upcoming Events</router-link>
+        <router-link to="/ServicesPWD" class="nav-link">Services</router-link>
+        <router-link to="/publicationsPWD" class="nav-link">Publications</router-link>
+        
+        <router-link to="/SchedulePWD" class="nav-link">Schedule</router-link>
+        <button @click="logout" class="logout-button">Logout</button>
+      </div>
+    </nav>
 
-      <div class="content-grid">
-        <!-- Request Appointment Form -->
-        <div class="appointment-form">
-          <h2>
-            <CalendarPlusIcon class="icon" />
-            Request Appointment
-          </h2>
-          <form @submit.prevent="addSchedule">
-            <div class="form-group">
-              <label for="user">Full Name</label>
-              <input
-                v-model="newSchedule.user"
-                id="user"
-                type="text"
-                placeholder="Enter your full name"
-                required
-              >
-            </div>
-            <div class="form-group">
-              <label for="date">Preferred Date and Time</label>
-              <input
-                v-model="newSchedule.date"
-                id="date"
-                type="datetime-local"
-                required
-              >
-            </div>
-            <div class="form-group">
-              <label for="description">Appointment Details</label>
-              <textarea
-                v-model="newSchedule.description"
-                id="description"
-                placeholder="Please provide any additional information"
-                rows="3"
-              ></textarea>
-            </div>
-            <div class="form-actions">
-              <button type="submit" :disabled="isSubmitting">
-                {{ isSubmitting ? 'Submitting...' : 'Request Appointment' }}
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="container">
+        <header>
+          <img src="/placeholder.svg?height=80&width=80" alt="MSWD Logo" class="logo" />
+          <h1>MSWD Schedule Manager</h1>
+          <p>Municipal Social Welfare and Development Office</p>
+        </header>
+
+        <div class="content-grid">
+          <!-- Request Appointment Form -->
+          <div class="appointment-form">
+            <h2>
+              <CalendarPlusIcon class="icon" />
+              Request Appointment
+            </h2>
+            <form @submit.prevent="addSchedule">
+              <div class="form-group">
+                <label for="user">Full Name</label>
+                <input
+                  v-model="newSchedule.user"
+                  id="user"
+                  type="text"
+                  placeholder="Enter your full name"
+                  required
+                >
+              </div>
+              <div class="form-group">
+                <label for="date">Preferred Date and Time</label>
+                <input
+                  v-model="newSchedule.date"
+                  id="date"
+                  type="datetime-local"
+                  required
+                >
+              </div>
+              <div class="form-group">
+                <label for="description">Appointment Details</label>
+                <textarea
+                  v-model="newSchedule.description"
+                  id="description"
+                  placeholder="Please provide any additional information"
+                  rows="3"
+                ></textarea>
+              </div>
+              <div class="form-actions">
+                <button type="submit" :disabled="isSubmitting">
+                  {{ isSubmitting ? 'Submitting...' : 'Request Appointment' }}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Calendar View -->
+          <div class="calendar-view">
+            <h2>
+              <CalendarIcon class="icon" />
+              Calendar View
+            </h2>
+            <div class="calendar-header">
+              <button @click="previousMonth" class="calendar-nav-btn">
+                <ChevronLeftIcon />
+              </button>
+              <h3>{{ currentMonthYear }}</h3>
+              <button @click="nextMonth" class="calendar-nav-btn">
+                <ChevronRightIcon />
               </button>
             </div>
-          </form>
-        </div>
-
-        <!-- Calendar View -->
-        <div class="calendar-view">
-          <h2>
-            <CalendarIcon class="icon" />
-            Calendar View
-          </h2>
-          <div class="calendar-header">
-            <button @click="previousMonth" class="calendar-nav-btn">
-              <ChevronLeftIcon />
-            </button>
-            <h3>{{ currentMonthYear }}</h3>
-            <button @click="nextMonth" class="calendar-nav-btn">
-              <ChevronRightIcon />
-            </button>
-          </div>
-          <div class="calendar-grid">
-            <div v-for="day in calendarDays" :key="day.date" 
-                 :class="['calendar-day', { 'current-month': day.currentMonth, 'has-appointments': day.hasAppointments }]">
-              {{ day.dayOfMonth }}
-              <div v-if="day.hasAppointments" class="appointment-indicator"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Schedules List -->
-      <div class="schedules-list">
-        <h2>
-          <ClipboardListIcon class="icon" />
-          Upcoming Appointments
-        </h2>
-        <div class="filter-controls">
-          <div class="search-box">
-            <SearchIcon class="search-icon" />
-            <input
-              v-model="searchTerm"
-              type="text"
-              placeholder="Search appointments..."
-            >
-          </div>
-          <select v-model="filterDate">
-            <option value="all">All Dates</option>
-            <option value="today">Today</option>
-            <option value="week">This Week</option>
-            <option value="month">This Month</option>
-          </select>
-        </div>
-        <transition-group name="list" tag="ul" class="schedules">
-          <li v-for="schedule in filteredSchedules" :key="schedule.id" class="schedule-item">
-            <div class="schedule-header">
-              <div>
-                <h3>{{ schedule.user }}</h3>
-                <p>{{ formatDate(schedule.date) }}</p>
+            <div class="calendar-grid">
+              <div v-for="day in calendarDays" :key="day.date" 
+                   :class="['calendar-day', { 'current-month': day.currentMonth, 'has-appointments': day.hasAppointments }]">
+                {{ day.dayOfMonth }}
+                <div v-if="day.hasAppointments" class="appointment-indicator"></div>
               </div>
-              <span class="status">Scheduled</span>
             </div>
-            <p class="schedule-description">{{ schedule.description }}</p>
-          </li>
-        </transition-group>
-        <p v-if="filteredSchedules.length === 0" class="no-appointments">No appointments available.</p>
+          </div>
+        </div>
+
+        <!-- Schedules List -->
+        <div class="schedules-list">
+          <h2>
+            <ClipboardListIcon class="icon" />
+            Upcoming Appointments
+          </h2>
+          <div class="filter-controls">
+            <div class="search-box">
+              <SearchIcon class="search-icon" />
+              <input
+                v-model="searchTerm"
+                type="text"
+                placeholder="Search appointments..."
+              >
+            </div>
+            <select v-model="filterDate">
+              <option value="all">All Dates</option>
+              <option value="today">Today</option>
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+            </select>
+          </div>
+          <transition-group name="list" tag="ul" class="schedules">
+            <li v-for="schedule in filteredSchedules" :key="schedule.id" class="schedule-item">
+              <div class="schedule-header">
+                <div>
+                  <h3>{{ schedule.user }}</h3>
+                  <p>{{ formatDate(schedule.date) }}</p>
+                </div>
+                <span class="status">Scheduled</span>
+              </div>
+              <p class="schedule-description">{{ schedule.description }}</p>
+            </li>
+          </transition-group>
+          <p v-if="filteredSchedules.length === 0" class="no-appointments">No appointments available.</p>
+        </div>
       </div>
     </div>
   </div>
@@ -118,6 +139,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { 
   SearchIcon, 
@@ -128,6 +150,7 @@ import {
   ChevronRightIcon
 } from 'lucide-vue-next'
 
+const router = useRouter()
 const schedules = ref([])
 const newSchedule = ref({
   user: '',
@@ -139,7 +162,7 @@ const filterDate = ref('all')
 const isSubmitting = ref(false)
 const currentDate = ref(new Date())
 
-const apiBaseUrl = '/api' // Base URL for API requests
+const apiBaseUrl = '/api'
 
 const fetchSchedules = async () => {
   try {
@@ -277,31 +300,94 @@ const nextMonth = () => {
   currentDate.value = new Date(currentDate.value.getFullYear(), currentDate.value.getMonth() + 1, 1)
 }
 
+const logout = () => {
+  // Perform logout actions (e.g., clear session, remove tokens)
+  console.log('Logging out...')
+  // Redirect to the home page or login page after logout
+  router.push('/')
+}
+
 onMounted(() => {
   fetchSchedules()
 })
 
 watch(schedules, () => {
-  // Recalculate calendar days when schedules change
   calendarDays.value = calendarDays.value
 }, { deep: true })
 </script>
 
 <style scoped>
-.mswd-schedule-manager {
+.app-wrapper {
   min-height: 100vh;
-  background: linear-gradient(135deg, #e0f2fe, #e0e7ff);
-  padding: 2rem 0;
-  font-family: Arial, sans-serif;
+  background-color: #f8fafc;
+}
+
+.navbar {
+  background-color: white;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+}
+
+.logo-img {
+  height: 40px;
+  margin-right: 1rem;
+}
+
+.brand-text {
+  color: #004d7a;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.navbar-links {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.nav-link {
+  color: #333;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.nav-link:hover {
+  background-color: #f0f4f8;
+  color: #004d7a;
+}
+
+.logout-button {
+  background-color: #ff6b6b;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.logout-button:hover {
+  background-color: #ff5252;
+}
+
+.main-content {
+  padding-top: 2rem;
 }
 
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
-  background-color: #ffffff;
-  border-radius: 1rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  padding: 0 2rem;
 }
 
 header {
@@ -567,6 +653,24 @@ button:disabled {
   .search-box {
     margin-right: 0;
     margin-bottom: 1rem;
+  }
+
+  .navbar {
+    flex-direction: column;
+    padding: 1rem;
+  }
+
+  .navbar-brand {
+    margin-bottom: 1rem;
+  }
+
+  .navbar-links {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .nav-link, .logout-button {
+    margin-bottom: 0.5rem;
   }
 }
 </style>
