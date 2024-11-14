@@ -37,6 +37,8 @@ import ServicesPWD from '../views/PWD/ServicesPWD.vue';
 
 import Status from '../views/PWD/Status.vue';
 import AssistanceManagement from '../views/Admin/AssistanceManagement.vue';
+
+import Eventsmanage from '../views/Admin/Eventsmanage.vue';
 import SchedulePwd from '../views/PWD/SchedulePwd.vue';
 import CardManagement from '../views/Admin/CardManagement.vue';
 
@@ -54,6 +56,11 @@ const routes = [
   {
     path: '/BarangayM',
     component: BarangayM,
+  },
+
+  {
+    path: '/Eventsmanage',
+    component: Eventsmanage,
   },
   {
     path: '/SoloTemplate',
