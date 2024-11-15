@@ -33,6 +33,8 @@ import temlpatep from '../views/PWD/temlpatep.vue';
 import EventsPWD from '../views/PWD/EventsPWD.vue';
 
 import Schedule from '../views/Admin/Schedule.vue';
+
+import Publicationmanager from '../views/Admin/Publicationmanager.vue';
 import ServicesPWD from '../views/PWD/ServicesPWD.vue';
 
 import Status from '../views/PWD/Status.vue';
@@ -56,7 +58,12 @@ const routes = [
   {
     path: '/BarangayM',
     component: BarangayM,
+  },  
+  {
+    path: '/Publicationmanager',
+    component: Publicationmanager,
   },
+
 
   {
     path: '/Eventsmanage',
