@@ -13,7 +13,7 @@
         <router-link to="/publicationsPWD" class="nav-link">Publications</router-link>
       </div>
     </nav>
-
+<div class="spacer"></div>
     <main class="main-content">
       <h1 class="page-title">Persons with Disabilities (PWD) Office</h1>
       
@@ -726,6 +726,9 @@ onMounted(() => {
   transition: color 0.3s;
 }
 
+.spacer {
+    height: 100px;
+  }
 .modal-close:hover {
   color: #333;
 }
