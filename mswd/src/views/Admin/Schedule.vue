@@ -226,13 +226,13 @@ const notifications = ref([]);
 const unreadNotifications = ref(0);
 
 const navItems = [
-{ name: 'Dashboard', route: '/Dashboard' },
-        { name: 'Schedule', route: '/Schedule' },
-        { name: 'Barangay Management', route: '/Barangaym'},
-        { name: 'Assistance Management', route: '/AssistanceManagement'},
-        { name: 'Card Management', route: '/CardManagement' },
-        { name: 'User Management', route: '/user-management'},
-    ]
+  { name: 'Dashboard', route: '/Dashboard', icon: Home },
+  { name: 'Schedule', route: '/Schedule', icon: Calendar },
+  { name: 'Barangay Management', route: '/Barangaym', icon: Users },
+  { name: 'Assistance Management', route: '/AssistanceManagement', icon: HandsHelping },
+  { name: 'Card Management', route: '/CardManagement', icon: CreditCard },
+  { name: 'User Management', route: '/user-management', icon: Users },
+];
 
 const currentRoute = computed(() => route.path);
 
@@ -249,7 +249,7 @@ const fetchSchedules = async () => {
       ...schedule,
       user: schedule.user || 'Unknown User',
       description: schedule.description || 'No description available',
-      status: schedule.status || 'Unknown'
+      status: schedule.status || 'Pending'
     }));
   } catch (error) {
     console.error('Error fetching schedules:', error);
@@ -279,7 +279,7 @@ const closeModal = () => {
 const addOrUpdateSchedule = async () => {
   try {
     if (editingSchedule.value) {
-      await axios.put(`/api/editschedules/${editingSchedule.value.id}`, newSchedule.value);
+      await axios.post(`/api/editschedules/${editingSchedule.value.id}`, newSchedule.value);
     } else {
       await axios.post('/api/Createschedules', newSchedule.value);
     }
@@ -594,6 +594,7 @@ onMounted(() => {
 .toggle-button:hover {
   background-color: #45a049;
 }
+
 /* Main content styles */
 .main-content {
   margin-left: 250px;
@@ -914,47 +915,18 @@ onMounted(() => {
   font-size: 14px;
 }
 
-.date-filter, .status-filter {
+.date-filter,
+.status-filter {
   padding: 10px;
   border: 1px solid #ddd;
   border-radius: 6px;
   font-size: 14px;
-  min-width: 120px;
-}
-
-.schedule-list.grid-view {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 20px;
-}
-
-.schedule-status {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: bold;
-  text-transform: uppercase;
-}
-
-.schedule-status.pending {
-  background-color: #ffd700;
-  color: #000;
-}
-
-.schedule-status.confirmed {
-  background-color: #4caf50;
-  color: #fff;
-}
-
-.schedule-status.cancelled {
-  background-color: #f44336;
-  color: #fff;
+  background-color: white;
 }
 
 .pagination {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   margin-top: 20px;
   background-color: white;
@@ -967,11 +939,11 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 5px;
-  padding: 8px 16px;
   background-color: #4CAF50;
   color: white;
   border: none;
-  border-radius: 4px;
+  padding: 10px 15px;
+  border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.3s;
 }
@@ -981,13 +953,13 @@ onMounted(() => {
 }
 
 .pagination-btn:disabled {
-  background-color: #ddd;
+  background-color: #ccc;
   cursor: not-allowed;
 }
 
 .pagination-info {
-  margin: 0 20px;
-  font-weight: bold;
+  font-size: 14px;
+  color: #666;
 }
 
 .toggle-view-btn {
@@ -995,12 +967,14 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
   background-color: #f0f0f0;
-  color: #333;
   border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
+  padding: 10px 15px;
+  border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.3s;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
 }
 
 .toggle-view-btn:hover {
@@ -1012,17 +986,45 @@ onMounted(() => {
   gap: 10px;
 }
 
+.schedule-status {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.schedule-status.pending {
+  background-color: #FFF9C4;
+  color: #FBC02D;
+}
+
+.schedule-status.confirmed {
+  background-color: #C8E6C9;
+  color: #4CAF50;
+}
+
+.schedule-status.cancelled {
+  background-color: #FFCDD2;
+  color: #F44336;
+}
+
+.schedule-status.unknown {
+  background-color: #E0E0E0;
+  color: #757575;
+}
+
 .quick-actions-drawer {
   position: fixed;
-  top: 50%;
-  right: -200px;
-  transform: translateY(-50%);
-  width: 200px;
-  background-color: #fff;
+  top: 0;
+  right: -300px;
+  width: 300px;
+  height: 100vh;
+  background-color: white;
   box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
-  padding: 20px;
   transition: right 0.3s ease;
-  border-radius: 10px 0 0 10px;
+  z-index: 1000;
+  padding: 20px;
 }
 
 .quick-actions-drawer.open {
@@ -1031,31 +1033,30 @@ onMounted(() => {
 
 .quick-actions-toggle {
   position: absolute;
+  top: 20px;
   left: -40px;
-  top: 50%;
-  transform: translateY(-50%);
-  background-color: #4CAF50;
-  color: white;
+  background-color: white;
   border: none;
+  border-radius: 50% 0 0 50%;
   width: 40px;
   height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  border-radius: 4px 0 0 4px;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
 }
 
 .quick-action-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
   padding: 10px;
   margin-bottom: 10px;
   background-color: #f0f0f0;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.3s;
 }
@@ -1068,19 +1069,20 @@ onMounted(() => {
   position: fixed;
   top: 20px;
   right: 20px;
+  z-index: 1000;
 }
 
 .notification-toggle {
-  background-color: #4CAF50;
-  color: white;
+  background-color: white;
   border: none;
-  width: 40px;
-  height: 40px;
   border-radius: 50%;
+  width: 50px;
+  height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   position: relative;
 }
 
@@ -1097,16 +1099,17 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   font-size: 12px;
+  font-weight: bold;
 }
 
 .notification-list {
   position: absolute;
-  top: 50px;
+  top: 60px;
   right: 0;
   width: 300px;
-  background-color: #fff;
+  background-color: white;
+  border-radius: 10px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
   padding: 20px;
   max-height: 400px;
   overflow-y: auto;
@@ -1124,68 +1127,57 @@ onMounted(() => {
 .empty-notifications {
   text-align: center;
   color: #666;
+  padding: 20px 0;
 }
 
+/* Transitions */
 .list-enter-active,
 .list-leave-active {
   transition: all 0.5s ease;
 }
+
 .list-enter-from,
 .list-leave-to {
   opacity: 0;
   transform: translateX(30px);
 }
 
+/* Responsive adjustments */
 @media (max-width: 768px) {
   .sidebar {
-    width: 100%;
-    transform: translateX(-100%);
-  }
-
-  .sidebar.collapsed {
-    transform: translateX(0);
     width: 80px;
   }
 
+  .sidebar.collapsed {
+    width: 0;
+    padding: 0;
+  }
+
   .main-content {
-    margin-left: 0;
+    margin-left: 80px;
     padding: 20px;
   }
 
-  .toggle-button {
-    right: 10px;
-    top: 10px;
+  .content-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .header-actions {
-    flex-direction: column;
-    width: 100%;
+    margin-top: 20px;
   }
 
-  .toggle-view-btn, .add-schedule-btn {
-    width: 100%;
+  .schedule-list {
+    grid-template-columns: 1fr;
   }
 
   .filters {
     flex-direction: column;
   }
 
-  .search-input, .date-filter, .status-filter {
-    width: 100%;
-  }
-
-  .quick-actions-drawer {
-    width: 100%;
-    right: -100%;
-  }
-
-  .quick-actions-drawer.open {
-    right: 0;
-  }
-
-  .notification-list {
-    width: 100%;
-    right: -20px;
+  .pagination {
+    flex-direction: column;
+    gap: 10px;
   }
 }
 </style>

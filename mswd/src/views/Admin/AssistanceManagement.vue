@@ -138,13 +138,14 @@ const showNotifications = ref(false)
 const searchQuery = ref('')
 
 const navItems = [
-{ name: 'Dashboard', route: '/Dashboard' },
-        { name: 'Schedule', route: '/Schedule' },
-        { name: 'Barangay Management', route: '/Barangaym'},
-        { name: 'Assistance Management', route: '/AssistanceManagement'},
-        { name: 'Card Management', route: '/CardManagement' },
-        { name: 'User Management', route: '/user-management'},
-    ]
+  { name: 'Dashboard', route: '/Dashboard' },
+  { name: 'Schedule', route: '/Schedule' },
+  { name: 'Barangay Management', route: '/Barangaym'},
+  { name: 'Assistance Management', route: '/AssistanceManagement'},
+  { name: 'Card Management', route: '/CardManagement' },
+  { name: 'User Management', route: '/user-management'},
+]
+
 const toggleSidebar = () => {
   isCollapsed.value = !isCollapsed.value
 }
@@ -176,17 +177,23 @@ const acceptRequest = async (request) => {
     console.error('Error accepting request:', error)
   }
 }
-
 const rejectRequest = async (request) => {
   try {
-    const response = await axios.post('/api/rejectRequest', { requestId: request.id })
-    console.log('Request rejected:', response.data)
-    requestHistory.value = requestHistory.value.filter(r => r.id !== request.id)
-    await fetchNotifications()
+    // Ensure the payload structure matches what PHP expects
+    const response = await axios.post('/api/rejectRequest', { requestId: request.id });
+
+    // Log and update the UI based on response
+    console.log('Request rejected:', response.data);
+
+    // Update the request history to remove the rejected request
+    requestHistory.value = requestHistory.value.filter(r => r.id !== request.id);
+
+    // Fetch updated notifications
+    await fetchNotifications();
   } catch (error) {
-    console.error('Error rejecting request:', error)
+    console.error('Error rejecting request:', error);
   }
-}
+};
 
 const fetchNotifications = async () => {
   try {

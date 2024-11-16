@@ -13,7 +13,7 @@
         <router-link to="/publicationsPWD" class="nav-link">Publications</router-link>
       </div>
     </nav>
-<div class="spacer"></div>
+    <div class="spacer"></div>
     <main class="main-content">
       <h1 class="page-title">Persons with Disabilities (PWD) Office</h1>
       
@@ -97,7 +97,6 @@
         <li>Submit your application or request.</li>
         <li>Track your request status in the "Request History" section.</li>
       </ol>
-
       <button @click="closeWelcomeNotification" class="close-notification" aria-label="Close notification">&times;</button>
     </div>
 
@@ -109,16 +108,24 @@
         <form @submit.prevent="submitForm" class="dynamic-form">
           <template v-if="activeForm === 'membership'">
             <div class="form-group">
-              <label for="name" class="form-label">Full Name</label>
-              <input type="text" id="name" v-model="formData.name" required class="form-input" />
+              <label for="fullName" class="form-label">Full Name</label>
+              <input type="text" id="fullName" v-model="formData.fullName" required class="form-input" />
+            </div>
+            <div class="form-group">
+              <label for="idnumber" class="form-label">ID Number</label>
+              <input type="text" id="idnumber" v-model="formData.idnumber" required class="form-input" />
+            </div>
+            <div class="form-group">
+              <label for="phoneNumber" class="form-label">Phone Number</label>
+              <input type="tel" id="phoneNumber" v-model="formData.phoneNumber" required class="form-input" />
+            </div>
+            <div class="form-group">
+              <label for="address" class="form-label">Address</label>
+              <textarea id="address" v-model="formData.address" required class="form-input" rows="3"></textarea>
             </div>
             <div class="form-group">
               <label for="dob" class="form-label">Date of Birth</label>
               <input type="date" id="dob" v-model="formData.dob" required class="form-input" />
-            </div>
-            <div class="form-group">
-              <label for="idNumber" class="form-label">ID Number</label>
-              <input type="text" id="idNumber" v-model="formData.idNumber" required class="form-input" />
             </div>
             <div class="form-group">
               <label for="sickness" class="form-label">Disability or Medical Condition</label>
@@ -134,10 +141,6 @@
               </select>
             </div>
             <div class="form-group">
-              <label for="address" class="form-label">Address</label>
-              <textarea id="address" v-model="formData.address" required class="form-input" rows="3"></textarea>
-            </div>
-            <div class="form-group">
               <label for="certificate" class="form-label">Copy of Certificate</label>
               <input type="file" id="certificate" @change="handleFileUpload" required class="form-input file-input" accept="image/*,.pdf" />
             </div>
@@ -145,12 +148,24 @@
 
           <template v-if="activeForm === 'assistance'">
             <div class="form-group">
-              <label for="email" class="form-label">Email</label>
-              <input type="email" id="email" v-model="formData.email" required class="form-input" />
+              <label for="fullName" class="form-label">Full Name</label>
+              <input type="text" id="fullName" v-model="formData.fullName" required class="form-input" />
             </div>
             <div class="form-group">
-              <label for="idNumber" class="form-label">ID Number</label>
-              <input type="text" id="idNumber" v-model="formData.idNumber" required class="form-input" />
+              <label for="idnumber" class="form-label">ID Number</label>
+              <input type="text" id="idnumber" v-model="formData.idnumber" required class="form-input" />
+            </div>
+            <div class="form-group">
+              <label for="phoneNumber" class="form-label">Phone Number</label>
+              <input type="tel" id="phoneNumber" v-model="formData.phoneNumber" required class="form-input" />
+            </div>
+            <div class="form-group">
+              <label for="address" class="form-label">Address</label>
+              <textarea id="address" v-model="formData.address" required class="form-input" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="email" class="form-label">Email</label>
+              <input type="email" id="email" v-model="formData.email" required class="form-input" />
             </div>
             <div class="form-group">
               <label for="reason" class="form-label">Reason for Request</label>
@@ -182,12 +197,24 @@
         <h2 class="modal-title">Edit Request</h2>
         <form @submit.prevent="updateRequest" class="edit-form">
           <div class="form-group">
-            <label for="edit-email" class="form-label">Email</label>
-            <input type="email" id="edit-email" v-model="editFormData.email" required class="form-input" />
+            <label for="edit-fullName" class="form-label">Full Name</label>
+            <input type="text" id="edit-fullName" v-model="editFormData.fullName" required class="form-input" />
           </div>
           <div class="form-group">
-            <label for="edit-idNumber" class="form-label">ID Number</label>
-            <input type="text" id="edit-idNumber" v-model="editFormData.idNumber" required class="form-input" />
+            <label for="edit-idnumber" class="form-label">ID Number</label>
+            <input type="text" id="edit-idnumber" v-model="editFormData.idnumber" required class="form-input" />
+          </div>
+          <div class="form-group">
+            <label for="edit-phoneNumber" class="form-label">Phone Number</label>
+            <input type="tel" id="edit-phoneNumber" v-model="editFormData.phoneNumber" required class="form-input" />
+          </div>
+          <div class="form-group">
+            <label for="edit-address" class="form-label">Address</label>
+            <textarea id="edit-address" v-model="editFormData.address" required class="form-input" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="edit-email" class="form-label">Email</label>
+            <input type="email" id="edit-email" v-model="editFormData.email" required class="form-input" />
           </div>
           <div class="form-group">
             <label for="edit-reason" class="form-label">Reason</label>
@@ -219,12 +246,13 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 
 const formData = ref({
-  name: '',
+  fullName: '',
+  idnumber: '',
+  phoneNumber: '',
+  address: '',
   dob: '',
-  idNumber: '',
   sickness: '',
   category: '',
-  address: '',
   certificate: null,
   email: '',
   reason: '',
@@ -232,8 +260,11 @@ const formData = ref({
 })
 
 const editFormData = ref({
+  fullName: '',
+  idnumber: '',
+  phoneNumber: '',
+  address: '',
   email: '',
-  idNumber: '',
   reason: '',
   amount: 0,
   index: null,
@@ -292,12 +323,13 @@ const openModal = (formType) => {
 const closeModal = () => {
   isModalActive.value = false
   formData.value = {
-    name: '',
+    fullName: '',
+    idnumber: '',
+    phoneNumber: '',
+    address: '',
     dob: '',
-    idNumber: '',
     sickness: '',
     category: '',
-    address: '',
     certificate: null,
     email: '',
     reason: '',
@@ -330,15 +362,21 @@ const submitForm = async () => {
       })
     } else {
       response = await axios.post('/api/req', {
+        fullName: formData.value.fullName,
+        idnumber: formData.value.idnumber,
+        phoneNumber: formData.value.phoneNumber,
+        address: formData.value.address,
         email: formData.value.email,
-        idNumber: formData.value.idNumber,
         reason: formData.value.reason,
         amount: formData.value.amount,
       })
       requestHistory.value.unshift({
         date: new Date(),
+        fullName: formData.value.fullName,
+        idnumber: formData.value.idnumber,
+        phoneNumber: formData.value.phoneNumber,
+        address: formData.value.address,
         email: formData.value.email,
-        idNumber: formData.value.idNumber,
         reason: formData.value.reason,
         amount: formData.value.amount,
         status: 'Pending',
@@ -373,8 +411,11 @@ const updateRequest = async () => {
     const response = await axios.post('/api/updateRequest', { 
       requestId: requestHistory.value[index].id, 
       updatedData: {
+        fullName: editFormData.value.fullName,
+        idnumber: editFormData.value.idnumber,
+        phoneNumber: editFormData.value.phoneNumber,
+        address: editFormData.value.address,
         email: editFormData.value.email,
-        idNumber: editFormData.value.idNumber,
         reason: editFormData.value.reason,
         amount: editFormData.value.amount
       }
@@ -382,8 +423,11 @@ const updateRequest = async () => {
     console.log(response.data)
     requestHistory.value[index] = {
       ...requestHistory.value[index],
+      fullName: editFormData.value.fullName,
+      idnumber: editFormData.value.idnumber,
+      phoneNumber: editFormData.value.phoneNumber,
+      address: editFormData.value.address,
       email: editFormData.value.email,
-      idNumber: editFormData.value.idNumber,
       reason: editFormData.value.reason,
       amount: editFormData.value.amount,
     }
@@ -410,8 +454,11 @@ const deleteRequest = async (index) => {
 
 const editRequest = (index) => {
   editFormData.value = { 
+    fullName: requestHistory.value[index].fullName,
+    idnumber: requestHistory.value[index].idnumber,
+    phoneNumber: requestHistory.value[index].phoneNumber,
+    address: requestHistory.value[index].address,
     email: requestHistory.value[index].email,
-    idNumber: requestHistory.value[index].idNumber,
     reason: requestHistory.value[index].reason, 
     amount: requestHistory.value[index].amount,
     index 
@@ -421,7 +468,16 @@ const editRequest = (index) => {
 
 const closeEditModal = () => {
   isEditModalActive.value = false
-  editFormData.value = { email: '', idNumber: '', reason: '', amount: 0, index: null }
+  editFormData.value = { 
+    fullName: '', 
+    idnumber: '', 
+    phoneNumber: '', 
+    address: '', 
+    email: '', 
+    reason: '', 
+    amount: 0, 
+    index: null 
+  }
 }
 
 const handleFileUpload = (event) => {
@@ -727,8 +783,9 @@ onMounted(() => {
 }
 
 .spacer {
-    height: 100px;
-  }
+  height: 100px;
+}
+
 .modal-close:hover {
   color: #333;
 }
