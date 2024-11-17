@@ -61,7 +61,7 @@
           </select>
           <select v-model="filterStatus" class="status-filter">
             <option value="">All Statuses</option>
-            <option value="Pending">Pending</option>
+            <option value="pending">Pending</option>
             <option value="Confirmed">Confirmed</option>
             <option value="Cancelled">Cancelled</option>
           </select>
@@ -83,7 +83,7 @@
               <div class="schedule-info">
                 <div class="schedule-header">
                   <div class="schedule-date">{{ formatDate(schedule.date) }}</div>
-                  <div v-if="schedule.status" class="schedule-status" :class="getStatusClass(schedule.status)">
+                  <div class="schedule-status" :class="getStatusClass(schedule.status)">
                     {{ schedule.status }}
                   </div>
                 </div>
@@ -91,15 +91,23 @@
                 <p class="schedule-description">{{ schedule.description || 'No description available' }}</p>
               </div>
               <div class="schedule-actions">
-                <button @click="notifyUser(schedule)" class="action-btn notify-btn" :title="`Notify ${schedule.user || 'user'}`">
+                <button v-if="schedule.status === 'pending'" @click="acceptAppointment(schedule.id)" class="action-btn accept-btn" title="Accept appointment">
+                  <CheckIcon :size="16" />
+                  Accept
+                </button>
+                <button v-if="schedule.status === 'pending'" @click="rejectAppointment(schedule.id)" class="action-btn reject-btn" title="Reject appointment">
+                  <XIcon :size="16" />
+                  Reject
+                </button>
+                <button @click="notifyUser(schedule.id)" class="action-btn notify-btn" title="Notify user">
                   <BellIcon :size="16" />
                   Notify
                 </button>
-                <button @click="openModal(schedule)" class="action-btn edit-btn" :title="`Edit ${schedule.user || 'user'}'s schedule`">
+                <button @click="openModal(schedule)" class="action-btn edit-btn" title="Edit schedule">
                   <EditIcon :size="16" />
                   Edit
                 </button>
-                <button @click="deleteSchedule(schedule.id)" class="action-btn delete-btn" :title="`Delete ${schedule.user || 'user'}'s schedule`">
+                <button @click="deleteSchedule(schedule.id)" class="action-btn delete-btn" title="Delete schedule">
                   <TrashIcon :size="16" />
                   Delete
                 </button>
@@ -142,7 +150,7 @@
               <div class="form-group">
                 <label for="status">Status:</label>
                 <select id="status" v-model="newSchedule.status" required>
-                  <option value="Pending">Pending</option>
+                  <option value="pending">Pending</option>
                   <option value="Confirmed">Confirmed</option>
                   <option value="Cancelled">Cancelled</option>
                 </select>
@@ -202,7 +210,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { Home, Calendar, HandsHelping, CreditCard, Users, ChevronLeft, ChevronRight, LogOut, PlusIcon, BellIcon, EditIcon, XIcon, CalendarX, TrashIcon, GridIcon, ListIcon, SettingsIcon, DownloadIcon, UploadIcon, FileTextIcon, SearchIcon } from 'lucide-vue-next';
+import { Home, Calendar, HandsHelping, CreditCard, Users, ChevronLeft, ChevronRight, LogOut, PlusIcon, BellIcon, EditIcon, XIcon, CalendarX, TrashIcon, GridIcon, ListIcon, SettingsIcon, DownloadIcon, UploadIcon, FileTextIcon, SearchIcon, CheckIcon } from 'lucide-vue-next';
 import axios from 'axios';
 
 const router = useRouter();
@@ -210,7 +218,7 @@ const route = useRoute();
 const isCollapsed = ref(false);
 const showModal = ref(false);
 const isLoading = ref(true);
-const newSchedule = ref({ user: '', date: '', description: '', status: 'Pending' });
+const newSchedule = ref({ user: '', date: '', description: '', status: 'pending' });
 const schedules = ref([]);
 const editingSchedule = ref(null);
 const currentUser = ref({ name: 'Admin User' });
@@ -249,7 +257,7 @@ const fetchSchedules = async () => {
       ...schedule,
       user: schedule.user || 'Unknown User',
       description: schedule.description || 'No description available',
-      status: schedule.status || 'Pending'
+      status: schedule.status || 'pending'
     }));
   } catch (error) {
     console.error('Error fetching schedules:', error);
@@ -265,7 +273,7 @@ const openModal = (schedule = null) => {
     newSchedule.value = { ...schedule };
   } else {
     editingSchedule.value = null;
-    newSchedule.value = { user: '', date: '', description: '', status: 'Pending' };
+    newSchedule.value = { user: '', date: '', description: '', status: 'pending' };
   }
   showModal.value = true;
 };
@@ -273,7 +281,7 @@ const openModal = (schedule = null) => {
 const closeModal = () => {
   showModal.value = false;
   editingSchedule.value = null;
-  newSchedule.value = { user: '', date: '', description: '', status: 'Pending' };
+  newSchedule.value = { user: '', date: '', description: '', status: 'pending' };
 };
 
 const addOrUpdateSchedule = async () => {
@@ -303,11 +311,53 @@ const deleteSchedule = async (id) => {
   }
 };
 
-const notifyUser = async (schedule) => {
+const acceptAppointment = async (id) => {
   try {
-    await axios.post(`/api/schedules/${schedule.id}/notify`);
-    console.log('User notified about schedule:', schedule);
+    await axios.post(`/api/acceptAppointment/${id}`);
+    const index = schedules.value.findIndex(s => s.id === id);
+    if (index !== -1) {
+      schedules.value[index].status = 'Confirmed';
+    }
     // TODO: Add success message to the user
+  } catch (error) {
+    console.error('Error accepting appointment:', error);
+    // TODO: Add error handling, e.g., show an error message to the user
+  }
+};
+
+const rejectAppointment = async (id) => {
+  try {
+    await axios.post(`/api/rejectAppointment/${id}`);
+    const index = schedules.value.findIndex(s => s.id === id);
+    if (index !== -1) {
+      schedules.value[index].status = 'Cancelled';
+    }
+    // TODO: Add success message to the user
+  } catch (error) {
+    console.error('Error rejecting appointment:', error);
+    // TODO: Add error handling, e.g., show an error message to the user
+  }
+};
+
+const notifyUser = async (scheduleId) => {
+  try {
+    const response = await axios.post(`/api/schedules/${scheduleId}/notify`);
+    if (response.data.message) {
+      // Add a new notification
+      notifications.value.unshift({
+        id: Date.now(),
+        message: response.data.message,
+        date: new Date(),
+        read: false
+      });
+      unreadNotifications.value++;
+      
+      // Update the schedule status if needed
+      const scheduleIndex = schedules.value.findIndex(s => s.id === scheduleId);
+      if (scheduleIndex !== -1) {
+        schedules.value[scheduleIndex].notified = true;
+      }
+    }
   } catch (error) {
     console.error('Error notifying user:', error);
     // TODO: Add error handling, e.g., show an error message to the user
@@ -469,13 +519,15 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Sidebar styles */
+/* Dashboard layout */
 .dashboard {
   display: flex;
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background-color: #f0f2f5;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* Sidebar styles */
 .sidebar {
   width: 250px;
   background-color: #4CAF50;
@@ -597,10 +649,10 @@ onMounted(() => {
 
 /* Main content styles */
 .main-content {
+  flex-grow: 1;
   margin-left: 250px;
   padding: 40px;
   transition: margin-left 0.3s ease;
-  background-color: #f8f9fa;
 }
 
 .schedule-container {
@@ -626,96 +678,123 @@ onMounted(() => {
   margin: 0;
 }
 
-.add-schedule-btn {
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.add-schedule-btn,
+.toggle-view-btn {
   display: flex;
   align-items: center;
   gap: 8px;
-  background-color: #4CAF50;
-  color: white;
+  padding: 10px 20px;
   border: none;
-  padding: 12px 20px;
   border-radius: 8px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.add-schedule-btn {
+  background-color: #4CAF50;
+  color: white;
 }
 
 .add-schedule-btn:hover {
   background-color: #45a049;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.loading-overlay {
+.toggle-view-btn {
+  background-color: #f0f2f5;
+  color: #333;
+}
+
+.toggle-view-btn:hover {
+  background-color: #e4e6e9;
+}
+
+.filters {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 300px;
-}
-
-.spinner {
-  border: 4px solid rgba(0, 0, 0, 0.1);
-  border-left-color: #4CAF50;
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 300px;
-  color: #666;
+  gap: 20px;
+  margin-bottom: 30px;
   background-color: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  padding: 40px;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.empty-state svg {
-  margin-bottom: 20px;
-  color: #4CAF50;
+.search-wrapper {
+  position: relative;
+  flex-grow: 1;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+}
+
+.search-input,
+.date-filter,
+.status-filter {
+  width: 100%;
+  padding: 12px 12px 12px 40px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.search-input:focus,
+.date-filter:focus,
+.status-filter:focus {
+  outline: none;
+  border-color: #4CAF50;
+}
+
+.date-filter,
+.status-filter {
+  padding-left: 12px;
+  background-color: white;
+  cursor: pointer;
 }
 
 .schedule-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.schedule-list.grid-view {
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
 }
 
 .schedule-card {
   background-color: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   transition: all 0.3s ease;
 }
 
 .schedule-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .schedule-info {
-  padding: 24px;
+  padding: 20px;
 }
 
 .schedule-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .schedule-date {
@@ -723,9 +802,31 @@ onMounted(() => {
   color: #666;
 }
 
+.schedule-status {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 12px;
+}
+
+.schedule-status.pending {
+  background-color: #FFF9C4;
+  color: #FBC02D;
+}
+
+.schedule-status.confirmed {
+  background-color: #C8E6C9;
+  color: #4CAF50;
+}
+
+.schedule-status.cancelled {
+  background-color: #FFCDD2;
+  color: #F44336;
+}
+
 .schedule-user {
-  font-size: 1.4rem;
-  margin: 0 0 12px;
+  font-size: 1.2rem;
+  margin: 0 0 10px;
   color: #333;
 }
 
@@ -737,7 +838,7 @@ onMounted(() => {
 .schedule-actions {
   display: flex;
   justify-content: space-between;
-  padding: 16px 24px;
+  padding: 10px 20px;
   background-color: #f8f9fa;
   border-top: 1px solid #eee;
 }
@@ -745,31 +846,65 @@ onMounted(() => {
 .action-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
   background-color: transparent;
   border: none;
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 0.9rem;
   font-weight: 600;
-  padding: 8px 12px;
-  border-radius: 6px;
-}
-
-.notify-btn {
-  color: #4CAF50;
-}
-
-.edit-btn {
-  color: #2196F3;
-}
-
-.delete-btn {
-  color: #f44336;
+  padding: 5px 10px;
+  border-radius: 4px;
 }
 
 .action-btn:hover {
   background-color: rgba(0, 0, 0, 0.05);
+}
+
+.action-btn.accept-btn { color: #4CAF50; }
+.action-btn.reject-btn { color: #f44336; }
+.action-btn.notify-btn { color: #2196F3; }
+.action-btn.edit-btn { color: #FFA000; }
+.action-btn.delete-btn { color: #f44336; }
+
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 30px;
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.pagination-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background-color: #45a049;
+}
+
+.pagination-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  font-size: 1rem;
+  color: #666;
 }
 
 .modal-overlay {
@@ -786,80 +921,51 @@ onMounted(() => {
 }
 
 .modal {
-  position: relative;
   background-color: white;
-  padding: 40px;
-  border-radius: 12px;
+  padding: 30px;
+  border-radius: 10px;
   width: 500px;
   max-width: 90%;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
 .close-btn {
-  position: absolute;
-  top: 20px;
-  right: 20px;
+  float: right;
   background: none;
   border: none;
+  font-size: 1.5rem;
   cursor: pointer;
-  color: #666;
-  transition: color 0.3s;
-}
-
-.close-btn:hover {
-  color: #333;
-}
-
-.modal h3 {
-  font-size: 1.8rem;
-  margin-bottom: 24px;
-  color: #333;
 }
 
 .form-group {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 5px;
   font-weight: 600;
-  color: #555;
 }
 
 .form-group input,
 .form-group textarea,
 .form-group select {
   width: 100%;
-  padding: 12px;
+  padding: 10px;
   border: 1px solid #ddd;
-  border-radius: 6px;
+  border-radius: 4px;
   font-size: 1rem;
-  transition: border-color 0.3s;
-}
-
-.form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus {
-  outline: none;
-  border-color: #4CAF50;
-}
-
-.form-group textarea {
-  height: 120px;
-  resize: vertical;
 }
 
 .modal-buttons {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
+  gap: 10px;
 }
 
 .modal-btn {
-  padding: 12px 24px;
+  padding: 10px 20px;
   border: none;
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 1rem;
@@ -882,136 +988,6 @@ onMounted(() => {
 
 .cancel-btn:hover {
   background-color: #d32f2f;
-}
-
-.filters {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-  background-color: white;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.search-wrapper {
-  position: relative;
-  flex-grow: 1;
-}
-
-.search-icon {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #666;
-}
-
-.search-input {
-  width: 100%;
-  padding: 10px 10px 10px 40px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-}
-
-.date-filter,
-.status-filter {
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-  background-color: white;
-}
-
-.pagination {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 20px;
-  background-color: white;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.pagination-btn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.pagination-btn:hover:not(:disabled) {
-  background-color: #45a049;
-}
-
-.pagination-btn:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-.pagination-info {
-  font-size: 14px;
-  color: #666;
-}
-
-.toggle-view-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background-color: #f0f0f0;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
-}
-
-.toggle-view-btn:hover {
-  background-color: #e0e0e0;
-}
-
-.header-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.schedule-status {
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.schedule-status.pending {
-  background-color: #FFF9C4;
-  color: #FBC02D;
-}
-
-.schedule-status.confirmed {
-  background-color: #C8E6C9;
-  color: #4CAF50;
-}
-
-.schedule-status.cancelled {
-  background-color: #FFCDD2;
-  color: #F44336;
-}
-
-.schedule-status.unknown {
-  background-color: #E0E0E0;
-  color: #757575;
 }
 
 .quick-actions-drawer {
@@ -1054,9 +1030,9 @@ onMounted(() => {
   width: 100%;
   padding: 10px;
   margin-bottom: 10px;
-  background-color: #f0f0f0;
+  background-color: #f5f5f5;
   border: none;
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.3s;
 }
@@ -1076,8 +1052,8 @@ onMounted(() => {
   background-color: white;
   border: none;
   border-radius: 50%;
-  width: 50px;
-  height: 50px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1104,12 +1080,12 @@ onMounted(() => {
 
 .notification-list {
   position: absolute;
-  top: 60px;
+  top: 50px;
   right: 0;
   width: 300px;
   background-color: white;
   border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
   padding: 20px;
   max-height: 400px;
   overflow-y: auto;
@@ -1130,31 +1106,30 @@ onMounted(() => {
   padding: 20px 0;
 }
 
-/* Transitions */
-.list-enter-active,
-.list-leave-active {
-  transition: all 0.5s ease;
-}
+/* Responsive styles */
+@media (max-width: 1024px) {
+  .main-content {
+    margin-left: 80px;
+  }
 
-.list-enter-from,
-.list-leave-to {
-  opacity: 0;
-  transform: translateX(30px);
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
   .sidebar {
     width: 80px;
   }
 
-  .sidebar.collapsed {
-    width: 0;
-    padding: 0;
+  .sidebar-title,
+  .nav-link span,
+  .user-name,
+  .logout-button span {
+    display: none;
   }
 
+  .toggle-button {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
   .main-content {
-    margin-left: 80px;
     padding: 20px;
   }
 
@@ -1165,19 +1140,43 @@ onMounted(() => {
 
   .header-actions {
     margin-top: 20px;
-  }
-
-  .schedule-list {
-    grid-template-columns: 1fr;
+    width: 100%;
   }
 
   .filters {
     flex-direction: column;
   }
 
+  .schedule-list {
+    grid-template-columns: 1fr;
+  }
+
   .pagination {
     flex-direction: column;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .schedule-actions {
+    flex-wrap: wrap;
     gap: 10px;
   }
+
+  .action-btn {
+    flex: 1 0 calc(50% - 5px);
+  }
+}
+
+/* Transitions */
+.list-enter-active,
+.list-leave-active {
+  transition: all 0.5s ease;
+}
+
+.list-enter-from,
+.list-leave-to {
+  opacity: 0;
+  transform: translateY(30px);
 }
 </style>

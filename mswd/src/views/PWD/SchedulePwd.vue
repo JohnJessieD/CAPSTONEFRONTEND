@@ -12,7 +12,6 @@
         <router-link to="/EventsPWD" class="nav-link">Upcoming Events</router-link>
         <router-link to="/ServicesPWD" class="nav-link">Services</router-link>
         <router-link to="/publicationsPWD" class="nav-link">Publications</router-link>
-        
         <router-link to="/SchedulePWD" class="nav-link">Schedule</router-link>
         <button @click="logout" class="logout-button">Logout</button>
       </div>
@@ -31,7 +30,7 @@
           <!-- Request Appointment Form -->
           <div class="appointment-form">
             <h2>
-              <CalendarPlusIcon class="icon" />
+              <CalendarPlus class="icon" />
               Request Appointment
             </h2>
             <form @submit.prevent="addSchedule">
@@ -74,16 +73,16 @@
           <!-- Calendar View -->
           <div class="calendar-view">
             <h2>
-              <CalendarIcon class="icon" />
+              <Calendar class="icon" />
               Calendar View
             </h2>
             <div class="calendar-header">
               <button @click="previousMonth" class="calendar-nav-btn">
-                <ChevronLeftIcon />
+                <ChevronLeft />
               </button>
               <h3>{{ currentMonthYear }}</h3>
               <button @click="nextMonth" class="calendar-nav-btn">
-                <ChevronRightIcon />
+                <ChevronRight />
               </button>
             </div>
             <div class="calendar-grid">
@@ -99,12 +98,12 @@
         <!-- Schedules List -->
         <div class="schedules-list">
           <h2>
-            <ClipboardListIcon class="icon" />
-            Upcoming Appointments
+            <ClipboardList class="icon" />
+            Your Appointments
           </h2>
           <div class="filter-controls">
             <div class="search-box">
-              <SearchIcon class="search-icon" />
+              <Search class="search-icon" />
               <input
                 v-model="searchTerm"
                 type="text"
@@ -125,7 +124,7 @@
                   <h3>{{ schedule.user }}</h3>
                   <p>{{ formatDate(schedule.date) }}</p>
                 </div>
-                <span class="status">Scheduled</span>
+                <span class="status" :class="schedule.status">{{ schedule.status }}</span>
               </div>
               <p class="schedule-description">{{ schedule.description }}</p>
             </li>
@@ -138,16 +137,16 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { 
-  SearchIcon, 
-  CalendarIcon, 
-  CalendarPlusIcon, 
-  ClipboardListIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon
+  Search, 
+  Calendar, 
+  CalendarPlus, 
+  ClipboardList,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -179,15 +178,15 @@ const addSchedule = async () => {
 
   isSubmitting.value = true
   try {
-    const response = await axios.post(`${apiBaseUrl}/Createschedules`, newSchedule.value)
+    const response = await axios.post(`${apiBaseUrl}/requestAppointment`, newSchedule.value)
     if (response.data && response.data.id) {
-      schedules.value.push({ ...newSchedule.value, id: response.data.id })
+      schedules.value.push({ ...newSchedule.value, id: response.data.id, status: 'pending' })
       newSchedule.value = { user: '', date: '', description: '' }
-      alert('Appointment scheduled successfully!') // TODO: Replace with a more user-friendly notification
+      alert('Appointment request submitted successfully! Waiting for approval.') // TODO: Replace with a more user-friendly notification
     }
   } catch (error) {
     console.error('Error adding schedule:', error)
-    alert('Failed to schedule appointment. Please try again.') // TODO: Replace with a more user-friendly error message
+    alert('Failed to submit appointment request. Please try again.') // TODO: Replace with a more user-friendly error message
   } finally {
     isSubmitting.value = false
   }
@@ -310,10 +309,6 @@ const logout = () => {
 onMounted(() => {
   fetchSchedules()
 })
-
-watch(schedules, () => {
-  calendarDays.value = calendarDays.value
-}, { deep: true })
 </script>
 
 <style scoped>
@@ -609,12 +604,25 @@ button:disabled {
 }
 
 .status {
-  background-color: #dbeafe;
-  color: #1e40af;
   font-size: 0.75rem;
   font-weight: bold;
   padding: 0.25rem 0.5rem;
   border-radius: 9999px;
+}
+
+.status.pending {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.status.accepted {
+  background-color: #d1fae5;
+  color: #059669;
+}
+
+.status.rejected {
+  background-color: #fee2e2;
+  color: #dc2626;
 }
 
 .schedule-description {
