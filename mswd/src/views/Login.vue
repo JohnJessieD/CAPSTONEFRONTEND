@@ -126,6 +126,7 @@
     </v-snackbar>
   </v-app>
 </template>
+
 <script>
 import axios from 'axios';
 
@@ -147,9 +148,16 @@ export default {
       v => !!v || 'Password is required',
       v => v.length >= 6 || 'Password must be at least 6 characters',
     ],
+    showForgotPasswordDialog: false,
+    forgotPasswordEmail: '',
+    forgotPasswordValid: true,
+    forgotPasswordLoading: false,
+    emailRules: [
+      v => !!v || 'Email is required',
+      v => /.+@.+\..+/.test(v) || 'Email must be valid',
+    ],
   }),
   mounted() {
-    // Check if a username is stored in local storage and set it if available
     const storedUsername = localStorage.getItem('username');
     if (storedUsername) {
       this.username = storedUsername;
@@ -171,10 +179,8 @@ export default {
               this.message = 'Login successful!';
               this.snackbar = true;
 
-              // Store username in local storage
               localStorage.setItem('username', this.username);
 
-              // Check the user role and redirect accordingly
               switch (response.data.role) {
                 case 'admin':
                   this.$router.push('/Dashboard');
@@ -227,12 +233,12 @@ export default {
           });
 
           this.snackbarColor = 'success';
-          this.message = response.data.msg || 'Password reset instructions have been sent to your email.';
+          this.message = response.data.message || 'Password reset instructions have been sent to your email.';
           this.snackbar = true;
           this.showForgotPasswordDialog = false;
         } catch (error) {
           this.snackbarColor = 'error';
-          this.message = error.response?.data?.msg || 'Error processing your request. Please try again later.';
+          this.message = error.response?.data?.message || 'Error processing your request. Please try again later.';
           this.snackbar = true;
           console.error('Error during forgot password:', error);
         } finally {
@@ -243,7 +249,6 @@ export default {
   },
 };
 </script>
-
 
 <style scoped>
 .fill-height {

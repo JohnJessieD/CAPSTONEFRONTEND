@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import axios from 'axios';
 
 import Navbar from '../views/Navbar.vue';
+
 import Offices from '../views/Offices.vue';
 import SeniorServices from '../views/Senior Citizen/SeniorServices.vue';
 import Disastervictims from '../views/Offices/Disastervictims.vue';
