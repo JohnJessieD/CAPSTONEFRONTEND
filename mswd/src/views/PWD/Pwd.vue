@@ -49,14 +49,6 @@
                   <span class="request-amount">₱{{ request.amount.toLocaleString() }}</span>
                 </div>
               </div>
-              <div class="request-actions">
-                <button @click="editRequest(index)" class="btn btn-edit" :disabled="request.status !== 'Pending'">
-                  <span class="icon">✏️</span> Edit
-                </button>
-                <button @click="deleteRequest(index)" class="btn btn-delete" :disabled="request.status !== 'Pending'">
-                  <span class="icon">🗑️</span> Delete
-                </button>
-              </div>
             </div>
           </div>
           <p v-else class="no-requests">You haven't made any requests yet.</p>
@@ -108,12 +100,8 @@
         <form @submit.prevent="submitForm" class="dynamic-form">
           <template v-if="activeForm === 'membership'">
             <div class="form-group">
-              <label for="fullName" class="form-label">Full Name</label>
-              <input type="text" id="fullName" v-model="formData.fullName" required class="form-input" />
-            </div>
-            <div class="form-group">
-              <label for="idnumber" class="form-label">ID Number</label>
-              <input type="text" id="idnumber" v-model="formData.idnumber" required class="form-input" />
+              <label for="name" class="form-label">Full Name</label>
+              <input type="text" id="name" v-model="formData.name" required class="form-input" />
             </div>
             <div class="form-group">
               <label for="phoneNumber" class="form-label">Phone Number</label>
@@ -152,9 +140,9 @@
               <input type="text" id="fullName" v-model="formData.fullName" required class="form-input" />
             </div>
             <div class="form-group">
-              <label for="idnumber" class="form-label">ID Number</label>
-              <input type="text" id="idnumber" v-model="formData.idnumber" required class="form-input" />
-            </div>
+  <label for="idNumber" class="form-label">ID Number</label>
+  <input type="text" id="idNumber" v-model="formData.idNumber" required class="form-input" />
+</div>
             <div class="form-group">
               <label for="phoneNumber" class="form-label">Phone Number</label>
               <input type="tel" id="phoneNumber" v-model="formData.phoneNumber" required class="form-input" />
@@ -189,314 +177,200 @@
         <p v-if="error" class="error-message">{{ error }}</p>
       </div>
     </div>
-
-    <div v-if="isEditModalActive" class="modal">
-      <div class="modal-overlay" @click="closeEditModal"></div>
-      <div class="modal-container">
-        <button @click="closeEditModal" class="modal-close" aria-label="Close modal">&times;</button>
-        <h2 class="modal-title">Edit Request</h2>
-        <form @submit.prevent="updateRequest" class="edit-form">
-          <div class="form-group">
-            <label for="edit-fullName" class="form-label">Full Name</label>
-            <input type="text" id="edit-fullName" v-model="editFormData.fullName" required class="form-input" />
-          </div>
-          <div class="form-group">
-            <label for="edit-idnumber" class="form-label">ID Number</label>
-            <input type="text" id="edit-idnumber" v-model="editFormData.idnumber" required class="form-input" />
-          </div>
-          <div class="form-group">
-            <label for="edit-phoneNumber" class="form-label">Phone Number</label>
-            <input type="tel" id="edit-phoneNumber" v-model="editFormData.phoneNumber" required class="form-input" />
-          </div>
-          <div class="form-group">
-            <label for="edit-address" class="form-label">Address</label>
-            <textarea id="edit-address" v-model="editFormData.address" required class="form-input" rows="3"></textarea>
-          </div>
-          <div class="form-group">
-            <label for="edit-email" class="form-label">Email</label>
-            <input type="email" id="edit-email" v-model="editFormData.email" required class="form-input" />
-          </div>
-          <div class="form-group">
-            <label for="edit-reason" class="form-label">Reason</label>
-            <textarea id="edit-reason" v-model="editFormData.reason" required class="form-input" rows="4"></textarea>
-          </div>
-          <div class="form-group">
-            <label for="edit-amount" class="form-label">Amount Requested (PHP)</label>
-            <input type="number" id="edit-amount" v-model="editFormData.amount" required class="form-input" min="0" step="100" />
-          </div>
-          <div class="form-actions">
-            <button type="button" @click="closeEditModal" class="btn btn-secondary">
-              Cancel
-            </button>
-            <button type="submit" class="btn btn-primary">
-              Update Request
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
   </div>
 </template>
 
-<script setup>
+<script>
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
-import { useRouter } from 'vue-router'
 
-const router = useRouter()
-
-const formData = ref({
-  fullName: '',
-  idnumber: '',
-  phoneNumber: '',
-  address: '',
-  dob: '',
-  sickness: '',
-  category: '',
-  certificate: null,
-  email: '',
-  reason: '',
-  amount: 0,
-})
-
-const editFormData = ref({
-  fullName: '',
-  idnumber: '',
-  phoneNumber: '',
-  address: '',
-  email: '',
-  reason: '',
-  amount: 0,
-  index: null,
-})
-
-const error = ref(null)
-const requestHistory = ref([])
-const isLoading = ref(true)
-const isModalActive = ref(false)
-const isEditModalActive = ref(false)
-const activeForm = ref('')
-const showWelcomeNotification = ref(true)
-
-const faqs = ref([
-  {
-    question: "Who is eligible for PWD assistance?",
-    answer: "Individuals with permanent disabilities recognized by the government are eligible for PWD assistance.",
-    isOpen: false
-  },
-  {
-    question: "What documents do I need to apply for a PWD ID?",
-    answer: "You'll need a medical certificate from a licensed physician, barangay certificate, and valid ID. Additional requirements may vary by location.",
-    isOpen: false
-  },
-  {
-    question: "How long does it take to process a PWD ID application?",
-    answer: "Processing time varies, but it typically takes 2-4 weeks. You'll be notified when your ID is ready for pickup.",
-    isOpen: false
-  },
-  {
-    question: "What benefits do PWD cardholders receive?",
-    answer: "Benefits include discounts on medical supplies, transportation, and some goods and services. Specific benefits may vary by location and establishment.",
-    isOpen: false
-  },
-  {
-    question: "How often do I need to renew my PWD ID?",
-    answer: "PWD IDs are typically valid for 3 years. You should start the renewal process at least a month before the expiration date.",
-    isOpen: false
-  }
-])
-
-const toggleFaq = (index) => {
-  faqs.value[index].isOpen = !faqs.value[index].isOpen
-}
-
-const modalTitle = computed(() => {
-  return activeForm.value === 'membership' ? 'Membership Application' : 'Request Financial Assistance'
-})
-
-const openModal = (formType) => {
-  activeForm.value = formType
-  isModalActive.value = true
-  showWelcomeNotification.value = false
-}
-
-const closeModal = () => {
-  isModalActive.value = false
-  formData.value = {
-    fullName: '',
-    idnumber: '',
-    phoneNumber: '',
-    address: '',
-    dob: '',
-    sickness: '',
-    category: '',
-    certificate: null,
-    email: '',
-    reason: '',
-    amount: 0,
-  }
-  error.value = null
-}
-
-const closeWelcomeNotification = () => {
-  showWelcomeNotification.value = false
-}
-
-const submitForm = async () => {
-  try {
-    let response
-    if (activeForm.value === 'membership') {
-      const membershipFormData = new FormData()
-      for (const key in formData.value) {
-        if (key !== 'certificate') {
-          membershipFormData.append(key, formData.value[key])
-        }
-      }
-      if (formData.value.certificate) {
-        membershipFormData.append('certificate', formData.value.certificate)
-      }
-      response = await axios.post('/api/membership', membershipFormData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      })
-    } else {
-      response = await axios.post('/api/req', {
-        fullName: formData.value.fullName,
-        idnumber: formData.value.idnumber,
-        phoneNumber: formData.value.phoneNumber,
-        address: formData.value.address,
-        email: formData.value.email,
-        reason: formData.value.reason,
-        amount: formData.value.amount,
-      })
-      requestHistory.value.unshift({
-        date: new Date(),
-        fullName: formData.value.fullName,
-        idnumber: formData.value.idnumber,
-        phoneNumber: formData.value.phoneNumber,
-        address: formData.value.address,
-        email: formData.value.email,
-        reason: formData.value.reason,
-        amount: formData.value.amount,
-        status: 'Pending',
-      })
-    }
-    console.log(response.data)
-    closeModal()
-  } catch (err) {
-    error.value = err.response?.data?.message || 'An error occurred while submitting the form.'
-    console.error(err)
-  }
-}
-
-const fetchRequestHistory = async () => {
-  try {
-    const response = await axios.get('/api/PWD')
-    requestHistory.value = response.data.map(request => ({
-      ...request,
-      status: request.status || 'Pending',
-    }))
-    isLoading.value = false
-  } catch (err) {
-    console.error(err)
-    isLoading.value = false
-    error.value = 'Failed to load request history.'
-  }
-}
-
-const updateRequest = async () => {
-  try {
-    const index = editFormData.value.index
-    const response = await axios.post('/api/updateRequest', { 
-      requestId: requestHistory.value[index].id, 
-      updatedData: {
-        fullName: editFormData.value.fullName,
-        idnumber: editFormData.value.idnumber,
-        phoneNumber: editFormData.value.phoneNumber,
-        address: editFormData.value.address,
-        email: editFormData.value.email,
-        reason: editFormData.value.reason,
-        amount: editFormData.value.amount
-      }
+export default {
+  setup() {
+    const formData = ref({
+      name: '',
+      idNumber: '',
+      phoneNumber: '',
+      address: '',
+      dob: '',
+      sickness: '',
+      category: '',
+      certificate: null,
+      email: '',
+      reason: '',
+      amount: 0,
     })
-    console.log(response.data)
-    requestHistory.value[index] = {
-      ...requestHistory.value[index],
-      fullName: editFormData.value.fullName,
-      idnumber: editFormData.value.idnumber,
-      phoneNumber: editFormData.value.phoneNumber,
-      address: editFormData.value.address,
-      email: editFormData.value.email,
-      reason: editFormData.value.reason,
-      amount: editFormData.value.amount,
+
+    const error = ref(null)
+    const requestHistory = ref([])
+    const isLoading = ref(true)
+    const isModalActive = ref(false)
+    const activeForm = ref('')
+    const showWelcomeNotification = ref(true)
+
+    const faqs = ref([
+      {
+        question: "Who is eligible for PWD assistance?",
+        answer: "Individuals with permanent disabilities recognized by the government are eligible for PWD assistance.",
+        isOpen: false
+      },
+      {
+        question: "What documents do I need to apply for a PWD ID?",
+        answer: "You'll need a medical certificate from a licensed physician, barangay certificate, and valid ID. Additional requirements may vary by location.",
+        isOpen: false
+      },
+      {
+        question: "How long does it take to process a PWD ID application?",
+        answer: "Processing time varies, but it typically takes 2-4 weeks. You'll be notified when your ID is ready for pickup.",
+        isOpen: false
+      },
+      {
+        question: "What benefits do PWD cardholders receive?",
+        answer: "Benefits include discounts on medical supplies, transportation, and some goods and services. Specific benefits may vary by location and establishment.",
+        isOpen: false
+      },
+      {
+        question: "How often do I need to renew my PWD ID?",
+        answer: "PWD IDs are typically valid for 3 years. You should start the renewal process at least a month before the expiration date.",
+        isOpen: false
+      }
+    ])
+
+    const toggleFaq = (index) => {
+      faqs.value[index].isOpen = !faqs.value[index].isOpen
     }
-    closeEditModal()
-  } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to update the request.'
-    console.error(err)
-  }
-}
 
-const deleteRequest = async (index) => {
-  const confirmDelete = confirm('Are you sure you want to delete this request?')
-  if (confirmDelete) {
-    try {
-      const requestId = requestHistory.value[index].id
-      await axios.delete(`/api/deleteRequest/${requestId}`)
-      requestHistory.value.splice(index, 1)
-    } catch (err) {
-      console.error(err)
-      error.value = 'Failed to delete the request.'
+    const modalTitle = computed(() => {
+      return activeForm.value === 'membership' ? 'Membership Application' : 'Request Financial Assistance'
+    })
+
+    const openModal = (formType) => {
+      activeForm.value = formType
+      isModalActive.value = true
+      showWelcomeNotification.value = false
+    }
+
+    const closeModal = () => {
+      isModalActive.value = false
+      formData.value = {
+        name: '',
+        phoneNumber: '',
+        address: '',
+        dob: '',
+        sickness: '',
+        category: '',
+        certificate: null,
+        email: '',
+        reason: '',
+        amount: 0,
+      }
+      error.value = null
+    }
+
+    const closeWelcomeNotification = () => {
+      showWelcomeNotification.value = false
+    }
+
+    const submitForm = async () => {
+      try {
+        let response
+        if (activeForm.value === 'membership') {
+          const membershipFormData = new FormData()
+          for (const key in formData.value) {
+            if (key !== 'certificate') {
+              membershipFormData.append(key, formData.value[key])
+            }
+          }
+          if (formData.value.certificate) {
+            membershipFormData.append('certificate', formData.value.certificate)
+          }
+          response = await axios.post('/api/membership', membershipFormData, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          })
+        } else {
+          response = await axios.post('/api/req', {
+            fullName: formData.value.fullName,
+            idNumber: formData.value.idNumber,
+            phoneNumber: formData.value.phoneNumber,
+            address: formData.value.address,
+            email: formData.value.email,
+            reason: formData.value.reason,
+            amount: formData.value.amount,
+          })
+          requestHistory.value.unshift({
+            date: new Date(),
+            fullName: formData.value.fullName,
+           idNumber: formData.value.idNumber,
+            phoneNumber: formData.value.phoneNumber,
+            address: formData.value.address,
+            email: formData.value.email,
+            reason: formData.value.reason,
+            amount: formData.value.amount,
+            status: 'Pending',
+          })
+        }
+        console.log(response.data)
+        closeModal()
+      } catch (err) {
+        error.value = err.response?.data?.message || 'An error occurred while submitting the form.'
+        console.error(err)
+      }
+    }
+
+    const fetchRequestHistory = async () => {
+      try {
+        const response = await axios.get('/api/PWD')
+        requestHistory.value = response.data.map(request => ({
+          ...request,
+          status: request.status || 'Pending',
+        }))
+        isLoading.value = false
+      } catch (err) {
+        console.error(err)
+        isLoading.value = false
+        error.value = 'Failed to load request history.'
+      }
+    }
+
+    const handleFileUpload = (event) => {
+      formData.value.certificate = event.target.files[0]
+    }
+
+    const formatDate = (date) => {
+      return new Date(date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    }
+
+    onMounted(() => {
+      fetchRequestHistory()
+    })
+
+    return {
+      formData,
+      error,
+      requestHistory,
+      isLoading,
+      isModalActive,
+      activeForm,
+      showWelcomeNotification,
+      faqs,
+      toggleFaq,
+      modalTitle,
+      openModal,
+      closeModal,
+      closeWelcomeNotification,
+      submitForm,
+      handleFileUpload,
+      formatDate
     }
   }
 }
-
-const editRequest = (index) => {
-  editFormData.value = { 
-    fullName: requestHistory.value[index].fullName,
-    idnumber: requestHistory.value[index].idnumber,
-    phoneNumber: requestHistory.value[index].phoneNumber,
-    address: requestHistory.value[index].address,
-    email: requestHistory.value[index].email,
-    reason: requestHistory.value[index].reason, 
-    amount: requestHistory.value[index].amount,
-    index 
-  }
-  isEditModalActive.value = true
-}
-
-const closeEditModal = () => {
-  isEditModalActive.value = false
-  editFormData.value = { 
-    fullName: '', 
-    idnumber: '', 
-    phoneNumber: '', 
-    address: '', 
-    email: '', 
-    reason: '', 
-    amount: 0, 
-    index: null 
-  }
-}
-
-const handleFileUpload = (event) => {
-  formData.value.certificate = event.target.files[0]
-}
-
-const formatDate = (date) => {
-  return new Date(date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
-
-onMounted(() => {
-  fetchRequestHistory()
-})
 </script>
 
 <style scoped>
@@ -635,29 +509,6 @@ onMounted(() => {
   transform: translateY(-2px);
 }
 
-.btn-edit, .btn-delete {
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
-}
-
-.btn-edit {
-  background-color: #4caf50;
-  color: white;
-}
-
-.btn-edit:hover {
-  background-color: #45a049;
-}
-
-.btn-delete {
-  background-color: #f44336;
-  color: white;
-}
-
-.btn-delete:hover {
-  background-color: #da190b;
-}
-
 .request-list {
   display: grid;
   gap: 1rem;
@@ -730,12 +581,6 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.request-actions {
-  display: flex;
-  gap: 0.5rem;
-  justify-content: flex-end;
 }
 
 .modal {
@@ -1038,12 +883,6 @@ onMounted(() => {
   .request-item {
     flex-direction: column;
     align-items: flex-start;
-  }
-
-  .request-actions {
-    margin-top: 1rem;
-    width: 100%;
-    justify-content: space-between;
   }
 
   .notification {

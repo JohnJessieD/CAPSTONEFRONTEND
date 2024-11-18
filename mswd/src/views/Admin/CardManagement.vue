@@ -1,54 +1,39 @@
 <template>
   <div class="dashboard">
     <aside class="sidebar" :class="{ 'collapsed': isCollapsed }">
-  <div class="sidebar-header">
-    <img src="/img/Download.jpg" class="logo-img" alt="Government Logo" />
-    <h1 v-if="!isCollapsed" class="sidebar-title">MSWD Admin</h1>
-  </div>
-  <nav class="sidebar-nav">
-    <router-link v-for="(item, index) in navItems" :key="index" :to="item.route" class="nav-link">
-      <component :is="item.icon" :size="24" />
-      <span v-if="!isCollapsed">{{ item.name }}</span>
-    </router-link>
-  </nav>
-  <div class="user-info">
-    <span v-if="!isCollapsed" class="user-name">Admin User</span>
-    <button class="logout-button">
-      <LogOut :size="20" />
-      <span v-if="!isCollapsed">Logout</span>
-    </button>
-  </div>
-  <button class="toggle-button" @click="toggleSidebar">
-    <ChevronLeft v-if="!isCollapsed" :size="20" />
-    <ChevronRight v-else :size="20" />
-  </button>
-</aside>
-
+      <div class="sidebar-header">
+        <img src="/img/Download.jpg" class="logo-img" alt="Government Logo" />
+        <h1 v-if="!isCollapsed" class="sidebar-title">MSWD Admin</h1>
+      </div>
+      <nav class="sidebar-nav">
+        <router-link v-for="(item, index) in navItems" :key="index" :to="item.route" class="nav-link">
+          <component :is="item.icon" :size="24" />
+          <span v-if="!isCollapsed">{{ item.name }}</span>
+        </router-link>
+      </nav>
+      <div class="user-info">
+        <span v-if="!isCollapsed" class="user-name">Admin User</span>
+        <button class="logout-button">
+          <LogOut :size="20" />
+          <span v-if="!isCollapsed">Logout</span>
+        </button>
+      </div>
+      <button class="toggle-button" @click="toggleSidebar">
+        <ChevronLeft v-if="!isCollapsed" :size="20" />
+        <ChevronRight v-else :size="20" />
+      </button>
+    </aside>
 
     <main class="main-content" :class="{ 'sidebar-collapsed': isCollapsed }">
       <div class="content-wrapper">
         <h1 class="page-title">Membership Management</h1>
 
         <div class="dashboard-stats">
-          <div class="stat-card">
-            <UsersIcon class="stat-icon" />
+          <div v-for="stat in stats" :key="stat.title" class="stat-card">
+            <component :is="stat.icon" class="stat-icon" />
             <div class="stat-content">
-              <h3>Total Members</h3>
-              <p>{{ members.length }}</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <UserPlusIcon class="stat-icon" />
-            <div class="stat-content">
-              <h3>New This Month</h3>
-              <p>{{ newMembersThisMonth }}</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <ActivityIcon class="stat-icon" />
-            <div class="stat-content">
-              <h3>Active Members</h3>
-              <p>{{ activeMembers }}</p>
+              <h3>{{ stat.title }}</h3>
+              <p>{{ stat.value }}</p>
             </div>
           </div>
         </div>
@@ -82,6 +67,7 @@
               <p><strong>Date of Birth:</strong> {{ member.dob }}</p>
               <p><strong>Sickness:</strong> {{ member.sickness }}</p>
               <p><strong>Address:</strong> {{ member.address }}</p>
+              <p><strong>ID Number:</strong> {{ member.idnumber || 'N/A' }}</p>
             </div>
             <div class="membership-card-footer">
               <button @click="viewCertificate(member)" class="view-button">
@@ -107,24 +93,37 @@
       <div class="modal-content">
         <h2 class="modal-title">Member Certificate</h2>
         <div class="certificate-preview">
-          <div class="id-card">
-            <div class="id-card-header">
-              <img src="/img/Download.jpg" alt="Logo" class="id-logo">
-              <h3>MSWD Membership Card</h3>
-            </div>
-            <div class="id-card-body">
-              <div class="id-photo-placeholder">Photo</div>
-              <div class="id-details">
-                <p><strong>Name:</strong> {{ selectedMember.name }}</p>
-                <p><strong>Category:</strong> {{ selectedMember.category }}</p>
-                <p><strong>DOB:</strong> {{ selectedMember.dob }}</p>
-                <p><strong>ID:</strong> {{ selectedMember.id || 'N/A' }}</p>
-                <p><strong>Address:</strong> {{ selectedMember.address || 'N/A' }}</p>
+          <div class="id-card" @click="flipCard">
+            <div class="id-card-front" :class="{ 'is-flipped': isCardFlipped }">
+              <div class="id-card-header">
+                <img src="/img/Download.jpg" alt="Logo" class="id-logo">
+                <h3>MSWD Membership Card</h3>
+              </div>
+              <div class="id-card-body">
+                <div class="id-photo-placeholder">
+                  <img :src="selectedMember.photo || '/placeholder.svg?height=120&width=120'" alt="Member Photo">
+                </div>
+                <div class="id-details">
+                  <p class="member-name">{{ selectedMember.name }}</p>
+                  <p class="member-category">{{ selectedMember.category }}</p>
+                  <p class="member-id">ID: {{ selectedMember.idnumber || 'N/A' }}</p>
+                </div>
+              </div>
+              <div class="id-card-footer">
+                <p class="expiry-date">Expires: {{ expiryDate }}</p>
               </div>
             </div>
-            <div class="id-card-footer">
-              <div class="qr-placeholder">QR</div>
-              <p class="id-footer-text">This card is the property of the Municipal Social Welfare and Development Office.</p>
+            <div class="id-card-back" :class="{ 'is-flipped': isCardFlipped }">
+              <div class="back-header">Additional Information</div>
+              <div class="back-body">
+                <p><strong>Date of Birth:</strong> {{ selectedMember.dob }}</p>
+                <p><strong>Address:</strong> {{ selectedMember.address || 'N/A' }}</p>
+                <p><strong>Emergency Contact:</strong> {{ selectedMember.emergencyContact || 'N/A' }}</p>
+              </div>
+              <div class="back-footer">
+                <p>This card is the property of the Municipal Social Welfare and Development Office.</p>
+                <p>If found, please return to the nearest MSWD office.</p>
+              </div>
             </div>
           </div>
         </div>
@@ -167,6 +166,14 @@
             <input v-model="editingMember.address" id="address" required>
           </div>
           <div class="form-group">
+            <label for="idnumber">ID Number:</label>
+            <input v-model="editingMember.idnumber" id="idNumber" required>
+          </div>
+          <div class="form-group">
+            <label for="emergencyContact">Emergency Contact:</label>
+            <input v-model="editingMember.emergencyContact" id="emergencyContact">
+          </div>
+          <div class="form-group">
             <label for="certificate">Certificate:</label>
             <input type="file" id="certificate" @change="handleFileUpload" accept="image/*">
           </div>
@@ -196,7 +203,9 @@ import {
   FileQuestion as FileQuestionIcon,
   Printer as PrinterIcon,
   UserPlus as UserPlusIcon,
-  Activity as ActivityIcon
+  Activity as ActivityIcon,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-vue-next'
 import axios from 'axios'
 
@@ -209,15 +218,16 @@ const editingMember = ref(null)
 const newCertificate = ref(null)
 const showCertificateModal = ref(false)
 const selectedMember = ref(null)
+const isCardFlipped = ref(false)
 
 const navItems = [
-{ name: 'Dashboard', route: '/Dashboard' },
-        { name: 'Schedule', route: '/Schedule' },
-        { name: 'Barangay Management', route: '/Barangaym'},
-        { name: 'Assistance Management', route: '/AssistanceManagement'},
-        { name: 'Card Management', route: '/CardManagement' },
-        { name: 'User Management', route: '/user-management'},
-    ]
+  { name: 'Dashboard', route: '/Dashboard' },
+  { name: 'Schedule', route: '/Schedule' },
+  { name: 'Barangay Management', route: '/Barangaym' },
+  { name: 'Assistance Management', route: '/AssistanceManagement' },
+  { name: 'Card Management', route: '/CardManagement' },
+  { name: 'User Management', route: '/user-management' },
+]
 
 const toggleSidebar = () => {
   isCollapsed.value = !isCollapsed.value
@@ -245,12 +255,23 @@ const filteredMembers = computed(() => {
 const viewCertificate = (member) => {
   selectedMember.value = member
   showCertificateModal.value = true
+  isCardFlipped.value = false
 }
 
 const closeCertificateModal = () => {
   showCertificateModal.value = false
   selectedMember.value = null
 }
+
+const flipCard = () => {
+  isCardFlipped.value = !isCardFlipped.value
+}
+
+const expiryDate = computed(() => {
+  const date = new Date()
+  date.setFullYear(date.getFullYear() + 5)
+  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+})
 
 const printCertificate = (user) => {
   const printWindow = window.open('', '_blank')
@@ -273,9 +294,9 @@ const printCertificate = (user) => {
           .id-card {
             width: 3.375in;
             height: 2.125in;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
             border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             overflow: hidden;
             position: relative;
           }
@@ -297,52 +318,55 @@ const printCertificate = (user) => {
           }
           .id-card-body {
             display: flex;
-            padding: 10px;
+            padding: 15px;
           }
           .id-photo-placeholder {
             width: 80px;
             height: 80px;
             background-color: #ddd;
             border: 2px solid #4CAF50;
+            border-radius: 50%;
             display: flex;
             justify-content: center;
             align-items: center;
             font-size: 10px;
             color: #666;
-            margin-right: 10px;
+            margin-right: 15px;
+            overflow: hidden;
+          }
+          .id-photo-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
           }
           .id-details {
             flex: 1;
-            font-size: 10px;
           }
           .id-details p {
             margin: 3px 0;
+            font-size: 12px;
+          }
+          .member-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+          }
+          .member-category {
+            font-size: 14px;
+            color: #4CAF50;
           }
           .id-card-footer {
             position: absolute;
-            bottom: 5px;
-            left: 10px;
-            right: 10px;
+            bottom: 10px;
+            left: 15px;
+            right: 15px;
             display: flex;
             justify-content: space-between;
-            align-items: flex-end;
-          }
-          .qr-placeholder {
-            width: 50px;
-            height: 50px;
-            background-color: #fff;
-            border: 1px solid #4CAF50;
-            display: flex;
-            justify-content: center;
             align-items: center;
-            font-size: 8px;
-            color: #666;
           }
-          .id-footer-text {
-            font-size: 6px;
+          .expiry-date {
+            font-size: 12px;
             color: #666;
-            text-align: right;
-            max-width: 150px;
           }
           @media print {
             body {
@@ -361,18 +385,19 @@ const printCertificate = (user) => {
             <h3>MSWD Membership Card</h3>
           </div>
           <div class="id-card-body">
-            <div class="id-photo-placeholder">Photo</div>
+            <div class="id-photo-placeholder">
+              <img src="${user.photo || '/placeholder.svg?height=80&width=80'}" alt="Member Photo">
+            </div>
             <div class="id-details">
-              <p><strong>Name:</strong> ${user.name}</p>
-              <p><strong>Category:</strong> ${user.category}</p>
-              <p><strong>DOB:</strong> ${user.dob}</p>
-              <p><strong>ID:</strong> ${user.id || 'N/A'}</p>
-              <p><strong>Address:</strong> ${user.address || 'N/A'}</p>
+              <p class="member-name">${user.name}</p>
+              <p class="member-category">${user.category}</p>
+              <p>ID: ${user.idnumber || 'N/A'}</p>
+              <p>DOB: ${user.dob}</p>
+              <p>Address: ${user.address || 'N/A'}</p>
             </div>
           </div>
           <div class="id-card-footer">
-            <div class="qr-placeholder">QR</div>
-            <p class="id-footer-text">This card is the property of the Municipal Social Welfare and Development Office.</p>
+            <p class="expiry-date">Expires: ${new Date(new Date().setFullYear(new Date().getFullYear() + 5)).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</p>
           </div>
         </div>
         <script>
@@ -405,6 +430,8 @@ const updateMember = async () => {
     formData.append('dob', editingMember.value.dob)
     formData.append('sickness', editingMember.value.sickness)
     formData.append('address', editingMember.value.address)
+    formData.append('idnumber', editingMember.value.idnumber)
+    formData.append('emergencyContact', editingMember.value.emergencyContact)
     if (newCertificate.value) {
       formData.append('certificate', newCertificate.value)
     }
@@ -446,6 +473,12 @@ const newMembersThisMonth = computed(() => {
 const activeMembers = computed(() => {
   return members.value.filter(member => member.certificate).length
 })
+
+const stats = computed(() => [
+  { title: 'Total Members', value: members.value.length, icon: UsersIcon },
+  { title: 'New This Month', value: newMembersThisMonth.value, icon: UserPlusIcon },
+  { title: 'Active Members', value: activeMembers.value, icon: ActivityIcon },
+])
 
 onMounted(() => {
   fetchMembers()
@@ -908,114 +941,5 @@ onMounted(() => {
 .save-button:hover,
 .print-button:hover {
   background-color: #45a049;
-}
-
-.cancel-button,
-.close-button {
-  background-color: #f0f2f5;
-  color: #4a5568;
-}
-
-.cancel-button:hover,
-.close-button:hover {
-  background-color: #e2e8f0;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 1.5rem;
-}
-
-.certificate-preview {
-  background-color: #f0f2f5;
-  padding: 1rem;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-}
-
-.id-card {
-  width: 3.375in;
-  height: 2.125in;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  position: relative;
-  margin: 0 auto;
-}
-
-.id-card-header {
-  background-color: #4CAF50;
-  color: white;
-  padding: 10px;
-  text-align: center;
-  font-size: 14px;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.id-logo {
-  width: 30px;
-  height: 30px;
-  margin-right: 10px;
-}
-
-.id-card-body {
-  display: flex;
-  padding: 10px;
-}
-
-.id-photo-placeholder {
-  width: 80px;
-  height: 80px;
-  background-color: #ddd;
-  border: 2px solid #4CAF50;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 10px;
-  color: #666;
-  margin-right: 10px;
-}
-
-.id-details {
-  flex: 1;
-  font-size: 10px;
-}
-
-.id-details p {
-  margin: 3px 0;
-}
-
-.id-card-footer {
-  position: absolute;
-  bottom: 5px;
-  left: 10px;
-  right: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-}
-
-.qr-placeholder {
-  width: 50px;
-  height: 50px;
-  background-color: #fff;
-  border: 1px solid #4CAF50;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 8px;
-  color: #666;
-}
-
-.id-footer-text {
-  font-size: 6px;
-  color: #666;
-  text-align: right;
-  max-width: 150px;
 }
 </style>
