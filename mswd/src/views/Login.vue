@@ -2,6 +2,7 @@
   <v-app>
     <v-container fluid class="pa-0 fill-height">
       <v-row no-gutters class="fill-height">
+        <!-- Left Image Section -->
         <v-col cols="12" md="6" class="d-none d-md-flex login-image-col">
           <v-img
             src="/placeholder.svg?height=1080&width=1080"
@@ -11,7 +12,7 @@
           >
             <div class="image-overlay d-flex flex-column justify-center align-center text-center pa-6">
               <v-avatar size="120" class="mb-6 elevation-10">
-                <v-img src="/placeholder.svg?height=120&width=120" alt="MSWD Logo"></v-img>
+                <v-img src="/img/download.jpg" alt="MSWD Logo"></v-img>
               </v-avatar>
               <h1 class="text-h2 font-weight-bold white--text mb-4 text-shadow">Welcome to MSWD</h1>
               <p class="text-h6 white--text text-shadow">Empowering communities, one login at a time.</p>
@@ -19,6 +20,7 @@
           </v-img>
         </v-col>
 
+        <!-- Login Form Section -->
         <v-col cols="12" md="6" class="d-flex align-center justify-center login-form-col">
           <v-sheet class="login-form pa-8" rounded="lg" elevation="10" max-width="500" width="100%">
             <h2 class="text-h4 font-weight-bold text-center mb-6 primary--text">Welcome Back</h2>
@@ -84,6 +86,7 @@
       </v-row>
     </v-container>
 
+    <!-- Forgot Password Dialog -->
     <v-dialog v-model="showForgotPasswordDialog" max-width="500px">
       <v-card rounded="lg" class="pa-4">
         <v-card-title class="text-h5 justify-center">Forgot Password</v-card-title>
@@ -118,6 +121,7 @@
       </v-card>
     </v-dialog>
 
+    <!-- Snackbar -->
     <v-snackbar v-model="snackbar" :color="snackbarColor" :timeout="4000" top rounded="pill">
       {{ message }}
       <template v-slot:action="{ attrs }">
@@ -256,7 +260,7 @@ export default {
 }
 
 .login-image-col {
-  background-color: #2e7d32;
+  background: radial-gradient(circle, #2e7d32, #1b5e20);
 }
 
 .login-image {
@@ -264,12 +268,17 @@ export default {
 }
 
 .image-overlay {
-  background-color: rgba(46, 125, 50, 0.8);
+  background-color: rgba(46, 125, 50, 0.85);
   height: 100%;
+  transition: all 0.5s ease-in-out;
+}
+
+.image-overlay:hover {
+  background-color: rgba(46, 125, 50, 0.95);
 }
 
 .text-shadow {
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.6);
 }
 
 .login-form-col {
@@ -277,36 +286,46 @@ export default {
 }
 
 .login-form {
-  background-color: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 24px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(15px);
+  border-radius: 20px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.login-form:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.3);
 }
 
 .custom-btn {
   text-transform: none;
-  font-size: 18px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
   transition: all 0.3s ease;
 }
 
 .custom-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-.input-field :deep(.v-input__slot) {
+.input-field :deep(.v-input__control) {
   border-radius: 28px;
+  padding: 16px 12px;
   transition: all 0.3s ease;
 }
 
-.input-field:hover :deep(.v-input__slot) {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.input-field :deep(.v-input__control:hover) {
+  background-color: #f5f5f5;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .input-field :deep(.v-label) {
   font-size: 14px;
+  font-weight: 600;
+  color: #555;
 }
 
 @media (max-width: 960px) {
@@ -314,5 +333,11 @@ export default {
     border-radius: 0;
     height: 100%;
   }
+}
+
+.v-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+  border-radius: 16px;
 }
 </style>

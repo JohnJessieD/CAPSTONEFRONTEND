@@ -1,161 +1,195 @@
 <template>
-  <div class="event-manager">
-    <div class="container">
-      <header class="header">
-        <h1>Event Manager</h1>
-        <p>Organize your events with style and ease</p>
-      </header>
+  <div class="dashboard">
+    <aside class="sidebar" :class="{ 'collapsed': isCollapsed }">
+      <div class="sidebar-header">
+        <img src="/img/Download.jpg" class="logo-img" alt="Government Logo" />
+        <h1 v-if="!isCollapsed" class="sidebar-title">MSWD Admin</h1>
+      </div>
+      <nav class="sidebar-nav">
+        <router-link 
+          v-for="(item, index) in navItems" 
+          :key="index" 
+          :to="item.route" 
+          class="nav-link"
+          :class="{ 'active': currentRoute === item.route }"
+        >
+          <component :is="item.icon" :size="24" />
+          <span v-if="!isCollapsed">{{ item.name }}</span>
+        </router-link>
+      </nav>
+      <div class="user-info">
+        <span v-if="!isCollapsed" class="user-name">Admin User</span>
+        <button class="logout-button">
+          <LogOut :size="20" />
+          <span v-if="!isCollapsed">Logout</span>
+        </button>
+      </div>
+      <button class="toggle-button" @click="toggleSidebar">
+        <ChevronLeft v-if="!isCollapsed" :size="20" />
+        <ChevronRight v-else :size="20" />
+      </button>
+    </aside>
 
-      <main class="content">
-        <div class="toolbar">
-          <button @click="toggleForm" class="btn btn-primary btn-large">
-            <component :is="isFormOpen ? 'XIcon' : 'PlusIcon'" class="icon" />
-            {{ isFormOpen ? 'Close Form' : (editingEvent ? 'Edit Event' : 'Add New Event') }}
-          </button>
-          <div class="search-bar">
-            <SearchIcon class="search-icon" />
-            <input v-model="searchQuery" type="text" placeholder="Search events..." />
+    <main class="main-content" :class="{ 'sidebar-collapsed': isCollapsed }">
+      <div class="event-manager">
+        <div class="container">
+          <header class="header">
+            <h1>Event Manager</h1>
+            <p>Organize your events with style and ease</p>
+          </header>
+
+          <div class="content">
+            <div class="toolbar">
+              <button @click="toggleForm" class="btn btn-primary btn-large">
+                <component :is="isFormOpen ? 'XIcon' : 'PlusIcon'" class="icon" />
+                {{ isFormOpen ? 'Close Form' : (editingEvent ? 'Edit Event' : 'Add New Event') }}
+              </button>
+              <div class="search-bar">
+                <SearchIcon class="search-icon" />
+                <input v-model="searchQuery" type="text" placeholder="Search events..." />
+              </div>
+            </div>
+
+            <transition name="slide-fade">
+              <form v-if="isFormOpen" @submit.prevent="submitEvent" class="event-form">
+                <div class="form-group">
+                  <label for="title">Event Title</label>
+                  <input
+                    id="title"
+                    v-model="event.title"
+                    type="text"
+                    required
+                    placeholder="Enter event title"
+                  >
+                </div>
+                <div class="form-group">
+                  <label for="description">Event Description</label>
+                  <textarea
+                    id="description"
+                    v-model="event.description"
+                    rows="3"
+                    required
+                    placeholder="Describe your event"
+                  ></textarea>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="category">Category</label>
+                    <select
+                      id="category"
+                      v-model="event.category"
+                      required
+                    >
+                      <option value="" disabled>Select a category</option>
+                      <option value="pwd">PWD</option>
+                      <option value="solo_parents">Solo Parents</option>
+                      <option value="senior_citizen">Senior Citizen</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="event_date">Event Date</label>
+                    <input
+                      id="event_date"
+                      v-model="event.event_date"
+                      type="date"
+                      required
+                    >
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button
+                    type="button"
+                    @click="cancelEdit"
+                    class="btn btn-secondary"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    :disabled="isLoading"
+                    class="btn btn-primary"
+                  >
+                    {{ isLoading ? 'Processing...' : (editingEvent ? 'Update Event' : 'Add Event') }}
+                  </button>
+                </div>
+              </form>
+            </transition>
+
+            <transition name="fade">
+              <div v-if="message" :class="['message', messageType]">
+                <component :is="messageType === 'success' ? 'CheckCircleIcon' : 'AlertCircleIcon'" class="message-icon" />
+                {{ message }}
+              </div>
+            </transition>
+
+            <section class="events-list">
+              <h2>Upcoming Events</h2>
+              <div v-if="isLoading" class="loader-container">
+                <div class="loader"></div>
+                <p>Loading events...</p>
+              </div>
+              <p v-else-if="filteredEvents.length === 0" class="no-events">
+                <CalendarXIcon class="no-events-icon" />
+                No events found. {{ events.length === 0 ? 'Add your first event above!' : 'Try adjusting your search.' }}
+              </p>
+              <transition-group name="event-list" tag="div" class="event-grid">
+                <div
+                  v-for="event in filteredEvents"
+                  :key="event.id"
+                  class="event-card"
+                >
+                  <div class="event-card-content">
+                    <h3>{{ event.title }}</h3>
+                    <p>{{ event.description }}</p>
+                    <div class="event-meta">
+                      <span class="category" :class="event.category">{{ getCategoryLabel(event.category) }}</span>
+                      <span class="date">
+                        <CalendarIcon class="date-icon" />
+                        {{ formatDate(event.event_date) }}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="event-actions">
+                    <button
+                      @click="editEvent(event)"
+                      class="btn btn-icon"
+                      aria-label="Edit event"
+                    >
+                      <Edit2Icon />
+                    </button>
+                    <button
+                      @click="deleteEvent(event.id)"
+                      class="btn btn-icon delete"
+                      aria-label="Delete event"
+                    >
+                      <Trash2Icon />
+                    </button>
+                  </div>
+                </div>
+              </transition-group>
+            </section>
           </div>
         </div>
-
-        <transition name="slide-fade">
-          <form v-if="isFormOpen" @submit.prevent="submitEvent" class="event-form">
-            <div class="form-group">
-              <label for="title">Event Title</label>
-              <input
-                id="title"
-                v-model="event.title"
-                type="text"
-                required
-                placeholder="Enter event title"
-              >
-            </div>
-            <div class="form-group">
-              <label for="description">Event Description</label>
-              <textarea
-                id="description"
-                v-model="event.description"
-                rows="3"
-                required
-                placeholder="Describe your event"
-              ></textarea>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="category">Category</label>
-                <select
-                  id="category"
-                  v-model="event.category"
-                  required
-                >
-                  <option value="" disabled>Select a category</option>
-                  <option value="pwd">PWD</option>
-                  <option value="solo_parents">Solo Parents</option>
-                  <option value="senior_citizen">Senior Citizen</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="event_date">Event Date</label>
-                <input
-                  id="event_date"
-                  v-model="event.event_date"
-                  type="date"
-                  required
-                >
-              </div>
-            </div>
-            <div class="form-actions">
-              <button
-                type="button"
-                @click="cancelEdit"
-                class="btn btn-secondary"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                :disabled="isLoading"
-                class="btn btn-primary"
-              >
-                {{ isLoading ? 'Processing...' : (editingEvent ? 'Update Event' : 'Add Event') }}
-              </button>
-            </div>
-          </form>
-        </transition>
-
-        <transition name="fade">
-          <div v-if="message" :class="['message', messageType]">
-            <component :is="messageType === 'success' ? 'CheckCircleIcon' : 'AlertCircleIcon'" class="message-icon" />
-            {{ message }}
-          </div>
-        </transition>
-
-        <section class="events-list">
-          <h2>Upcoming Events</h2>
-          <div v-if="isLoading" class="loader-container">
-            <div class="loader"></div>
-            <p>Loading events...</p>
-          </div>
-          <p v-else-if="filteredEvents.length === 0" class="no-events">
-            <CalendarXIcon class="no-events-icon" />
-            No events found. {{ events.length === 0 ? 'Add your first event above!' : 'Try adjusting your search.' }}
-          </p>
-          <transition-group name="event-list" tag="div" class="event-grid">
-            <div
-              v-for="event in filteredEvents"
-              :key="event.id"
-              class="event-card"
-            >
-              <div class="event-card-content">
-                <h3>{{ event.title }}</h3>
-                <p>{{ event.description }}</p>
-                <div class="event-meta">
-                  <span class="category" :class="event.category">{{ getCategoryLabel(event.category) }}</span>
-                  <span class="date">
-                    <CalendarIcon class="date-icon" />
-                    {{ formatDate(event.event_date) }}
-                  </span>
-                </div>
-              </div>
-              <div class="event-actions">
-                <button
-                  @click="editEvent(event)"
-                  class="btn btn-icon"
-                  aria-label="Edit event"
-                >
-                  <Edit2Icon />
-                </button>
-                <button
-                  @click="deleteEvent(event.id)"
-                  class="btn btn-icon delete"
-                  aria-label="Delete event"
-                >
-                  <Trash2Icon />
-                </button>
-              </div>
-            </div>
-          </transition-group>
-        </section>
-      </main>
-    </div>
+      </div>
+    </main>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import axios from 'axios'
 import { 
-  XIcon, 
-  PlusIcon, 
-  Edit2Icon, 
-  Trash2Icon, 
-  SearchIcon, 
-  CalendarIcon, 
-  CheckCircleIcon, 
-  AlertCircleIcon,
+  Home, Calendar, HandsHelping, CreditCard, Users, LogOut, 
+  ChevronLeft, ChevronRight, XIcon, PlusIcon, Edit2Icon, 
+  Trash2Icon, SearchIcon, CheckCircleIcon, AlertCircleIcon,
   CalendarXIcon
 } from 'lucide-vue-next'
 
+const route = useRoute()
+const currentRoute = computed(() => route.path)
+
+const isCollapsed = ref(false)
 const events = ref([])
 const event = ref({
   title: '',
@@ -169,6 +203,21 @@ const message = ref('')
 const messageType = ref('')
 const isFormOpen = ref(false)
 const searchQuery = ref('')
+
+const navItems = [
+  { name: 'Dashboard', route: '/Dashboard' },
+  { name: 'Schedule', route: '/Schedule' },
+  { name: 'Barangay Management', route: '/Barangaym' },
+  { name: 'AssistanceManagement', route: '/AssistanceManagement' },
+  { name: 'Card Management', route: '/CardManagement' },
+  { name: 'User Management', route: '/user-management' },
+  { name: 'Publication Manager', route: '/PublicationManager' },
+  { name: 'Events Manager', route: '/EventsManager' },
+  { name: 'Feedback List', route: '/FeedbackList' },
+]
+const toggleSidebar = () => {
+  isCollapsed.value = !isCollapsed.value
+}
 
 const filteredEvents = computed(() => {
   if (!searchQuery.value) return events.value
@@ -292,10 +341,143 @@ fetchEvents()
 </script>
 
 <style scoped>
-.event-manager {
-  font-family: 'Inter', sans-serif;
-  background-color: #f7fafc;
+.dashboard {
+  display: flex;
   min-height: 100vh;
+  background-color: #f7fafc;
+  font-family: 'Inter', sans-serif;
+}
+
+.sidebar {
+  width: 250px;
+  background-color: #4CAF50;
+  color: white;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+  transition: width 0.3s ease;
+  z-index: 1000;
+}
+
+.sidebar.collapsed {
+  width: 80px;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.logo-img {
+  width: 50px;
+  height: 50px;
+  margin-right: 10px;
+}
+
+.sidebar-title {
+  font-size: 20px;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-nav {
+  flex-grow: 1;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  color: white;
+  text-decoration: none;
+  transition: background-color 0.3s;
+  border-radius: 5px;
+  margin-bottom: 5px;
+}
+
+.nav-link:hover, .nav-link.active {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-link svg {
+  margin-right: 10px;
+}
+
+.user-info {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-name {
+  margin-bottom: 10px;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.logout-button {
+  background-color: transparent;
+  border: 1px solid white;
+  color: white;
+  padding: 8px 15px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  display: flex;
+  align-items: center;
+}
+
+.logout-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.logout-button svg {
+  margin-right: 5px;
+}
+
+.toggle-button {
+  position: absolute;
+  top: 10px;
+  right: -15px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.toggle-button:hover {
+  background-color: #45a049;
+}
+
+.main-content {
+  flex-grow: 1;
+  margin-left: 250px;
+  transition: margin-left 0.3s ease;
+}
+
+.main-content.sidebar-collapsed {
+  margin-left: 80px;
+}
+
+.event-manager {
   padding: 2rem;
 }
 
@@ -684,6 +866,23 @@ fetchEvents()
 }
 
 @media (max-width: 768px) {
+  .sidebar {
+    width: 80px;
+  }
+  
+  .sidebar.collapsed {
+    width: 0;
+    padding: 0;
+  }
+  
+  .main-content {
+    margin-left: 80px;
+  }
+  
+  .main-content.sidebar-collapsed {
+    margin-left: 0;
+  }
+  
   .event-manager {
     padding: 1rem;
   }

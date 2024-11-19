@@ -1,200 +1,382 @@
 <template>
-  <div class="publication-manager">
-    <header>
-      <h1>MSWD Publication Manager</h1>
-    </header>
+  <div class="dashboard">
+    <aside class="sidebar" :class="{ 'collapsed': isCollapsed }">
+      <div class="sidebar-header">
+        <img src="/img/Download.jpg" class="logo-img" alt="Government Logo" />
+        <h1 v-if="!isCollapsed" class="sidebar-title">MSWD Admin</h1>
+      </div>
+      <nav class="sidebar-nav">
+        <router-link 
+          v-for="(item, index) in navItems" 
+          :key="index" 
+          :to="item.route" 
+          class="nav-link"
+          :class="{ 'active': currentRoute === item.route }"
+        >
+          <component :is="item.icon" :size="24" />
+          <span v-if="!isCollapsed">{{ item.name }}</span>
+        </router-link>
+      </nav>
+      <div class="user-info">
+        <span v-if="!isCollapsed" class="user-name">Admin User</span>
+        <button class="logout-button">
+          <LogOut :size="20" />
+          <span v-if="!isCollapsed">Logout</span>
+        </button>
+      </div>
+      <button class="toggle-button" @click="toggleSidebar">
+        <ChevronLeft v-if="!isCollapsed" :size="20" />
+        <ChevronRight v-else :size="20" />
+      </button>
+    </aside>
 
-    <main>
-      <section class="publication-form-section">
-        <h2>{{ editingId ? 'Edit Publication' : 'Add New Publication' }}</h2>
-        <form @submit.prevent="submitPublication" class="publication-form">
-          <div class="form-group">
-            <label for="title">Title</label>
-            <input
-              v-model="newPublication.title"
-              id="title"
-              type="text"
-              required
-              placeholder="Enter publication title"
-            >
-          </div>
-          <div class="form-group">
-            <label for="description">Description</label>
-            <textarea
-              v-model="newPublication.description"
-              id="description"
-              required
-              placeholder="Enter publication description"
-              rows="4"
-            ></textarea>
-          </div>
-          <div class="form-group">
-            <label for="publication_date">Publication Date</label>
-            <input
-              v-model="newPublication.publication_date"
-              id="publication_date"
-              type="date"
-              required
-            >
-          </div>
-          <div class="form-actions">
-            <button type="submit" class="btn btn-primary">
-              {{ editingId ? 'Update Publication' : 'Add Publication' }}
-            </button>
-            <button
-              v-if="editingId"
-              @click="cancelEdit"
-              type="button"
-              class="btn btn-secondary"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      </section>
+    <div class="main-content" :class="{ 'sidebar-collapsed': isCollapsed }">
+      <div class="publication-manager">
+        <header>
+          <h1>MSWD Publication Manager</h1>
+        </header>
 
-      <section class="publications-list-section">
-        <h2>Publications List</h2>
-        <div v-if="loading" class="loading">
-          <div class="spinner"></div>
-          <p>Loading publications...</p>
-        </div>
-        <div v-else-if="error" class="error-message">
-          {{ error }}
-        </div>
-        <div v-else-if="publications.length === 0" class="no-publications">
-          <p>No publications found. Add your first publication above.</p>
-        </div>
-        <transition-group name="list" tag="ul" v-else class="publications-list">
-          <li v-for="pub in publications" :key="pub.id" class="publication-item">
-            <div class="publication-content">
-              <h3>{{ pub.title }}</h3>
-              <p class="description">{{ pub.description }}</p>
-              <p class="date">
-                {{ formatDate(pub.publication_date) }}
-              </p>
+        <main>
+          <section class="publication-form-section">
+            <h2>{{ editingId ? 'Edit Publication' : 'Add New Publication' }}</h2>
+            <form @submit.prevent="submitPublication" class="publication-form">
+              <div class="form-group">
+                <label for="title">Title</label>
+                <input
+                  v-model="newPublication.title"
+                  id="title"
+                  type="text"
+                  required
+                  placeholder="Enter publication title"
+                >
+              </div>
+              <div class="form-group">
+                <label for="description">Description</label>
+                <textarea
+                  v-model="newPublication.description"
+                  id="description"
+                  required
+                  placeholder="Enter publication description"
+                  rows="4"
+                ></textarea>
+              </div>
+              <div class="form-group">
+                <label for="publication_date">Publication Date</label>
+                <input
+                  v-model="newPublication.publication_date"
+                  id="publication_date"
+                  type="date"
+                  required
+                >
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                  {{ editingId ? 'Update Publication' : 'Add Publication' }}
+                </button>
+                <button
+                  v-if="editingId"
+                  @click="cancelEdit"
+                  type="button"
+                  class="btn btn-secondary"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <section class="publications-list-section">
+            <h2>Publications List</h2>
+            <div v-if="loading" class="loading">
+              <div class="spinner"></div>
+              <p>Loading publications...</p>
             </div>
-            <div class="publication-actions">
-              <button
-                @click="editPublication(pub)"
-                class="btn btn-edit"
-                aria-label="Edit publication"
-              >
-                Edit
-              </button>
-              <button
-                @click="deletePublication(pub.id)"
-                class="btn btn-delete"
-                aria-label="Delete publication"
-              >
-                Delete
-              </button>
+            <div v-else-if="error" class="error-message">
+              {{ error }}
             </div>
-          </li>
-        </transition-group>
-      </section>
-    </main>
+            <div v-else-if="publications.length === 0" class="no-publications">
+              <p>No publications found. Add your first publication above.</p>
+            </div>
+            <transition-group name="list" tag="ul" v-else class="publications-list">
+              <li v-for="pub in publications" :key="pub.id" class="publication-item">
+                <div class="publication-content">
+                  <h3>{{ pub.title }}</h3>
+                  <p class="description">{{ pub.description }}</p>
+                  <p class="date">
+                    {{ formatDate(pub.publication_date) }}
+                  </p>
+                </div>
+                <div class="publication-actions">
+                  <button
+                    @click="editPublication(pub)"
+                    class="btn btn-edit"
+                    aria-label="Edit publication"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    @click="deletePublication(pub.id)"
+                    class="btn btn-delete"
+                    aria-label="Delete publication"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </li>
+            </transition-group>
+          </section>
+        </main>
 
-    <footer>
-      <p>&copy; {{ currentYear }} MSWD Publication Manager. All rights reserved.</p>
-    </footer>
+        <footer>
+          <p>&copy; {{ currentYear }} MSWD Publication Manager. All rights reserved.</p>
+        </footer>
+      </div>
+    </div>
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import axios from 'axios'
+import { 
+  Home, Calendar, HandsHelping, CreditCard, Users, LogOut, 
+  ChevronLeft, ChevronRight
+} from 'lucide-vue-next'
 
-export default {
-  data() {
-    return {
-      publications: [],
-      newPublication: {
-        title: '',
-        description: '',
-        publication_date: ''
-      },
-      editingId: null,
-      loading: true,
-      error: null,
-      currentYear: new Date().getFullYear()
-    }
-  },
-  methods: {
-    async fetchPublications() {
-      this.loading = true
-      try {
-        const response = await axios.get('/api/publications')
-        this.publications = response.data
-        this.error = null
-      } catch (error) {
-        console.error('Error fetching publications:', error)
-        this.error = 'Failed to load publications. Please try again.'
-      } finally {
-        this.loading = false
-      }
-    },
-    async submitPublication() {
-      try {
-        if (this.editingId) {
-          await axios.post(`/api/publications/${this.editingId}`, this.newPublication)
-        } else {
-          await axios.post('/api/publications', this.newPublication)
-        }
-        await this.fetchPublications()
-        this.resetForm()
-      } catch (error) {
-        console.error('Error submitting publication:', error)
-        this.error = 'Failed to save publication. Please try again.'
-      }
-    },
-    editPublication(publication) {
-      this.editingId = publication.id
-      this.newPublication = { ...publication }
-    },
-    cancelEdit() {
-      this.resetForm()
-    },
-    async deletePublication(id) {
-      if (confirm('Are you sure you want to delete this publication?')) {
-        try {
-          await axios.delete(`/api/publications/${id}`)
-          await this.fetchPublications()
-        } catch (error) {
-          console.error('Error deleting publication:', error)
-          this.error = 'Failed to delete publication. Please try again.'
-        }
-      }
-    },
-    resetForm() {
-      this.newPublication = {
-        title: '',
-        description: '',
-        publication_date: ''
-      }
-      this.editingId = null
-    },
-    formatDate(dateString) {
-      const options = { year: 'numeric', month: 'long', day: 'numeric' }
-      return new Date(dateString).toLocaleDateString(undefined, options)
-    }
-  },
-  mounted() {
-    this.fetchPublications()
+const route = useRoute()
+const currentRoute = computed(() => route.path)
+
+const isCollapsed = ref(false)
+const publications = ref([])
+const newPublication = ref({
+  title: '',
+  description: '',
+  publication_date: ''
+})
+const editingId = ref(null)
+const loading = ref(true)
+const error = ref(null)
+const currentYear = new Date().getFullYear()
+
+const navItems = [
+  { name: 'Dashboard', route: '/Dashboard' },
+  { name: 'Schedule', route: '/Schedule' },
+  { name: 'Barangay Management', route: '/Barangaym' },
+  { name: 'AssistancEManagement', route: '/AssistanceManagement' },
+  { name: 'Card Management', route: '/CardManagement' },
+  { name: 'User Management', route: '/user-management' },
+  { name: 'Publication Manager', route: '/PublicationManager' },
+  { name: 'Events Manager', route: '/EventsManager' },
+  { name: 'Feedback List', route: '/FeedbackList' },
+]
+
+const toggleSidebar = () => {
+  isCollapsed.value = !isCollapsed.value
+}
+
+const fetchPublications = async () => {
+  loading.value = true
+  try {
+    const response = await axios.get('/api/publications')
+    publications.value = response.data
+    error.value = null
+  } catch (err) {
+    console.error('Error fetching publications:', err)
+    error.value = 'Failed to load publications. Please try again.'
+  } finally {
+    loading.value = false
   }
 }
+
+const submitPublication = async () => {
+  try {
+    if (editingId.value) {
+      await axios.post(`/api/publications/${editingId.value}`, newPublication.value)
+    } else {
+      await axios.post('/api/publications', newPublication.value)
+    }
+    await fetchPublications()
+    resetForm()
+  } catch (err) {
+    console.error('Error submitting publication:', err)
+    error.value = 'Failed to save publication. Please try again.'
+  }
+}
+
+const editPublication = (publication) => {
+  editingId.value = publication.id
+  newPublication.value = { ...publication }
+}
+
+const cancelEdit = () => {
+  resetForm()
+}
+
+const deletePublication = async (id) => {
+  if (confirm('Are you sure you want to delete this publication?')) {
+    try {
+      await axios.delete(`/api/publications/${id}`)
+      await fetchPublications()
+    } catch (err) {
+      console.error('Error deleting publication:', err)
+      error.value = 'Failed to delete publication. Please try again.'
+    }
+  }
+}
+
+const resetForm = () => {
+  newPublication.value = {
+    title: '',
+    description: '',
+    publication_date: ''
+  }
+  editingId.value = null
+}
+
+const formatDate = (dateString) => {
+  const options = { year: 'numeric', month: 'long', day: 'numeric' }
+  return new Date(dateString).toLocaleDateString(undefined, options)
+}
+
+onMounted(() => {
+  fetchPublications()
+})
 </script>
 
 <style scoped>
-:root {
-  --primary-color: #3498db;
-  --secondary-color: #2ecc71;
-  --background-color: #f7f9fc;
-  --surface-color: #ffffff;
-  --error-color: #e74c3c;
-  --text-primary: #2c3e50;
-  --text-secondary: #7f8c8d;
-  --border-color: #bdc3c7;
-  --shadow-color: rgba(0, 0, 0, 0.1);
+.dashboard {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 250px;
+  background-color: #4CAF50;
+  color: white;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+  transition: width 0.3s ease;
+  z-index: 1000;
+}
+
+.sidebar.collapsed {
+  width: 80px;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.logo-img {
+  width: 50px;
+  height: 50px;
+  margin-right: 10px;
+}
+
+.sidebar-title {
+  font-size: 20px;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-nav {
+  flex-grow: 1;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  color: white;
+  text-decoration: none;
+  transition: background-color 0.3s;
+  border-radius: 5px;
+  margin-bottom: 5px;
+}
+
+.nav-link:hover, .nav-link.active {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-link svg {
+  margin-right: 10px;
+}
+
+.user-info {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-name {
+  margin-bottom: 10px;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.logout-button {
+  background-color: transparent;
+  border: 1px solid white;
+  color: white;
+  padding: 8px 15px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  display: flex;
+  align-items: center;
+}
+
+.logout-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.logout-button svg {
+  margin-right: 5px;
+}
+
+.toggle-button {
+  position: absolute;
+  top: 10px;
+  right: -15px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.toggle-button:hover {
+  background-color: #45a049;
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 250px;
+  transition: margin-left 0.3s ease;
+}
+
+.main-content.sidebar-collapsed {
+  margin-left: 80px;
 }
 
 .publication-manager {
@@ -218,7 +400,6 @@ h1 {
   font-weight: 800;
   letter-spacing: -1px;
   text-shadow: 2px 2px 4px var(--shadow-color);
-  
 }
 
 h2 {
@@ -239,7 +420,6 @@ h2::after {
   height: 4px;
   background-color: var(--primary-color);
   border-radius: 2px;
-  
 }
 
 main {
@@ -281,7 +461,6 @@ label {
   font-size: 0.9rem;
   text-transform: uppercase;
   letter-spacing: 1px;
-  
 }
 
 input[type="text"],
@@ -302,7 +481,6 @@ input[type="date"]:focus,
 textarea:focus {
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
-  
 }
 
 textarea {
@@ -496,6 +674,23 @@ footer {
 }
 
 @media (max-width: 768px) {
+  .sidebar {
+    width: 80px;
+  }
+  
+  .sidebar.collapsed {
+    width: 0;
+    padding: 0;
+  }
+  
+  .main-content {
+    margin-left: 80px;
+  }
+  
+  .main-content.sidebar-collapsed {
+    margin-left: 0;
+  }
+
   .publication-manager {
     padding: 20px 10px;
   }

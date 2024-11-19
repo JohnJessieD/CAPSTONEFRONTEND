@@ -12,6 +12,7 @@ import Pwd from '../views/PWD/Pwd.vue';
 import UserManagementView from '../views/Admin/UserManagementView.vue';
 import Dashboard from '../views/Admin/Dashboard.vue';
 
+import Feedbacklist from '../views/Admin/Feedbacklist.vue';
 import Soloparent from '../views/SoloParent/Soloparent.vue';
 import AdminNav from '../views/Admin/AdminNav.vue';
 import Solopublications from '../views/SoloParent/Solopublications.vue';
@@ -81,6 +82,10 @@ const routes = [
   {
     path: '/Solopublications',
     component: Solopublications,
+  },
+  {
+    path: '/Feedbacklist',
+    component: Feedbacklist,
   },
   {
     path: '/SoloServices',

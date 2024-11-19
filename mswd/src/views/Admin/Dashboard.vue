@@ -126,13 +126,16 @@ export default {
     const selectedCategory = ref('all')
 
     const navItems = [
-      { name: 'Dashboard', route: '/Dashboard' },
-      { name: 'Schedule', route: '/Schedule' },
-      { name: 'Barangay Management', route: '/Barangaym' },
-      { name: 'Assistance Management', route: '/AssistanceManagement' },
-      { name: 'Card Management', route: '/CardManagement' },
-      { name: 'User Management', route: '/user-management' },
-    ]
+  { name: 'Dashboard', route: '/Dashboard' },
+  { name: 'Schedule', route: '/Schedule' },
+  { name: 'Barangay Management', route: '/Barangaym' },
+  { name: 'AssistanceManagement', route: '/AssistanceManagement' },
+  { name: 'Card Management', route: '/CardManagement' },
+  { name: 'User Management', route: '/user-management' },
+  { name: 'Publication Manager', route: '/PublicationManager' },
+  { name: 'Events Manager', route: '/EventsManager' },
+  { name: 'Feedback List', route: '/FeedbackList' },
+]
 
     const summaryCards = [
       { title: 'Total Barangays', value: 5, icon: MapPin },

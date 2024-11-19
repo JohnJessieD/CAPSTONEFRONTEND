@@ -234,13 +234,16 @@ const notifications = ref([]);
 const unreadNotifications = ref(0);
 
 const navItems = [
-  { name: 'Dashboard', route: '/Dashboard'},
-  { name: 'Schedule', route: '/Schedule'},
-  { name: 'Barangay Management', route: '/Barangaym'},
-  { name: 'Assistance Management', route: '/AssistanceManagement'},
+  { name: 'Dashboard', route: '/Dashboard' },
+  { name: 'Schedule', route: '/Schedule' },
+  { name: 'Barangay Management', route: '/Barangaym' },
+  { name: 'AssistanceManagement', route: '/AssistanceManagement' },
   { name: 'Card Management', route: '/CardManagement' },
   { name: 'User Management', route: '/user-management' },
-];
+  { name: 'Publication Manager', route: '/PublicationManager' },
+  { name: 'Events Manager', route: '/EventsManager' },
+  { name: 'Feedback List', route: '/FeedbackList' },
+]
 
 const currentRoute = computed(() => route.path);
 

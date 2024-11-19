@@ -1,5 +1,6 @@
 <template>
-  <div class="app-container">
+  <div class="app-wrapper">
+    <!-- Navigation Bar -->
     <nav class="navbar">
       <div class="navbar-brand">
         <img src="/img/Download.jpg" class="logo-img" alt="Government Logo" />
@@ -11,8 +12,11 @@
         <router-link to="/EventsPWD" class="nav-link">Upcoming Events</router-link>
         <router-link to="/ServicesPWD" class="nav-link">Services</router-link>
         <router-link to="/publicationsPWD" class="nav-link">Publications</router-link>
+        <router-link to="/SchedulePWD" class="nav-link">Schedule</router-link>
+        <button @click="logout" class="logout-button">Logout</button>
       </div>
     </nav>
+
     <div class="spacer"></div>
     <main class="main-content">
       <h1 class="page-title">Persons with Disabilities (PWD) Office</h1>
@@ -140,9 +144,9 @@
               <input type="text" id="fullName" v-model="formData.fullName" required class="form-input" />
             </div>
             <div class="form-group">
-  <label for="idNumber" class="form-label">ID Number</label>
-  <input type="text" id="idNumber" v-model="formData.idNumber" required class="form-input" />
-</div>
+              <label for="idNumber" class="form-label">ID Number</label>
+              <input type="text" id="idNumber" v-model="formData.idNumber" required class="form-input" />
+            </div>
             <div class="form-group">
               <label for="phoneNumber" class="form-label">Phone Number</label>
               <input type="tel" id="phoneNumber" v-model="formData.phoneNumber" required class="form-input" />
@@ -180,201 +184,195 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import axios from 'axios'
 
-export default {
-  setup() {
-    const formData = ref({
-      name: '',
-      idNumber: '',
-      phoneNumber: '',
-      address: '',
-      dob: '',
-      sickness: '',
-      category: '',
-      certificate: null,
-      email: '',
-      reason: '',
-      amount: 0,
-    })
+const router = useRouter()
 
-    const error = ref(null)
-    const requestHistory = ref([])
-    const isLoading = ref(true)
-    const isModalActive = ref(false)
-    const activeForm = ref('')
-    const showWelcomeNotification = ref(true)
+const formData = ref({
+  name: '',
+  idNumber: '',
+  phoneNumber: '',
+  address: '',
+  dob: '',
+  sickness: '',
+  category: '',
+  certificate: null,
+  email: '',
+  reason: '',
+  amount: 0,
+})
 
-    const faqs = ref([
-      {
-        question: "Who is eligible for PWD assistance?",
-        answer: "Individuals with permanent disabilities recognized by the government are eligible for PWD assistance.",
-        isOpen: false
-      },
-      {
-        question: "What documents do I need to apply for a PWD ID?",
-        answer: "You'll need a medical certificate from a licensed physician, barangay certificate, and valid ID. Additional requirements may vary by location.",
-        isOpen: false
-      },
-      {
-        question: "How long does it take to process a PWD ID application?",
-        answer: "Processing time varies, but it typically takes 2-4 weeks. You'll be notified when your ID is ready for pickup.",
-        isOpen: false
-      },
-      {
-        question: "What benefits do PWD cardholders receive?",
-        answer: "Benefits include discounts on medical supplies, transportation, and some goods and services. Specific benefits may vary by location and establishment.",
-        isOpen: false
-      },
-      {
-        question: "How often do I need to renew my PWD ID?",
-        answer: "PWD IDs are typically valid for 3 years. You should start the renewal process at least a month before the expiration date.",
-        isOpen: false
-      }
-    ])
+const error = ref(null)
+const requestHistory = ref([])
+const isLoading = ref(true)
+const isModalActive = ref(false)
+const activeForm = ref('')
+const showWelcomeNotification = ref(true)
 
-    const toggleFaq = (index) => {
-      faqs.value[index].isOpen = !faqs.value[index].isOpen
-    }
+const faqs = ref([
+  {
+    question: "Who is eligible for PWD assistance?",
+    answer: "Individuals with permanent disabilities recognized by the government are eligible for PWD assistance.",
+    isOpen: false
+  },
+  {
+    question: "What documents do I need to apply for a PWD ID?",
+    answer: "You'll need a medical certificate from a licensed physician, barangay certificate, and valid ID. Additional requirements may vary by location.",
+    isOpen: false
+  },
+  {
+    question: "How long does it take to process a PWD ID application?",
+    answer: "Processing time varies, but it typically takes 2-4 weeks. You'll be notified when your ID is ready for pickup.",
+    isOpen: false
+  },
+  {
+    question: "What benefits do PWD cardholders receive?",
+    answer: "Benefits include discounts on medical supplies, transportation, and some goods and services. Specific benefits may vary by location and establishment.",
+    isOpen: false
+  },
+  {
+    question: "How often do I need to renew my PWD ID?",
+    answer: "PWD IDs are typically valid for 3 years. You should start the renewal process at least a month before the expiration date.",
+    isOpen: false
+  }
+])
 
-    const modalTitle = computed(() => {
-      return activeForm.value === 'membership' ? 'Membership Application' : 'Request Financial Assistance'
-    })
+const toggleFaq = (index) => {
+  faqs.value[index].isOpen = !faqs.value[index].isOpen
+}
 
-    const openModal = (formType) => {
-      activeForm.value = formType
-      isModalActive.value = true
-      showWelcomeNotification.value = false
-    }
+const modalTitle = computed(() => {
+  return activeForm.value === 'membership' ? 'Membership Application' : 'Request Financial Assistance'
+})
 
-    const closeModal = () => {
-      isModalActive.value = false
-      formData.value = {
-        name: '',
-        phoneNumber: '',
-        address: '',
-        dob: '',
-        sickness: '',
-        category: '',
-        certificate: null,
-        email: '',
-        reason: '',
-        amount: 0,
-      }
-      error.value = null
-    }
+const openModal = (formType) => {
+  activeForm.value = formType
+  isModalActive.value = true
+  showWelcomeNotification.value = false
+}
 
-    const closeWelcomeNotification = () => {
-      showWelcomeNotification.value = false
-    }
+const closeModal = () => {
+  isModalActive.value = false
+  formData.value = {
+    name: '',
+    phoneNumber: '',
+    address: '',
+    dob: '',
+    sickness: '',
+    category: '',
+    certificate: null,
+    email: '',
+    reason: '',
+    amount: 0,
+  }
+  error.value = null
+}
 
-    const submitForm = async () => {
-      try {
-        let response
-        if (activeForm.value === 'membership') {
-          const membershipFormData = new FormData()
-          for (const key in formData.value) {
-            if (key !== 'certificate') {
-              membershipFormData.append(key, formData.value[key])
-            }
-          }
-          if (formData.value.certificate) {
-            membershipFormData.append('certificate', formData.value.certificate)
-          }
-          response = await axios.post('/api/membership', membershipFormData, {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          })
-        } else {
-          response = await axios.post('/api/req', {
-            fullName: formData.value.fullName,
-            idNumber: formData.value.idNumber,
-            phoneNumber: formData.value.phoneNumber,
-            address: formData.value.address,
-            email: formData.value.email,
-            reason: formData.value.reason,
-            amount: formData.value.amount,
-          })
-          requestHistory.value.unshift({
-            date: new Date(),
-            fullName: formData.value.fullName,
-           idNumber: formData.value.idNumber,
-            phoneNumber: formData.value.phoneNumber,
-            address: formData.value.address,
-            email: formData.value.email,
-            reason: formData.value.reason,
-            amount: formData.value.amount,
-            status: 'Pending',
-          })
+const closeWelcomeNotification = () => {
+  showWelcomeNotification.value = false
+}
+
+const submitForm = async () => {
+  try {
+    let response
+    if (activeForm.value === 'membership') {
+      const membershipFormData = new FormData()
+      for (const key in formData.value) {
+        if (key !== 'certificate') {
+          membershipFormData.append(key, formData.value[key])
         }
-        console.log(response.data)
-        closeModal()
-      } catch (err) {
-        error.value = err.response?.data?.message || 'An error occurred while submitting the form.'
-        console.error(err)
       }
-    }
-
-    const fetchRequestHistory = async () => {
-      try {
-        const response = await axios.get('/api/PWD')
-        requestHistory.value = response.data.map(request => ({
-          ...request,
-          status: request.status || 'Pending',
-        }))
-        isLoading.value = false
-      } catch (err) {
-        console.error(err)
-        isLoading.value = false
-        error.value = 'Failed to load request history.'
+      if (formData.value.certificate) {
+        membershipFormData.append('certificate', formData.value.certificate)
       }
-    }
-
-    const handleFileUpload = (event) => {
-      formData.value.certificate = event.target.files[0]
-    }
-
-    const formatDate = (date) => {
-      return new Date(date).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+      response = await axios.post('/api/membership', membershipFormData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+    } else {
+      response = await axios.post('/api/req', {
+        fullName: formData.value.fullName,
+        idNumber: formData.value.idNumber,
+        phoneNumber: formData.value.phoneNumber,
+        address: formData.value.address,
+        email: formData.value.email,
+        reason: formData.value.reason,
+        amount: formData.value.amount,
+      })
+      requestHistory.value.unshift({
+        date: new Date(),
+        fullName: formData.value.fullName,
+        idNumber: formData.value.idNumber,
+        phoneNumber: formData.value.phoneNumber,
+        address: formData.value.address,
+        email: formData.value.email,
+        reason: formData.value.reason,
+        amount: formData.value.amount,
+        status: 'Pending',
       })
     }
-
-    onMounted(() => {
-      fetchRequestHistory()
-    })
-
-    return {
-      formData,
-      error,
-      requestHistory,
-      isLoading,
-      isModalActive,
-      activeForm,
-      showWelcomeNotification,
-      faqs,
-      toggleFaq,
-      modalTitle,
-      openModal,
-      closeModal,
-      closeWelcomeNotification,
-      submitForm,
-      handleFileUpload,
-      formatDate
-    }
+    console.log(response.data)
+    closeModal()
+  } catch (err) {
+    error.value = err.response?.data?.message || 'An error occurred while submitting the form.'
+    console.error(err)
   }
 }
+
+const fetchRequestHistory = async () => {
+  try {
+    const response = await axios.get('/api/PWD')
+    requestHistory.value = response.data.map(request => ({
+      ...request,
+      status: request.status || 'Pending',
+    }))
+    isLoading.value = false
+  } catch (err) {
+    console.error(err)
+    isLoading.value = false
+    error.value = 'Failed to load request history.'
+  }
+}
+
+const handleFileUpload = (event) => {
+  formData.value.certificate = event.target.files[0]
+}
+
+const formatDate = (date) => {
+  return new Date(date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+const logout = async () => {
+  try {
+    // Call logout API endpoint
+    await axios.post('/api/logout')
+    // Clear local storage or any client-side stored data
+    localStorage.removeItem('user')
+    // Redirect to login page
+    router.push('/login')
+  } catch (error) {
+    console.error('Logout failed:', error)
+    // Handle logout error (e.g., show an error message to the user)
+  }
+}
+
+onMounted(() => {
+  fetchRequestHistory()
+})
 </script>
 
 <style scoped>
-.app-container {
+.app-wrapper {
   font-family: 'Roboto', sans-serif;
   background-color: #f5f7fa;
   min-height: 100vh;
@@ -422,6 +420,20 @@ export default {
 .nav-link:hover {
   background-color: #f0f4f8;
   color: #004d7a;
+}
+
+.logout-button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.logout-button:hover {
+  background-color: #c82333;
 }
 
 .main-content {
