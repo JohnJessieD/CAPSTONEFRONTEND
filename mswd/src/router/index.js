@@ -26,7 +26,6 @@ import AssistancePWD from '../views/AssistancePWD.vue';
 
 import PWDNavbar from '../views/PWD/PWDNavbar.vue';
 import SoloNav from '../views/SoloNav.vue';
-
 import SeniorTemplate from '../views/Senior Citizen/SeniorTemplate.vue';
 import publicationsPWD from '../views/PWD/publicationsPWD.vue';
 import CPWD from '../views/PWD/CPWD.vue';
@@ -49,6 +48,21 @@ import CardManagement from '../views/Admin/CardManagement.vue';
 import SoloTemplate from '../views/SoloParent/SoloTemplate.vue';
 
 import SoloContacts from '../views/SoloParent/SoloContacts.vue';
+import financialaid from '../views/SoloParent/financialaid.vue';
+import Childcare from '../views/SoloParent/Childcare.vue';
+import CommunityEvents from '../views/SoloParent/CommunityEvents.vue';
+import ParentingTips from '../views/SoloParent/ParentingTips.vue';
+
+import Counseling from '../views/SoloParent/Counseling.vue';
+import Healthandwellness from '../views/SoloParent/Healthandwellness.vue';
+
+import JobTraining from '../views/SoloParent/JobTraining.vue';
+
+import Education from '../views/SoloParent/Education.vue';
+import Legalsupport from '../views/SoloParent/Legalsupport.vue';
+import Housingassistance from '../views/SoloParent/Housingassistance.vue';
+import SupportGroups from '../views/SoloParent/SupportGroups.vue';
+import Workshopscomponent from '../views/SoloParent/Workshopscomponent.vue';
 import BarangayM  from '@/views/Admin/BarangayM.vue';
 const routes = [
 
@@ -58,9 +72,57 @@ const routes = [
   },
   
   {
+    path: '/Education',
+    component: Education,
+  },
+  {
     path: '/BarangayM',
     component: BarangayM,
   },  
+  {
+    path: '/Legalsupport',
+    component: Legalsupport,
+  },
+  {
+    path: '/SupportGroups',
+    component: SupportGroups,
+  },
+  {
+    path: '/Workshopscomponent',
+    component: Workshopscomponent,
+  },
+  {
+    path: '/ParentingTips',
+    component: ParentingTips,
+  },
+  {
+    path: '/CommunityEvents',
+    component: CommunityEvents,
+  },
+  {
+    path: '/JobTraining',
+    component: JobTraining,
+  },
+  {
+    path: '/Counseling',
+    component: Counseling,
+  },
+  {
+    path: '/Housingassistance',
+    component: Housingassistance,
+  },
+  {
+    path: '/Healthandwellness',
+    component: Healthandwellness,
+  },
+  {
+    path: '/financialaid',
+    component: financialaid,
+  },  
+  {
+    path: '/Childcare',
+    component: Childcare,
+  }, 
   {
     path: '/Publicationmanager',
     component: Publicationmanager,

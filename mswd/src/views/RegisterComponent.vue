@@ -11,7 +11,7 @@
           >
             <div class="image-overlay d-flex flex-column justify-center align-center text-center pa-6">
               <v-avatar size="120" class="mb-6 elevation-10">
-                <v-img src="/placeholder.svg?height=120&width=120" alt="MSWD Logo"></v-img>
+                <v-img src="/img/download.jpg" alt="MSWD Logo"></v-img>
               </v-avatar>
               <h1 class="text-h2 font-weight-bold white--text mb-4 text-shadow">Welcome to MSWD</h1>
               <p class="text-h6 white--text text-shadow">Empowering communities, one registration at a time.</p>

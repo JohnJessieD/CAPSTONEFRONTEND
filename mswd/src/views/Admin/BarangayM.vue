@@ -6,7 +6,13 @@
         <h1 v-if="!isCollapsed" class="sidebar-title">MSWD Admin</h1>
       </div>
       <nav class="sidebar-nav">
-        <a v-for="(item, index) in navItems" :key="index" :href="item.route" class="nav-link">
+        <a 
+          v-for="(item, index) in navItems" 
+          :key="index" 
+          :href="item.route" 
+          class="nav-link"
+          :class="{ 'active': currentRoute === item.route }"
+        >
           <component :is="item.icon" :size="24" />
           <span v-if="!isCollapsed">{{ item.name }}</span>
         </a>
@@ -29,26 +35,54 @@
         <header class="main-header">
           <h1 class="page-title">Resident Management</h1>
           <div class="header-actions">
+            <div class="search-bar">
+              <input 
+                v-model="searchQuery" 
+                @input="searchResidents" 
+                placeholder="Search residents..." 
+                class="search-input"
+              />
+              <Search :size="20" class="search-icon" />
+            </div>
             <select v-model="currentCategory" class="category-select">
               <option value="">All Categories</option>
               <option value="PWD">PWD</option>
               <option value="Senior Citizen">Senior Citizen</option>
               <option value="Solo Parent">Solo Parent</option>
             </select>
-            <input 
-              v-model="searchQuery" 
-              @input="searchResidents" 
-              placeholder="Search residents..." 
-              class="search-input"
-            />
-            <button @click="openModal()" class="add-btn">Add Resident</button>
-            <button @click="exportToExcel()" class="export-btn">Export to Excel</button>
+            <select v-model="currentBarangay" class="barangay-select">
+              <option value="">All Barangays</option>
+              <option v-for="barangay in barangays" :key="barangay" :value="barangay">
+                {{ barangay }}
+              </option>
+            </select>
           </div>
         </header>
 
-        <div v-if="loading" class="loading">Loading...</div>
+        <div class="action-buttons">
+          <button @click="openModal()" class="add-btn">
+            <UserPlus :size="20" />
+            Add Resident
+          </button>
+          <button @click="exportToExcel()" class="export-btn">
+            <FileSpreadsheet :size="20" />
+            Export to Excel
+          </button>
+          <button @click="generateReport()" class="report-btn">
+            <FileText :size="20" />
+            Generate Report
+          </button>
+        </div>
 
-        <div v-else-if="error" class="error">{{ error }}</div>
+        <div v-if="loading" class="loading">
+          <Loader :size="40" class="spinner" />
+          Loading...
+        </div>
+
+        <div v-else-if="error" class="error">
+          <AlertCircle :size="24" />
+          {{ error }}
+        </div>
 
         <div v-else class="table-container">
           <table class="resident-table">
@@ -59,7 +93,7 @@
                 <th>Category</th>
                 <th>Date of Birth</th>
                 <th>Contact Number</th>
-                <th>Details</th>
+                <th>Barangay</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -67,20 +101,23 @@
               <tr v-for="resident in residents" :key="resident.id">
                 <td>{{ resident.id_number }}</td>
                 <td>{{ resident.last_name }}, {{ resident.first_name }} {{ resident.middle_name }}</td>
-                <td>{{ resident.category }}</td>
+                <td>
+                  <span :class="['category-badge', resident.category.toLowerCase().replace(' ', '-')]">
+                    {{ resident.category }}
+                  </span>
+                </td>
                 <td>{{ formatDate(resident.date_of_birth) }}</td>
                 <td>{{ resident.contact_number }}</td>
+                <td>{{ resident.address }}</td>
                 <td>
-                  <button @click="showDetails(resident)" class="action-btn details-btn">
-                    View Details
+                  <button @click="showDetails(resident)" class="action-btn details-btn" title="View Details">
+                    <Eye :size="18" />
                   </button>
-                </td>
-                <td>
-                  <button @click="openModal(resident)" class="action-btn edit-btn">
-                    <Edit :size="16" />
+                  <button @click="openModal(resident)" class="action-btn edit-btn" title="Edit">
+                    <Edit :size="18" />
                   </button>
-                  <button @click="deleteResident(resident.id)" class="action-btn delete-btn">
-                    <Trash2 :size="16" />
+                  <button @click="deleteResident(resident.id)" class="action-btn delete-btn" title="Delete">
+                    <Trash2 :size="18" />
                   </button>
                 </td>
               </tr>
@@ -89,176 +126,294 @@
         </div>
 
         <div v-if="!loading && !error" class="pagination">
-          <button @click="changePage(currentPage - 1)" :disabled="currentPage === 1">&laquo; Previous</button>
+          <button @click="changePage(currentPage - 1)" :disabled="currentPage === 1" class="page-btn">
+            <ChevronLeft :size="20" />
+          </button>
           <span>Page {{ currentPage }} of {{ totalPages }}</span>
-          <button @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages">Next &raquo;</button>
+          <button @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages" class="page-btn">
+            <ChevronRight :size="20" />
+          </button>
         </div>
       </div>
     </main>
 
     <!-- Resident Modal -->
-    <div v-if="isModalOpen" class="modal">
-      <div class="modal-content">
-        <h2>{{ isEditing ? 'Edit Resident' : 'Add Resident' }}</h2>
-        <form @submit.prevent="saveResident">
-          <div class="form-group">
-            <label for="category">Category:</label>
-            <select v-model="form.category" id="category" required>
-              <option value="PWD">PWD</option>
-              <option value="Senior Citizen">Senior Citizen</option>
-              <option value="Solo Parent">Solo Parent</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="id_number">ID Number:</label>
-            <input v-model="form.id_number" id="id_number" required>
-          </div>
-          <div class="form-group">
-            <label for="first_name">First Name:</label>
-            <input v-model="form.first_name" id="first_name" required>
-          </div>
-          <div class="form-group">
-            <label for="last_name">Last Name:</label>
-            <input v-model="form.last_name" id="last_name" required>
-          </div>
-          <div class="form-group">
-            <label for="middle_name">Middle Name:</label>
-            <input v-model="form.middle_name" id="middle_name">
-          </div>
-          <div class="form-group">
-            <label for="date_of_birth">Date of Birth:</label>
-            <input v-model="form.date_of_birth" id="date_of_birth" type="date" required>
-          </div>
-          <div class="form-group">
-            <label for="gender">Gender:</label>
-            <select v-model="form.gender" id="gender" required>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="address">Address:</label>
-            <textarea v-model="form.address" id="address" required></textarea>
-          </div>
-          <div class="form-group">
-            <label for="contact_number">Contact Number:</label>
-            <input v-model="form.contact_number" id="contact_number" required>
-          </div>
-          <div class="form-group">
-            <label for="email">Email:</label>
-            <input v-model="form.email" id="email" type="email">
-          </div>
-          
-          <!-- Category-specific fields -->
-          <div v-if="form.category === 'PWD'">
+    <transition name="fade">
+      <div v-if="isModalOpen" class="modal">
+        <div class="modal-content">
+          <h2>{{ isEditing ? 'Edit Resident' : 'Add Resident' }}</h2>
+          <form @submit.prevent="saveResident">
             <div class="form-group">
-              <label for="disability_type">Disability Type:</label>
-              <input v-model="form.details.disability_type" id="disability_type" required>
-            </div>
-            <div class="form-group">
-              <label for="disability_cause">Disability Cause:</label>
-              <input v-model="form.details.disability_cause" id="disability_cause">
-            </div>
-            <div class="form-group">
-              <label for="disability_duration">Disability Duration:</label>
-              <input v-model="form.details.disability_duration" id="disability_duration">
-            </div>
-          </div>
-          
-          <div v-if="form.category === 'Senior Citizen'">
-            <div class="form-group">
-              <label for="pension_type">Pension Type:</label>
-              <select v-model="form.details.pension_type" id="pension_type">
-                <option value="Government">Government</option>
-                <option value="Private">Private</option>
-                <option value="None">None</option>
+              <label for="category">Category:</label>
+              <select v-model="form.category" id="category" required>
+                <option value="PWD">PWD</option>
+                <option value="Senior Citizen">Senior Citizen</option>
+                <option value="Solo Parent">Solo Parent</option>
               </select>
             </div>
             <div class="form-group">
-              <label for="health_condition">Health Condition:</label>
-              <textarea v-model="form.details.health_condition" id="health_condition"></textarea>
-            </div>
-          </div>
-          
-          <div v-if="form.category === 'Solo Parent'">
-            <div class="form-group">
-              <label for="reason_for_being_solo">Reason for Being Solo Parent:</label>
-              <textarea v-model="form.details.reason_for_being_solo" id="reason_for_being_solo" required></textarea>
+              <label for="id_number">ID Number:</label>
+              <input v-model="form.id_number" id="id_number" required>
             </div>
             <div class="form-group">
-              <label for="number_of_children">Number of Children:</label>
-              <input v-model.number="form.details.number_of_children" id="number_of_children" type="number" min="1" required>
+              <label for="first_name">First Name:</label>
+              <input v-model="form.first_name" id="first_name" required>
             </div>
-          </div>
+            <div class="form-group">
+              <label for="last_name">Last Name:</label>
+              <input v-model="form.last_name" id="last_name" required>
+            </div>
+            <div class="form-group">
+              <label for="middle_name">Middle Name:</label>
+              <input v-model="form.middle_name" id="middle_name">
+            </div>
+            <div class="form-group">
+              <label for="date_of_birth">Date of Birth:</label>
+              <input v-model="form.date_of_birth" id="date_of_birth" type="date" required>
+            </div>
+            <div class="form-group">
+              <label for="gender">Gender:</label>
+              <select v-model="form.gender" id="gender" required>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="address">Address:</label>
+              <textarea v-model="form.address" id="address" required></textarea>
+            </div>
+            <div class="form-group">
+              <label for="contact_number">Contact Number:</label>
+              <input v-model="form.contact_number" id="contact_number" required>
+            </div>
+            <div class="form-group">
+              <label for="email">Email:</label>
+              <input v-model="form.email" id="email" type="email">
+            </div>
+            
+            <!-- Category-specific fields -->
+            <div v-if="form.category === 'PWD'">
+              <div class="form-group">
+                <label for="disability_type">Disability Type:</label>
+                <input v-model="form.details.disability_type" id="disability_type" required>
+              </div>
+              <div class="form-group">
+                <label for="disability_cause">Disability Cause:</label>
+                <input v-model="form.details.disability_cause" id="disability_cause">
+              </div>
+              <div class="form-group">
+                <label for="disability_duration">Disability Duration:</label>
+                <input v-model="form.details.disability_duration" id="disability_duration">
+              </div>
+            </div>
+            
+            <div v-if="form.category === 'Senior Citizen'">
+              <div class="form-group">
+                <label for="pension_type">Pension Type:</label>
+                <select v-model="form.details.pension_type" id="pension_type">
+                  <option value="Government">Government</option>
+                  <option value="Private">Private</option>
+                  <option value="None">None</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="health_condition">Health Condition:</label>
+                <textarea v-model="form.details.health_condition" id="health_condition"></textarea>
+              </div>
+            </div>
+            
+            <div v-if="form.category === 'Solo Parent'">
+              <div class="form-group">
+                <label for="reason_for_being_solo">Reason for Being Solo Parent:</label>
+                <textarea v-model="form.details.reason_for_being_solo" id="reason_for_being_solo" required></textarea>
+              </div>
+              <div class="form-group">
+                <label for="number_of_children">Number of Children:</label>
+                <input v-model.number="form.details.number_of_children" id="number_of_children" type="number" min="1" required>
+              </div>
+            </div>
 
-          <div class="form-actions">
-            <button type="submit" class="save-btn">{{ isEditing ? 'Update' : 'Add' }}</button>
-            <button @click="closeModal" type="button" class="cancel-btn">Cancel</button>
-          </div>
-        </form>
+            <div class="form-actions">
+              <button type="submit" class="save-btn">
+                <Save :size="20" />
+                {{ isEditing ? 'Update' : 'Add' }}
+              </button>
+              <button @click="closeModal" type="button" class="cancel-btn">
+                <X :size="20" />
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+    </transition>
 
     <!-- Details Modal -->
-    <div v-if="isDetailsModalOpen" class="modal">
-      <div class="modal-content">
-        <h2>Resident Details</h2>
-        <div v-if="selectedResident">
-          <p><strong>ID Number:</strong> {{ selectedResident.id_number }}</p>
-          <p><strong>Name:</strong> {{ selectedResident.last_name }}, {{ selectedResident.first_name }} {{ selectedResident.middle_name }}</p>
-          <p><strong>Category:</strong> {{ selectedResident.category }}</p>
-          <p><strong>Date of Birth:</strong> {{ formatDate(selectedResident.date_of_birth) }}</p>
-          <p><strong>Gender:</strong> {{ selectedResident.gender }}</p>
-          <p><strong>Address:</strong> {{ selectedResident.address }}</p>
-          <p><strong>Contact Number:</strong> {{ selectedResident.contact_number }}</p>
-          <p><strong>Email:</strong> {{ selectedResident.email }}</p>
-          <h3>Additional Details:</h3>
-          <div v-if="selectedResident.category === 'PWD'">
-            <p><strong>Disability Type:</strong> {{ selectedResident.details?.disability_type || 'N/A' }}</p>
-            <p><strong>Disability Cause:</strong> {{ selectedResident.details?.disability_cause || 'N/A' }}</p>
-            <p><strong>Disability Duration:</strong> {{ selectedResident.details?.disability_duration || 'N/A' }}</p>
+    <transition name="fade">
+      <div v-if="isDetailsModalOpen" class="modal">
+        <div class="modal-content">
+          <h2>Resident Details</h2>
+          <div v-if="selectedResident" class="resident-details">
+            <p><strong>ID Number:</strong> {{ selectedResident.id_number }}</p>
+            <p><strong>Name:</strong> {{ selectedResident.last_name }}, {{ selectedResident.first_name }} {{ selectedResident.middle_name }}</p>
+            <p><strong>Category:</strong> {{ selectedResident.category }}</p>
+            <p><strong>Date of Birth:</strong> {{ formatDate(selectedResident.date_of_birth) }}</p>
+            <p><strong>Gender:</strong> {{ selectedResident.gender }}</p>
+            <p><strong>Address:</strong> {{ selectedResident.address }}</p>
+            <p><strong>Contact Number:</strong> {{ selectedResident.contact_number }}</p>
+            <p><strong>Email:</strong> {{ selectedResident.email }}</p>
+            <h3>Additional Details:</h3>
+            <div v-if="selectedResident.category === 'PWD'">
+              <p><strong>Disability Type:</strong> {{ selectedResident.details?.disability_type || 'N/A' }}</p>
+              <p><strong>Disability Cause:</strong> {{ selectedResident.details?.disability_cause || 'N/A' }}</p>
+              <p><strong>Disability Duration:</strong> {{ selectedResident.details?.disability_duration || 'N/A' }}</p>
+            </div>
+            <div v-else-if="selectedResident.category === 'Senior Citizen'">
+              <p><strong>Pension Type:</strong> {{ selectedResident.details?.pension_type || 'N/A' }}</p>
+              <p><strong>Health Condition:</strong> {{ selectedResident.details?.health_condition || 'N/A' }}</p>
+            </div>
+            <div v-else-if="selectedResident.category === 'Solo Parent'">
+              <p><strong>Reason for Being Solo Parent:</strong> {{ selectedResident.details?.reason_for_being_solo || 'N/A' }}</p>
+              <p><strong>Number of Children:</strong> {{ selectedResident.details?.number_of_children || 'N/A' }}</p>
+            </div>
           </div>
-          <div v-else-if="selectedResident.category === 'Senior Citizen'">
-            <p><strong>Pension Type:</strong> {{ selectedResident.details?.pension_type || 'N/A' }}</p>
-            <p><strong>Health Condition:</strong> {{ selectedResident.details?.health_condition || 'N/A' }}</p>
-          </div>
-          <div v-else-if="selectedResident.category === 'Solo Parent'">
-            <p><strong>Reason for Being Solo Parent:</strong> {{ selectedResident.details?.reason_for_being_solo || 'N/A' }}</p>
-            <p><strong>Number of Children:</strong> {{ selectedResident.details?.number_of_children || 'N/A' }}</p>
-          </div>
+          <button @click="closeDetailsModal" class="close-btn">
+            <X :size="20" />
+            Close
+          </button>
         </div>
-        <button @click="closeDetailsModal" class="cancel-btn">Close</button>
       </div>
-    </div>
+    </transition>
   </div>
 </template>
 
-<script>
+<script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import axios from 'axios'
-import { Home, Calendar, HandsHelping, CreditCard, Users, LogOut, ChevronLeft, ChevronRight, Edit, Trash2 } from 'lucide-vue-next'
+import { 
+  Home, Calendar, HandsHelping, CreditCard, Users, LogOut, 
+  ChevronLeft, ChevronRight, Edit, Trash2, UserPlus, 
+  FileSpreadsheet, FileText, Eye, Save, X, Search, Loader, AlertCircle 
+} from 'lucide-vue-next'
 
-export default {
-  name: 'ResidentManagement',
-  components: {
-    Home, Calendar, HandsHelping, CreditCard, Users, LogOut, ChevronLeft, ChevronRight, Edit, Trash2
-  },
-  setup() {
-    const isCollapsed = ref(false)
-    const currentCategory = ref('')
-    const isModalOpen = ref(false)
-    const isDetailsModalOpen = ref(false)
-    const isEditing = ref(false)
-    const currentPage = ref(1)
-    const totalPages = ref(1)
-    const itemsPerPage = 10
-    const residents = ref([])
-    const searchQuery = ref('')
-    const selectedResident = ref(null)
-    const loading = ref(false)
-    const error = ref(null)
-    const form = ref({
+const isCollapsed = ref(false)
+const currentCategory = ref('')
+const currentBarangay = ref('')
+const isModalOpen = ref(false)
+const isDetailsModalOpen = ref(false)
+const isEditing = ref(false)
+const currentPage = ref(1)
+const totalPages = ref(1)
+const itemsPerPage = 10
+const residents = ref([])
+const searchQuery = ref('')
+const selectedResident = ref(null)
+const loading = ref(false)
+const error = ref(null)
+const barangays = ref([])
+const currentRoute = ref('/Dashboard')
+const form = ref({
+  id: null,
+  category: '',
+  id_number: '',
+  first_name: '',
+  last_name: '',
+  middle_name: '',
+  date_of_birth: '',
+  gender: '',
+  address: '',
+  contact_number: '',
+  email: '',
+  details: {}
+})
+
+const navItems = [
+  { name: 'Dashboard', route: '/Dashboard', icon: Home },
+  { name: 'Schedule', route: '/Schedule', icon: Calendar },
+  { name: 'Barangay Management', route: '/Barangaym', icon: Users },
+  { name: 'AssistanceManagement', route: '/AssistanceManagement', icon: HandsHelping },
+  { name: 'Card Management', route: '/CardManagement', icon: CreditCard },
+  { name: 'User Management', route: '/user-management', icon: Users },
+  { name: 'Publication Manager', route: '/PublicationManager', icon: Users },
+  { name: 'Events Manager', route: '/EventsManager', icon: Calendar },
+  { name: 'Feedback List', route: '/FeedbackList', icon: Users },
+]
+
+const toggleSidebar = () => {
+  isCollapsed.value = !isCollapsed.value
+}
+
+const fetchResidents = async () => {
+  loading.value = true
+  error.value = null
+  try {
+    const response = await axios.get('/api/residents', {
+      params: { 
+        category: currentCategory.value,
+        barangay: currentBarangay.value,
+        search: searchQuery.value,
+        page: currentPage.value,
+        limit: itemsPerPage
+      }
+    })
+    residents.value = response.data.residents.map(resident => ({
+      ...resident,
+      details: typeof resident.details === 'string' ? JSON.parse(resident.details) : resident.details
+    }))
+    totalPages.value = response.data.pager.pages
+  } catch (err) {
+    console.error('Error fetching residents:', err)
+    error.value = 'Failed to fetch residents. Please try again.'
+  } finally {
+    loading.value = false
+  }
+}
+
+const fetchBarangays = async () => {
+  try {
+    const response = await axios.get('/api/barangays')
+    barangays.value = response.data
+  } catch (err) {
+    console.error('Error fetching barangays:', err)
+  }
+}
+
+const searchResidents = () => {
+  currentPage.value = 1
+  fetchResidents()
+}
+
+const openModal = (resident = null) => {
+  if (resident) {
+    form.value = { 
+      ...resident,
+      details: typeof resident.details === 'string' ? JSON.parse(resident.details) : resident.details
+    }
+    isEditing.value = true
+  } else {
+    form.value = {
+      id: null,
+      category: '',
+      id_number: '',
+      first_name: '',
+      last_name: '',
+      middle_name: '',
+      date_of_birth: '',
+      gender: '',
+      address: '',
+      contact_number: '',
+      email: '',
+      details: {}
+    }
+    isEditing.value = false
+  }
+  isModalOpen.value = true
+}
+
+const closeModal = () => {
+  isModalOpen.value = false
+  form.value = {
     id: null,
     category: '',
     id_number: '',
@@ -271,445 +426,292 @@ export default {
     contact_number: '',
     email: '',
     details: {}
-  })
+  }
+}
 
-  const navItems = [
-  { name: 'Dashboard', route: '/Dashboard' },
-  { name: 'Schedule', route: '/Schedule' },
-  { name: 'Barangay Management', route: '/Barangaym' },
-  { name: 'AssistanceManagement', route: '/AssistanceManagement' },
-  { name: 'Card Management', route: '/CardManagement' },
-  { name: 'User Management', route: '/user-management' },
-  { name: 'Publication Manager', route: '/PublicationManager' },
-  { name: 'Events Manager', route: '/EventsManager' },
-  { name: 'Feedback List', route: '/FeedbackList' },
-]
-
-    const toggleSidebar = () => {
-      isCollapsed.value = !isCollapsed.value
-    }
-
-    const fetchResidents = async () => {
-      loading.value = true
-      error.value = null
-      try {
-        const response = await axios.get('/api/residents', {
-          params: { 
-            category: currentCategory.value,
-            search: searchQuery.value,
-            page: currentPage.value,
-            limit: itemsPerPage
-          }
-        })
-        residents.value = response.data.residents.map(resident => ({
-          ...resident,
-          details: typeof resident.details === 'string' ? JSON.parse(resident.details) : resident.details
-        }))
-        totalPages.value = response.data.pager.pages
-      } catch (err) {
-        console.error('Error fetching residents:', err)
-        error.value = 'Failed to fetch residents. Please try again.'
-      } finally {
-        loading.value = false
-      }
-    }
-
-    const searchResidents = () => {
-      currentPage.value = 1
-      fetchResidents()
-    }
-
-    const openModal = (resident = null) => {
-      if (resident) {
-        form.value = { 
-          ...resident,
-          details: typeof resident.details === 'string' ? JSON.parse(resident.details) : resident.details
-        }
-        isEditing.value = true
-      } else {
-        form.value = {
-          id: null,
-          category: '',
-          id_number: '',
-          first_name: '',
-          last_name: '',
-          middle_name: '',
-          date_of_birth: '',
-          gender: '',
-          address: '',
-          contact_number: '',
-          email: '',
-          details: {}
-        }
-        isEditing.value = false
-      }
-      isModalOpen.value = true
-    }
-
-    const closeModal = () => {
-      isModalOpen.value = false
-      form.value = {
-        id: null,
-        category: '',
-        id_number: '',
-        first_name: '',
-        last_name: '',
-        middle_name: '',
-        date_of_birth: '',
-        gender: '',
-        address: '',
-        contact_number: '',
-        email: '',
-        details: {}
-      }
-    }
-
-    const addResident = async () => {
-  const residentData = { 
-    ...form.value,
-    details: JSON.stringify(form.value.details)
-  };
-
-  console.log('Adding new resident:', residentData);
-
+const saveResident = async () => {
   try {
-    const response = await axios.post('/api/addresidents', residentData);
-    console.log('Server response:', response.data);
-
-    // Assuming a successful addition always returns a status of 200
-    alert('Resident added successfully!');
-    await fetchResidents();
-    closeModal();
+    const residentData = { 
+      ...form.value,
+      details: JSON.stringify(form.value.details)
+    }
+    
+    if (isEditing.value) {
+      await axios.post(`/api/update/${residentData.id}`, residentData)
+    } else {
+      await axios.post('/api/addresidents', residentData)
+    }
+    
+    alert(isEditing.value ? 'Resident updated successfully!' : 'Resident added successfully!')
+    await fetchResidents()
+    closeModal()
   } catch (error) {
-    console.error('Error adding resident:', error);
+    console.error('Error saving resident:', error)
+    alert('Failed to save resident. Please try again.')
   }
-};
+}
 
-
-    const updateResident = async () => {
+const deleteResident = async (id) => {
+  if (confirm('Are you sure you want to delete this resident?')) {
     try {
-      const residentData = { 
-        ...form.value,
-        details: JSON.stringify(form.value.details)
-      }
-      
-      console.log('Updating resident:', residentData)
-
-      const response = await axios.post(`/api/update/${residentData.id}`, residentData)
-
-      console.log('Server response:', response.data)
-
-      if (response.data.status === 200) {
-        alert('Resident updated successfully!')
-        // Assuming fetchResidents and closeModal are defined elsewhere in the component
-        await fetchResidents()
-        closeModal()
-      } else {
-        throw new Error(response.data.message || 'Failed to update resident')
-      }
+      await axios.delete(`/api/delresidents/${id}`)
+      alert('Resident deleted successfully!')
+      await fetchResidents()
     } catch (error) {
-      console.error('Error updating resident:', error)
-      alert(`Failed to update resident: ${error.message}. Please check your input and try again.`)
-    }
-  }
-
-    const saveResident = () => {
-      if (isEditing.value) {
-        updateResident()
-      } else {
-        addResident()
-      }
-    }
-    const deleteResident = async (id) => {
-      if (confirm('Are you sure you want to delete this resident?')) {
-        try {
-          await axios.delete(`/api/delresidents/${id}`)
-          alert('Resident deleted successfully!')
-          await fetchResidents()
-        } catch (error) {
-          console.error('Error deleting resident:', error)
-          alert('Failed to delete resident. Please try again.')
-        }
-      }
-    }
-    const formatDate = (dateString) => {
-      if (!dateString) return 'N/A'
-      const options = { year: 'numeric', month: 'long', day: 'numeric' }
-      return new Date(dateString).toLocaleDateString(undefined, options)
-    }
-
-    const changePage = (page) => {
-      currentPage.value = page
-      fetchResidents()
-    }
-
-    const exportToExcel = async () => {
-      try {
-        const response = await axios.get('/api/Exlresidents/export/excel', {
-          responseType: 'blob'
-        })
-        const url = window.URL.createObjectURL(new Blob([response.data]))
-        const link = document.createElement('a')
-        link.href = url
-        link.setAttribute('download', 'residents.xlsx')
-        document.body.appendChild(link)
-        link.click()
-        link.remove()
-      } catch (error) {
-        console.error('Error exporting to Excel:', error)
-        alert('Failed to export data. Please try again.')
-      }
-    }
-
-    const showDetails = (resident) => {
-      selectedResident.value = {
-        ...resident,
-        details: typeof resident.details === 'string' ? JSON.parse(resident.details) : resident.details
-      }
-      isDetailsModalOpen.value = true
-    }
-
-    const closeDetailsModal = () => {
-      isDetailsModalOpen.value = false
-      selectedResident.value = null
-    }
-
-    watch([currentCategory, searchQuery], () => {
-      currentPage.value = 1
-      fetchResidents()
-    })
-
-    onMounted(() => {
-      fetchResidents()
-    })
-
-    return {
-      isCollapsed,
-      currentCategory,
-      isModalOpen,
-      isDetailsModalOpen,
-      isEditing,
-      currentPage,
-      totalPages,
-      residents,
-      searchQuery,
-      form,
-      navItems,
-      selectedResident,
-      loading,
-      error,
-      toggleSidebar,
-      searchResidents,
-      openModal,
-      closeModal,
-      saveResident,
-      addResident,
-      updateResident,
-      deleteResident,
-      formatDate,
-      changePage,
-      exportToExcel,
-      showDetails,
-      closeDetailsModal
+      console.error('Error deleting resident:', error)
+      alert('Failed to delete resident. Please try again.')
     }
   }
 }
+
+const formatDate = (dateString) => {
+  if (!dateString) return 'N/A'
+  const options = { year: 'numeric', month: 'long', day: 'numeric' }
+  return new Date(dateString).toLocaleDateString(undefined, options)
+}
+
+const changePage = (page) => {
+  currentPage.value = page
+  fetchResidents()
+}
+
+const exportToExcel = async () => {
+  try {
+    const response = await axios.get('/api/Exlresidents/export/excel', {
+      responseType: 'blob'
+    })
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', 'residents.xlsx')
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+  } catch (error) {
+    console.error('Error exporting to Excel:', error)
+    alert('Failed to export data. Please try again.')
+  }
+}
+
+const generateReport = async () => {
+  try {
+    const response = await axios.get('/api/residents/report', {
+      params: {
+        category: currentCategory.value,
+        barangay: currentBarangay.value
+      },
+      responseType: 'blob'
+    })
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', 'residents_report.xlsx')
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+  } catch (error) {
+    console.error('Error generating report:', error)
+    alert('Failed to generate report. Please try again.')
+  }
+}
+
+const showDetails = (resident) => {
+  selectedResident.value = {
+    ...resident,
+    details: typeof resident.details === 'string' ? JSON.parse(resident.details) : resident.details
+  }
+  isDetailsModalOpen.value = true
+}
+
+const closeDetailsModal = () => {
+  isDetailsModalOpen.value = false
+  selectedResident.value = null
+}
+
+watch([currentCategory, currentBarangay, searchQuery], () => {
+  currentPage.value = 1
+  fetchResidents()
+})
+
+onMounted(() => {
+  fetchResidents()
+  fetchBarangays()
+})
 </script>
 
 <style scoped>
 .dashboard {
   display: flex;
   min-height: 100vh;
+  font-family: 'Arial', sans-serif;
   background-color: #f0f2f5;
-  font-family: Arial, sans-serif;
 }
 
 .sidebar {
   width: 250px;
-  background-color: #4CAF50;
+  background-color: #1a237e;
   color: white;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  position: fixed;
-  height: 100vh;
-  overflow-y: auto;
-  transition: width 0.3s ease;
-  z-index: 1000;
+  transition: all 0.3s ease;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
 }
 
 .sidebar.collapsed {
-  width: 80px;
+  width: 60px;
 }
 
 .sidebar-header {
+  padding: 20px;
   display: flex;
   align-items: center;
-  margin-bottom: 30px;
+  justify-content: center;
 }
 
 .logo-img {
-  width: 50px;
-  height: 50px;
-  margin-right: 10px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
 }
 
 .sidebar-title {
-  font-size: 20px;
+  margin-left: 10px;
+  font-size: 1.2rem;
   font-weight: bold;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .sidebar-nav {
-  flex-grow: 1;
+  margin-top: 20px;
 }
 
 .nav-link {
   display: flex;
   align-items: center;
-  padding: 10px;
-  color: white;
+  padding: 10px 20px;
+  color: #fff;
   text-decoration: none;
   transition: background-color 0.3s;
-  border-radius: 5px;
-  margin-bottom: 5px;
 }
 
-.nav-link:hover, .nav-link.router-link-active {
-  background-color: rgba(255, 255, 255, 0.1);
+.nav-link:hover, .nav-link.active {
+  background-color: #3949ab;
 }
 
-.nav-link svg {
-  margin-right: 10px;
+.nav-link span {
+  margin-left: 10px;
 }
 
 .user-info {
-  margin-top: auto;
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  padding-top: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.user-name {
-  margin-bottom: 10px;
-  font-weight: bold;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .logout-button {
-  background-color: transparent;
-  border: 1px solid white;
+  background: none;
+  border: none;
   color: white;
-  padding: 8px 15px;
-  border-radius: 20px;
   cursor: pointer;
-  transition: background-color 0.3s;
   display: flex;
   align-items: center;
-}
-
-.logout-button:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.logout-button svg {
-  margin-right: 5px;
 }
 
 .toggle-button {
   position: absolute;
-  top: 10px;
-  right: -15px;
-  background-color: #4CAF50;
-  color: white;
+  bottom: 20px;
+  right: 20px;
+  background: none;
   border: none;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  color: white;
   cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.toggle-button:hover {
-  background-color: #45a049;
 }
 
 .main-content {
-  margin-left: 250px;
-  padding: 40px;
-  flex-grow: 1;
-  transition: margin-left 0.3s ease;
+  flex: 1;
+  padding: 20px;
+  transition: all 0.3s ease;
 }
 
 .main-content.collapsed {
-  margin-left: 80px;
-}
-
-.content-wrapper {
-  max-width: 1200px;
-  margin: 0 auto;
+  margin-left: 60px;
 }
 
 .main-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 .page-title {
-  font-size: 28px;
-  color: #333;
-  margin: 0;
+  font-size: 2rem;
+  color: #1a237e;
 }
 
 .header-actions {
   display: flex;
-  align-items: center;
+  gap: 10px;
 }
 
-.category-select,
+.search-bar {
+  position: relative;
+}
+
 .search-input {
-  margin-right: 15px;
-  padding: 8px 12px;
-  border-radius: 4px;
+  padding: 8px 30px 8px 10px;
   border: 1px solid #ddd;
-  background-color: white;
+  border-radius: 4px;
   font-size: 14px;
 }
 
-.add-btn,
-.export-btn {
-  padding: 10px 20px;
+.search-icon {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+}
+
+.category-select, .barangay-select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.add-btn, .export-btn, .report-btn {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
   border: none;
   border-radius: 4px;
+  font-size: 14px;
   cursor: pointer;
   transition: background-color 0.3s;
-  font-size: 14px;
-  margin-left: 10px;
 }
 
 .add-btn {
-  background-color: #4CAF50;
+  background-color: #4caf50;
   color: white;
 }
 
 .export-btn {
-  background-color: #2196F3;
+  background-color: #2196f3;
   color: white;
 }
 
-.add-btn:hover,
-.export-btn:hover {
+.report-btn {
+  background-color: #ff9800;
+  color: white;
+}
+
+.add-btn:hover, .export-btn:hover, .report-btn:hover {
   opacity: 0.9;
 }
 
@@ -722,111 +724,124 @@ export default {
 
 .resident-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 .resident-table th,
 .resident-table td {
-  padding: 16px;
+  padding: 12px;
   text-align: left;
-  border-bottom: 1px solid #eee;
 }
 
 .resident-table th {
-  background-color: #f8f9fa;
-  font-weight: 600;
+  background-color: #f5f5f5;
+  font-weight: bold;
   color: #333;
 }
 
-.resident-table tr:last-child td {
-  border-bottom: none;
+.resident-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.resident-table tr:hover {
+  background-color: #e8eaf6;
+}
+
+.category-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.category-badge.pwd {
+  background-color: #e1f5fe;
+  color: #0288d1;
+}
+
+.category-badge.senior-citizen {
+  background-color: #fff3e0;
+  color: #ff9800;
+}
+
+.category-badge.solo-parent {
+  background-color: #e8f5e9;
+  color: #4caf50;
 }
 
 .action-btn {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 5px;
-  margin-right: 5px;
+  padding: 4px;
+  margin: 0 2px;
   border-radius: 4px;
   transition: background-color 0.3s;
 }
 
-.edit-btn:hover {
-  background-color: #e3f2fd;
-}
-
-.delete-btn:hover {
-  background-color: #ffebee;
+.action-btn:hover {
+  background-color: #e0e0e0;
 }
 
 .details-btn {
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
+  color: #2196f3;
 }
 
-.details-btn:hover {
-  background-color: #45a049;
+.edit-btn {
+  color: #4caf50;
+}
+
+.delete-btn {
+  color: #f44336;
 }
 
 .pagination {
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: 10px;
   margin-top: 20px;
 }
 
-.pagination button {
-  padding: 8px 16px;
+.page-btn {
+  background: none;
   border: none;
-  background-color: #4CAF50;
-  color: white;
   cursor: pointer;
+  padding: 4px;
   border-radius: 4px;
-  margin: 0 5px;
+  transition: background-color 0.3s;
 }
 
-.pagination button:disabled {
-  background-color: #ddd;
+.page-btn:hover:not(:disabled) {
+  background-color: #e0e0e0;
+}
+
+.page-btn:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
-}
-
-.pagination span {
-  margin: 0 10px;
 }
 
 .modal {
   position: fixed;
-  z-index: 1000;
-  left: 0;
   top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 1000;
 }
 
 .modal-content {
   background-color: white;
-  padding: 30px;
+  padding: 20px;
   border-radius: 8px;
-  width: 500px;
-  max-height: 80vh;
-  overflow-y: auto;
+  width: 80%;
+  max-width: 500px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.modal-content h2 {
-  margin-top: 0;
-  margin-bottom: 20px;
-  color: #333;
 }
 
 .form-group {
@@ -836,7 +851,7 @@ export default {
 .form-group label {
   display: block;
   margin-bottom: 5px;
-  color: #666;
+  font-weight: bold;
 }
 
 .form-group input,
@@ -849,10 +864,6 @@ export default {
   font-size: 14px;
 }
 
-.form-group textarea {
-  height: 100px;
-}
-
 .form-actions {
   display: flex;
   justify-content: flex-end;
@@ -860,43 +871,54 @@ export default {
   margin-top: 20px;
 }
 
-.save-btn,
-.cancel-btn {
-  padding: 10px 20px;
+.save-btn, .cancel-btn, .close-btn {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
   border: none;
   border-radius: 4px;
-  cursor: pointer;
   font-size: 14px;
+  cursor: pointer;
   transition: background-color 0.3s;
 }
 
 .save-btn {
-  background-color: #4CAF50;
+  background-color: #4caf50;
   color: white;
 }
 
-.cancel-btn {
+.cancel-btn, .close-btn {
   background-color: #f44336;
   color: white;
 }
 
-.save-btn:hover,
-.cancel-btn:hover {
+.save-btn:hover, .cancel-btn:hover, .close-btn:hover {
   opacity: 0.9;
 }
 
-.loading,
-.error {
-  text-align: center;
-  padding: 20px;
+.loading, .error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
   font-size: 18px;
+  color: #666;
 }
 
-.loading {
-  color: #4CAF50;
+.spinner {
+  margin-right: 10px;
+  animation: spin 1s linear infinite;
 }
 
-.error {
-  color: #f44336;
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s;
+}
+.fade-enter, .fade-leave-to {
+  opacity: 0;
 }
 </style>
