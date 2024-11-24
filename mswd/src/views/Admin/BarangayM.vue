@@ -32,6 +32,26 @@
 
     <main class="main-content" :class="{ 'collapsed': isCollapsed }">
       <div class="content-wrapper">
+        <!-- New Dashboard Stats Section -->
+        <div class="dashboard-stats">
+          <div class="stat-card">
+            <h3>Total Residents</h3>
+            <p>{{ dashboardStats.total_residents }}</p>
+          </div>
+          <div class="stat-card">
+            <h3>PWD Count</h3>
+            <p>{{ dashboardStats.pwd_count }}</p>
+          </div>
+          <div class="stat-card">
+            <h3>Senior Citizen Count</h3>
+            <p>{{ dashboardStats.senior_citizen_count }}</p>
+          </div>
+          <div class="stat-card">
+            <h3>Solo Parent Count</h3>
+            <p>{{ dashboardStats.solo_parent_count }}</p>
+          </div>
+        </div>
+
         <header class="main-header">
           <h1 class="page-title">Resident Management</h1>
           <div class="header-actions">
@@ -325,7 +345,14 @@ const form = ref({
   address: '',
   contact_number: '',
   email: '',
-  details: {}
+details: {}
+})
+
+const dashboardStats = ref({
+  total_residents: 0,
+  pwd_count: 0,
+  senior_citizen_count: 0,
+  solo_parent_count: 0
 })
 
 const navItems = [
@@ -376,6 +403,15 @@ const fetchBarangays = async () => {
     barangays.value = response.data
   } catch (err) {
     console.error('Error fetching barangays:', err)
+  }
+}
+
+const fetchDashboardStats = async () => {
+  try {
+    const response = await axios.get('/api/dashboard/stats')
+    dashboardStats.value = response.data
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error)
   }
 }
 
@@ -444,6 +480,7 @@ const saveResident = async () => {
     
     alert(isEditing.value ? 'Resident updated successfully!' : 'Resident added successfully!')
     await fetchResidents()
+    await fetchDashboardStats() // Refresh dashboard stats after adding/updating a resident
     closeModal()
   } catch (error) {
     console.error('Error saving resident:', error)
@@ -457,6 +494,7 @@ const deleteResident = async (id) => {
       await axios.delete(`/api/delresidents/${id}`)
       alert('Resident deleted successfully!')
       await fetchResidents()
+      await fetchDashboardStats() // Refresh dashboard stats after deleting a resident
     } catch (error) {
       console.error('Error deleting resident:', error)
       alert('Failed to delete resident. Please try again.')
@@ -505,7 +543,7 @@ const generateReport = async () => {
     const url = window.URL.createObjectURL(new Blob([response.data]))
     const link = document.createElement('a')
     link.href = url
-    link.setAttribute('download', 'residents_report.xlsx')
+    link.setAttribute('download', 'residents_report.pdf') // Changed file extension to .pdf
     document.body.appendChild(link)
     link.click()
     link.remove()
@@ -536,6 +574,7 @@ watch([currentCategory, currentBarangay, searchQuery], () => {
 onMounted(() => {
   fetchResidents()
   fetchBarangays()
+  fetchDashboardStats()
 })
 </script>
 
@@ -882,6 +921,7 @@ onMounted(() => {
   transition: background-color 0.3s;
 }
 
+
 .save-btn {
   background-color: #4caf50;
   color: white;
@@ -921,4 +961,32 @@ onMounted(() => {
 .fade-enter, .fade-leave-to {
   opacity: 0;
 }
+
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.stat-card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.stat-card h3 {
+  font-size: 1rem;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.stat-card p {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #1a237e;
+}
 </style>
+
