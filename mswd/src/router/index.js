@@ -130,7 +130,7 @@ const routes = [
 
 
   {
-    path: '/Eventsmanage',
+    path: '/Eventsmanager',
     component: Eventsmanage,
   },
   {
