@@ -11,7 +11,7 @@ import Needyadults from '../views/Senior Citizen/Needyadults.vue';
 import Pwd from '../views/PWD/Pwd.vue';
 import UserManagementView from '../views/Admin/UserManagementView.vue';
 import Dashboard from '../views/Admin/Dashboard.vue';
-
+import UserUpdateModal from '../views/UserUpdateModal.vue'
 import Feedbacklist from '../views/Admin/Feedbacklist.vue';
 import Soloparent from '../views/SoloParent/Soloparent.vue';
 import AdminNav from '../views/Admin/AdminNav.vue';
@@ -82,6 +82,10 @@ const routes = [
   {
     path: '/Legalsupport',
     component: Legalsupport,
+  },
+  {
+    path: '/UserUpdateModal',
+    component: UserUpdateModal,
   },
   {
     path: '/SupportGroups',
